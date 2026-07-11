@@ -1,0 +1,40 @@
+{
+  "name": "engineer-meetup-discordbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "rm -rf dist && tsc && cp -r src/image-gen/assets dist/image-gen/ && cp -r src/x/assets dist/x/ && cp -r src/vrchat/assets dist/vrchat/",
+    "deploy": "npm run build && pm2 restart engineer-meetup-bot",
+    "start": "ts-node src/discordbot/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fontsource/noto-sans-jp": "^5.2.9",
+    "@resvg/resvg-js": "^2.6.2",
+    "axios": "^1.7.0",
+    "axios-cookiejar-support": "^4.0.0",
+    "cron-parser": "^5.5.0",
+    "discord.js": "^14.26.4",
+    "dotenv": "^17.4.2",
+    "node-cron": "^3.0.3",
+    "otpauth": "^9.3.0",
+    "react": "^19.2.7",
+    "satori": "^0.26.0",
+    "tough-cookie": "^4.1.0",
+    "twitter-api-v2": "^1.29.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "^19.2.17",
+    "@types/tough-cookie": "^4.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.9"
+  }
+}

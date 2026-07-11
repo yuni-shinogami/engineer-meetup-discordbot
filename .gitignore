@@ -1,0 +1,9 @@
+node_modules/
+dist/
+storage.json
+assets/fonts/*.ttf
+assets/fonts/*.otf
+src/**/__snapshots__/*.actual.png
+.env
+.env.local
+state/
