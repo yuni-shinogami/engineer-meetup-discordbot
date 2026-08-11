@@ -1,6 +1,7 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, ButtonInteraction } from 'discord.js';
 import { config } from '../config';
-import { sendConfirmMeetupToChannel } from '../meetup';
+import { storage } from '../storage';
+import { CONFIRM_MEETUP_YES, sendConfirmMeetupToChannel } from '../meetup';
 import { requireOperatorRole, formatError } from './utils';
 
 export const confirmMeetupCommand = new SlashCommandBuilder()
@@ -25,4 +26,19 @@ export async function handleConfirmMeetupCommand(interaction: ChatInputCommandIn
     console.error('handleConfirmMeetupCommand failed:', error);
     await interaction.editReply(formatError(error));
   }
+}
+
+export async function handleConfirmMeetupButton(interaction: ButtonInteraction) {
+  if (!await requireOperatorRole(interaction, '❌ このボタンを押す権限がありません。')) return;
+
+  const isYes = interaction.customId === CONFIRM_MEETUP_YES;
+  storage.isScheduled = isYes;
+
+  const answer = isYes ? 'YES (開催する)' : 'NO (開催しない)';
+  const result = isYes ? '木曜19時に事前告知を自動投稿します。' : '今週の自動告知は行いません。';
+
+  await interaction.update({
+    content: `【確認】今週エンジニア集会やる？\n→ **${answer}** が選択されました。${result}\n\n<@${interaction.user.id}> が選択しました。`,
+    components: [],
+  });
 }

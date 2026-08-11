@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, GuildMember, APIInteractionGuildMember } from 'discord.js';
+import { RepliableInteraction, GuildMember, APIInteractionGuildMember } from 'discord.js';
 import { CronExpressionParser } from 'cron-parser';
 import { config } from '../config';
 
@@ -22,17 +22,23 @@ export function formatError(error: unknown, maxLength = 1800): string {
   return prefix + truncated;
 }
 
-export async function requireOperatorRole(interaction: ChatInputCommandInteraction): Promise<boolean> {
-  const member = interaction.member;
-  let hasRole = false;
+export function memberHasOperatorRole(
+  member: GuildMember | APIInteractionGuildMember | null,
+): boolean {
   if (member instanceof GuildMember) {
-    hasRole = member.roles.cache.has(config.operatorRoleId);
-  } else if (member) {
-    hasRole = (member as APIInteractionGuildMember).roles.includes(config.operatorRoleId);
+    return member.roles.cache.has(config.operatorRoleId);
   }
-  if (!hasRole) {
-    await interaction.reply({ content: '❌ このコマンドを実行する権限がありません。', ephemeral: true });
-    return false;
+  if (member) {
+    return (member as APIInteractionGuildMember).roles.includes(config.operatorRoleId);
   }
-  return true;
+  return false;
+}
+
+export async function requireOperatorRole(
+  interaction: RepliableInteraction,
+  message = '❌ このコマンドを実行する権限がありません。',
+): Promise<boolean> {
+  if (memberHasOperatorRole(interaction.member)) return true;
+  await interaction.reply({ content: message, ephemeral: true });
+  return false;
 }

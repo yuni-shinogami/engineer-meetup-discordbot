@@ -1,7 +1,10 @@
 import { REST, Routes } from 'discord.js';
 import { config } from '../config';
 
-export { confirmMeetupCommand, handleConfirmMeetupCommand } from './confirm-meetup';
+export { confirmMeetupCommand, handleConfirmMeetupCommand, handleConfirmMeetupButton } from './confirm-meetup';
+export { ltApplyCommand, handleLtApplyCommand, handleLtApplyModal, LT_APPLY_MODAL } from './lt-apply';
+export { handleLtDatesSelect, handleLtConsultModal, LT_CONSULT_MODAL } from './lt-dates';
+export { handleLtVideoSelect } from './lt-video';
 export { preAnnounceCommand, handlePreAnnounceCommand } from './pre-announce';
 export { createInstanceCommand, handleCreateInstanceCommand } from './create-instance';
 export { postAnnouncementCommand, handlePostAnnouncementCommand } from './post-announcement';
@@ -16,10 +19,12 @@ import { postAnnouncementCommand } from './post-announcement';
 import { checkPermissionsCommand } from './check-permissions';
 import { statusCommand } from './status';
 import { generateLtImageCommand } from './generate-lt-image';
+import { ltApplyCommand } from './lt-apply';
 
 export async function registerCommands() {
   const commands = [
     confirmMeetupCommand.toJSON(),
+    ltApplyCommand.toJSON(),
     preAnnounceCommand.toJSON(),
     createInstanceCommand.toJSON(),
     postAnnouncementCommand.toJSON(),

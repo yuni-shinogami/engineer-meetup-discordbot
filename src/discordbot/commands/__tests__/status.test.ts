@@ -7,7 +7,15 @@ vi.mock('../../config', () => ({
     publicChannelId: 'public-id',
     testChannelId: 'test-id',
     vrcStateDir: '',
+    ltForumChannelId: '',
+    testLtForumChannelId: '',
+    ltStorePath: '',
   },
+  ltForumChannelId: () => '',
+}));
+
+vi.mock('../../lt/store', () => ({
+  ltStore: { list: () => [] },
 }));
 
 vi.mock('../../storage', () => ({
@@ -86,5 +94,17 @@ describe('handleStatusCommand', () => {
     expect(message).toContain('YES（木曜19時に事前告知を自動投稿）');
     expect(message).toContain('https://x.com/foo/status/1');
     expect(message).toContain('https://vrchat.com/i/abc');
+  });
+
+  it('LTフォーラム未設定なら LT セクションにその旨を表示する', async () => {
+    const interaction = makeInteraction();
+
+    await handleStatusCommand(interaction);
+
+    const [message] = interaction.editReply.mock.calls[0]!;
+    expect(message).toContain('**LT 応募**');
+    expect(message).toContain('❌ LTフォーラム（本番）: 未設定');
+    expect(message).toContain('❌ LTフォーラム（テスト）: 未設定');
+    expect(message).toContain('全 0 件');
   });
 });

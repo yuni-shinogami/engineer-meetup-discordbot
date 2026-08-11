@@ -1,6 +1,7 @@
 node_modules/
 dist/
 storage.json
+lt-store.json
 assets/fonts/*.ttf
 assets/fonts/*.otf
 src/**/__snapshots__/*.actual.png
