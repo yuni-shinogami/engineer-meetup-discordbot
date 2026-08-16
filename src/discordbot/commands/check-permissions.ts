@@ -13,12 +13,16 @@ const TEXT_PERMISSIONS = [
   { flag: PermissionFlagsBits.MentionEveryone,  label: 'MentionEveryone（ロールping）',   required: false },
 ] as const;
 
-/** フォーラムでは投稿の作成に SendMessages、タグ操作に ManageThreads が要る。 */
+/**
+ * フォーラムでは投稿の作成に SendMessages、タグ操作に ManageThreads が要る。
+ * 告知画像をポストに投稿するため AttachFiles も必須。
+ */
 const FORUM_PERMISSIONS = [
   { flag: PermissionFlagsBits.ViewChannel,           label: 'ViewChannel（閲覧）',                   required: true  },
   { flag: PermissionFlagsBits.SendMessages,          label: 'SendMessages（ポスト作成）',            required: true  },
   { flag: PermissionFlagsBits.SendMessagesInThreads, label: 'SendMessagesInThreads（ポスト内投稿）', required: true  },
   { flag: PermissionFlagsBits.ManageThreads,         label: 'ManageThreads（タグ設定）',             required: true  },
+  { flag: PermissionFlagsBits.AttachFiles,           label: 'AttachFiles（告知画像の投稿）',         required: true  },
   { flag: PermissionFlagsBits.EmbedLinks,            label: 'EmbedLinks（リンク埋め込み）',          required: false },
 ] as const;
 

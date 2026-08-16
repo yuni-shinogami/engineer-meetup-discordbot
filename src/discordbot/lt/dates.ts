@@ -27,6 +27,18 @@ export function formatShortDate(key: string): string {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
+/** 'YYYY-MM-DD' を 'YYYY/MM/DD' にする。X の告知文で使う表記。 */
+export function formatSlashDate(key: string): string {
+  return key.replace(/-/g, '/');
+}
+
+/** 'YYYY-MM-DD' を「9月5日」形式にする。告知画像に載せる曜日なしの表記。 */
+export function formatImageDate(key: string): string {
+  const date = parseDateKey(key);
+  if (!date) return key;
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
+}
+
 /** 'YYYY-MM-DD' を「9月5日(金)」形式にする。解析できなければ入力をそのまま返す。 */
 export function formatMeetupDate(key: string): string {
   const date = parseDateKey(key);

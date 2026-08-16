@@ -3,6 +3,7 @@ import { existsSync } from 'fs';
 import { config, ltForumChannelId } from '../config';
 import { storage } from '../storage';
 import { CRON_SCHEDULES } from '../scheduler';
+import { formatDateKey, formatMeetupDate } from '../lt/dates';
 import { fetchLtForum } from '../lt/forum';
 import { LT_STATUS_LABELS, resolveLtTags } from '../lt/status';
 import { ltStore } from '../lt/store';
@@ -66,6 +67,14 @@ export async function handleStatusCommand(interaction: ChatInputCommandInteracti
     .filter(status => status !== 'done' && status !== 'cancelled')
     .map(status => `${LT_STATUS_LABELS[status]} ${entries.filter(e => e.status === status).length}件`);
 
+  const today = formatDateKey(new Date());
+  const upcoming = entries
+    .filter(e => e.eventDate && e.eventDate >= today && e.status !== 'cancelled')
+    .sort((a, b) => a.eventDate!.localeCompare(b.eventDate!))
+    .slice(0, 5)
+    .map(e => `　${formatMeetupDate(e.eventDate!)} ${e.speakerName}「${e.title}」`
+      + `（${LT_STATUS_LABELS[e.status]}）`);
+
   const lines = [
     '📊 **システム状態**',
     '',
@@ -86,6 +95,7 @@ export async function handleStatusCommand(interaction: ChatInputCommandInteracti
     '**LT 応募**',
     ...ltForumChecks,
     `・進行中: ${activeCounts.join(' / ')}（全 ${entries.length} 件）`,
+    upcoming.length ? `・確定済みの登壇:\n${upcoming.join('\n')}` : '・確定済みの登壇: なし',
     '',
     '**自動実行スケジュール**',
     ...CRON_SCHEDULES.map(({ label, expr, description }) =>

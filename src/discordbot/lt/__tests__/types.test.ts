@@ -10,7 +10,10 @@ import {
   isArchivePolicy,
   isCapturePolicy,
   needsCaptureWarning,
+  needsTitle,
   newLtEntry,
+  normalizeXAccount,
+  outstandingItems,
 } from '../types';
 
 describe('ポリシーの選択肢', () => {
@@ -103,5 +106,78 @@ describe('newLtEntry', () => {
     for (const target of [entry.announce.x, entry.announce.discord, entry.announce.vrchat]) {
       expect(target).toEqual({ ref: null, postedAt: null });
     }
+  });
+});
+
+describe('needsTitle', () => {
+  it('フォームの案内どおり「未定」と書かれていたら未定として扱う', () => {
+    expect(needsTitle('未定')).toBe(true);
+    expect(needsTitle(' 未定 ')).toBe(true);
+    expect(needsTitle('未定です。')).toBe(true);
+    expect(needsTitle('TBD')).toBe(true);
+  });
+
+  it('空欄も未定として扱う', () => {
+    expect(needsTitle('')).toBe(true);
+    expect(needsTitle('   ')).toBe(true);
+  });
+
+  it('タイトルが書かれていれば未定ではない', () => {
+    expect(needsTitle('未定義動作の話')).toBe(false);
+    expect(needsTitle('LT のタイトル')).toBe(false);
+  });
+});
+
+describe('normalizeXAccount', () => {
+  it('@ 付き・無しのどちらも ID に揃える', () => {
+    expect(normalizeXAccount('@example')).toBe('example');
+    expect(normalizeXAccount('example')).toBe('example');
+    expect(normalizeXAccount('  @Example_1 ')).toBe('Example_1');
+  });
+
+  it('プロフィール URL を貼られても ID を取り出す', () => {
+    expect(normalizeXAccount('https://x.com/example')).toBe('example');
+    expect(normalizeXAccount('https://twitter.com/example')).toBe('example');
+    expect(normalizeXAccount('https://x.com/example?s=20')).toBe('example');
+  });
+
+  it('X の ID として成立しない入力は null', () => {
+    expect(normalizeXAccount('')).toBeNull();
+    expect(normalizeXAccount('@')).toBeNull();
+    expect(normalizeXAccount('ゆに')).toBeNull();
+    expect(normalizeXAccount('a'.repeat(16))).toBeNull();
+  });
+});
+
+describe('outstandingItems', () => {
+  const filled = { title: 'LTのタイトル', xAccount: 'example', videoPlayback: true };
+
+  it('すべて埋まっていれば空', () => {
+    expect(outstandingItems(filled)).toEqual([]);
+  });
+
+  it('タイトル未定・X未登録・動画再生未回答をそれぞれ拾う', () => {
+    expect(outstandingItems({ ...filled, title: '未定' }).join()).toContain('タイトル');
+    expect(outstandingItems({ ...filled, xAccount: null }).join()).toContain('X アカウント');
+    expect(outstandingItems({ ...filled, videoPlayback: null }).join()).toContain('動画');
+  });
+
+  it('動画再生は「いいえ」でも回答済みとして扱う', () => {
+    expect(outstandingItems({ ...filled, videoPlayback: false })).toEqual([]);
+  });
+
+  it('応募直後は X アカウントが未登録として残る', () => {
+    const entry = newLtEntry({
+      id: 't1',
+      speakerId: 'u1',
+      speakerName: 'ゆに',
+      title: 'LTのタイトル',
+      durationMin: 10,
+      capturePolicy: 'allowed',
+      archivePolicy: 'public',
+    }, '2026-08-11T00:00:00.000Z');
+
+    expect(entry.xAccount).toBeNull();
+    expect(outstandingItems(entry).join()).toContain('X アカウント');
   });
 });

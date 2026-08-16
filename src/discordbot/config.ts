@@ -6,6 +6,12 @@ function intEnv(name: string, fallback: number): number {
   return Number.isInteger(parsed) ? parsed : fallback;
 }
 
+function boolEnv(name: string, fallback: boolean): boolean {
+  const raw = process.env[name]?.trim().toLowerCase();
+  if (raw === undefined || raw === '') return fallback;
+  return raw === 'true' || raw === '1' || raw === 'yes';
+}
+
 export const config = {
   discordToken: process.env.DISCORD_TOKEN || '',
   guildId: process.env.GUILD_ID || '',
@@ -30,6 +36,22 @@ export const config = {
   ltSlotsPerDay: intEnv('LT_SLOTS_PER_DAY', 1),
   /** 日程選択で提示する候補の開催回数 */
   ltDateCandidates: intEnv('LT_DATE_CANDIDATES', 8),
+  /**
+   * 素材として受け付ける画像 1 枚あたりの上限（MB）。
+   * Discord が添付を通した画像は基本的に受けたいので、Nitro Basic / ブーストレベル2 の
+   * 添付上限に合わせて 50MB を既定にしている。サーバーの上限に合わせて調整する。
+   */
+  ltMaxMaterialMb: intEnv('LT_MAX_MATERIAL_MB', 50),
+  /**
+   * LT 告知でメンションするロール。週次告知の ANNOUNCE_ROLE_ID とは分けている。
+   * LT は開催のたびに増えるので、既定（未設定）ではメンションしない。
+   */
+  ltAnnounceRoleId: process.env.LT_ANNOUNCE_ROLE_ID || '',
+  /**
+   * VRChat グループ掲示板への LT 告知でメンバー全員に通知を飛ばすか。
+   * 週次告知（GROUP_POST_SEND_NOTIFICATION）と違い LT は本数が多いので既定は false。
+   */
+  ltGroupPostNotify: boolEnv('LT_GROUP_POST_NOTIFY', false),
 };
 
 export function ltForumChannelId(isProd: boolean): string {

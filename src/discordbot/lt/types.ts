@@ -94,6 +94,46 @@ export function needsCaptureWarning(policy: CapturePolicy): boolean {
   return policy === 'denied';
 }
 
+/**
+ * タイトルが未定で、登壇者に用意してもらう必要があるか。
+ * 応募フォームが「未定の場合は『未定』と書いてください」なので、その表記を拾う。
+ */
+export function needsTitle(title: string): boolean {
+  const normalized = title.trim().replace(/[\s。．.!！]/g, '');
+  // 「未定義動作の話」のような正当なタイトルを巻き込まないよう、完全一致だけを未定とみなす
+  return normalized === '' || /^(未定|みてい|tbd)(です)?$/i.test(normalized);
+}
+
+/**
+ * X アカウントの入力を ID（@ 抜き）に正規化する。
+ * URL を貼られることも @ 付きで書かれることもあるため、どちらも受ける。
+ */
+export function normalizeXAccount(raw: string): string | null {
+  const trimmed = raw.trim()
+    .replace(/^https?:\/\/(?:www\.)?(?:x|twitter)\.com\//i, '')
+    .replace(/^@/, '')
+    .replace(/[/?].*$/, '');
+  return /^[A-Za-z0-9_]{1,15}$/.test(trimmed) ? trimmed : null;
+}
+
+/**
+ * 告知を作るまでに登壇者から埋めてもらう必要が残っている項目。
+ * 日程確定の連絡や埋め込みでそのまま宿題として提示する。
+ */
+export function outstandingItems(entry: Pick<LtEntry, 'title' | 'xAccount' | 'videoPlayback'>): string[] {
+  const items: string[] = [];
+  if (needsTitle(entry.title)) {
+    items.push('**LT のタイトル**（現在は「未定」です）');
+  }
+  if (!entry.xAccount) {
+    items.push('**X アカウント**（告知画像のアイコンに X のプロフィール画像を使います）');
+  }
+  if (entry.videoPlayback === null) {
+    items.push('**LT の中で動画を流す予定があるか**');
+  }
+  return items;
+}
+
 /** 登壇後に YouTube へアップしてよいか（限定公開を含む）。 */
 export function canArchive(policy: ArchivePolicy): boolean {
   return policy !== 'none';
@@ -112,8 +152,13 @@ export interface LtEntry {
   speakerId: string;
   /** 呼ばれたい名前。告知画像・告知文に載せる */
   speakerName: string;
-  /** 発表テーマ・タイトル。未定なら「未定」が入る */
+  /** 発表テーマ・タイトル。未定なら「未定」が入る（needsTitle で判定し、確定後に登録してもらう） */
   title: string;
+  /**
+   * X のアカウント ID（@ 抜き）。告知画像のアイコンには通常 X のプロフィール画像を使う。
+   * 応募モーダルの 5 枠に収まらないため、フォーラムポスト内で登録してもらう。`null` は未登録。
+   */
+  xAccount: string | null;
   durationMin: number;
   /**
    * LT 中に動画を流す予定があるか（ワールド側の準備要否に関わる）。
@@ -171,10 +216,20 @@ export function emptyAnnounceResult(): LtAnnounceResult {
   return { ref: null, postedAt: null };
 }
 
+/** 全媒体とも未投稿の初期値。 */
+export function emptyAnnounce(): LtEntry['announce'] {
+  return {
+    x: emptyAnnounceResult(),
+    discord: emptyAnnounceResult(),
+    vrchat: emptyAnnounceResult(),
+  };
+}
+
 export function newLtEntry(input: LtEntryInput, now: string): LtEntry {
   return {
     ...input,
     status: 'applied',
+    xAccount: null,
     videoPlayback: null,
     preferredDates: [],
     scheduleNote: '',
@@ -184,11 +239,7 @@ export function newLtEntry(input: LtEntryInput, now: string): LtEntry {
       titleSlidePath: null,
       announceImagePath: null,
     },
-    announce: {
-      x: emptyAnnounceResult(),
-      discord: emptyAnnounceResult(),
-      vrchat: emptyAnnounceResult(),
-    },
+    announce: emptyAnnounce(),
     createdAt: now,
     updatedAt: now,
   };

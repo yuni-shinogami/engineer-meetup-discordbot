@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { config } from '../../config';
 import { upcomingMeetupDates } from '../dates';
+import { emptyAnnounce } from '../types';
 import {
   allCandidatesFull,
+  buildEditRow,
   buildLtComponents,
   buildLtThreadName,
+  buildOperatorRow,
   buildPreferredDatesRow,
   buildVideoPlaybackRow,
   LT_DATES_CONSULT_VALUE,
@@ -14,11 +17,21 @@ interface SelectJson {
   custom_id: string;
   min_values: number;
   max_values: number;
+  disabled?: boolean;
   options: { label: string; value: string; description: string; default: boolean }[];
 }
 
-const select = (row: ReturnType<typeof buildPreferredDatesRow>): SelectJson =>
-  row.toJSON().components[0] as unknown as SelectJson;
+interface ButtonJson {
+  custom_id: string;
+  label: string;
+  disabled?: boolean;
+}
+
+/** 行の型（セレクト行／ボタン行）を問わず先頭コンポーネントの JSON を取り出す。 */
+type AnyRow = { toJSON(): { components: unknown[] } };
+
+const select = (row: AnyRow): SelectJson => row.toJSON().components[0] as SelectJson;
+const buttons = (row: AnyRow): ButtonJson[] => row.toJSON().components as ButtonJson[];
 
 describe('buildPreferredDatesRow', () => {
   const candidates = () => upcomingMeetupDates();
@@ -133,22 +146,93 @@ describe('buildVideoPlaybackRow', () => {
   });
 });
 
-describe('buildLtComponents', () => {
-  // 片方だけ差し替えるともう片方が消えるため、常に2行そろって返る必要がある
-  it('希望日と動画再生の2行を必ず返す', () => {
-    const rows = buildLtComponents({ id: '1', preferredDates: [], videoPlayback: null });
+describe('buildEditRow', () => {
+  const style = (row: AnyRow) => (row.toJSON().components[0] as { style: number }).style;
 
-    expect(rows).toHaveLength(2);
-    const customIds = rows.map(row => select(row).custom_id);
-    expect(customIds).toEqual(['lt:dates:1', 'lt:video:1']);
+  it('未入力が残っているうちは目立たせる', () => {
+    const pending = buildEditRow({ id: '1', title: '未定', xAccount: null, videoPlayback: null });
+    const filled = buildEditRow({ id: '1', title: 'タイトル', xAccount: 'yuni', videoPlayback: true });
+
+    expect(buttons(pending)[0]!.custom_id).toBe('lt:edit:1');
+    expect(style(pending)).not.toBe(style(filled));
+  });
+});
+
+describe('buildOperatorRow', () => {
+  it('未確定なら「確定」ボタンで、取り消しは押せない', () => {
+    const [schedule, unschedule] = buttons(buildOperatorRow({ id: '1', eventDate: null, announce: emptyAnnounce() }));
+
+    expect(schedule!.custom_id).toBe('lt:schedule:1');
+    expect(schedule!.label).toBe('運営: 日程を確定');
+    expect(unschedule!.custom_id).toBe('lt:unsched:1');
+    expect(unschedule!.disabled).toBe(true);
+  });
+
+  it('確定済みなら「変更」ボタンになり、取り消しが押せる', () => {
+    const [schedule, unschedule] = buttons(buildOperatorRow({ id: '1', eventDate: '2026-08-14', announce: emptyAnnounce() }));
+
+    expect(schedule!.label).toBe('運営: 日程を変更');
+    expect(unschedule!.disabled).toBe(false);
+  });
+
+  it('日程が未確定のうちは告知できない', () => {
+    const [, , announce] = buttons(buildOperatorRow({
+      id: '1', eventDate: null, announce: emptyAnnounce(),
+    }));
+
+    expect(announce!.custom_id).toBe('lt:announce:1');
+    expect(announce!.disabled).toBe(true);
+  });
+
+  // 一部の媒体だけ失敗したときに再送できる必要がある
+  it('告知済みでも押せるままで、ラベルだけ変わる', () => {
+    const posted = emptyAnnounce();
+    posted.x = { ref: '123', postedAt: '2026-08-14T00:00:00.000Z' };
+
+    const [, , announce] = buttons(buildOperatorRow({
+      id: '1', eventDate: '2026-08-14', announce: posted,
+    }));
+
+    expect(announce!.label).toBe('運営: 告知をやり直す');
+    expect(announce!.disabled).toBe(false);
+  });
+});
+
+describe('buildLtComponents', () => {
+  const base = { title: 'タイトル', xAccount: 'yuni', announce: emptyAnnounce() };
+
+  // 一部だけ差し替えると他の行が消えるため、常に4行そろって返る必要がある
+  it('希望日・動画再生・登壇情報・運営操作の4行を必ず返す', () => {
+    const rows = buildLtComponents({
+      ...base, id: '1', preferredDates: [], videoPlayback: null, eventDate: null,
+    });
+
+    expect(rows).toHaveLength(4);
+    expect(select(rows[0]!).custom_id).toBe('lt:dates:1');
+    expect(select(rows[1]!).custom_id).toBe('lt:video:1');
+    expect(buttons(rows[2]!).map(b => b.custom_id)).toEqual(['lt:edit:1']);
+    expect(buttons(rows[3]!).map(b => b.custom_id))
+      .toEqual(['lt:schedule:1', 'lt:unsched:1', 'lt:announce:1']);
   });
 
   it('レコードの現在値がそれぞれの行に反映される', () => {
     const first = upcomingMeetupDates()[0]!;
-    const rows = buildLtComponents({ id: '9', preferredDates: [first], videoPlayback: true });
+    const rows = buildLtComponents({
+      ...base, id: '9', preferredDates: [first], videoPlayback: true, eventDate: null,
+    });
 
     expect(select(rows[0]!).options.filter(o => o.default).map(o => o.value)).toEqual([first]);
     expect(select(rows[1]!).options.filter(o => o.default).map(o => o.value)).toEqual(['yes']);
+  });
+
+  it('日程が確定したら登壇者の希望日セレクトを無効化する', () => {
+    const rows = buildLtComponents({
+      ...base, id: '9', preferredDates: [], videoPlayback: true, eventDate: '2026-08-14',
+    });
+
+    expect(select(rows[0]!).disabled).toBe(true);
+    // 動画再生の予定は確定後も変わりうるので触れるままにする
+    expect(select(rows[1]!).disabled).toBeFalsy();
   });
 });
 
