@@ -4,7 +4,8 @@ import {
   ButtonInteraction,
   ButtonStyle,
 } from 'discord.js';
-import { config } from '../config';
+import { config, ltAnnounceRoleId } from '../config';
+import { xPostUrl } from '../../x/postUrl';
 import { buildCustomId } from '../interactions';
 import { announceLt, missingForAnnounce } from '../lt/announce';
 import {
@@ -68,7 +69,10 @@ function buildPreview(entry: LtEntry, isProd: boolean): string {
     `**X** ${posted(entry.announce.x.ref)}`,
     '```', buildXAnnounceText(entry), '```',
     `**Discord**（${discordChannel ? `<#${discordChannel}>` : '未設定のためスキップ'}）${posted(entry.announce.discord.ref)}`,
-    '```', buildDiscordAnnounceText(entry, config.ltAnnounceRoleId), '```',
+    '```', buildDiscordAnnounceText(entry, {
+      roleId: ltAnnounceRoleId(),
+      xPostUrl: entry.announce.x.ref ? xPostUrl(entry.announce.x.ref, isProd) : null,
+    }), '```',
     `**VRChatグループ**（${config.vrcStateDir ? '掲示板' : '未設定のためスキップ'}）${posted(entry.announce.vrchat.ref)}`,
     '```', buildVrchatAnnounce(entry).body, '```',
   ];

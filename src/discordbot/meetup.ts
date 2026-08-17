@@ -2,6 +2,7 @@ import { Client, TextChannel, ActionRowBuilder, ButtonBuilder, ButtonStyle } fro
 import { config } from './config';
 import { storage } from './storage';
 import { postAnnouncement } from '../x/postAnnouncement';
+import { xPostUrl } from '../x/postUrl';
 
 /**
  * 開催確認ボタンの customId。
@@ -37,8 +38,7 @@ export async function sendConfirmMeetupToChannel(client: Client, channelId: stri
 export async function executePreAnnounce(isProd: boolean): Promise<string> {
   const tweetId = await postAnnouncement(isProd);
 
-  const xAccount = isProd ? config.xAccount : config.testXAccount;
-  const postUrl = xAccount ? `https://x.com/${xAccount}/status/${tweetId}` : tweetId;
+  const postUrl = xPostUrl(tweetId, isProd);
 
   storage.lastTweetId = tweetId;
   storage.preAnnouncePostUrl = postUrl;

@@ -1,7 +1,8 @@
 import { AttachmentBuilder, Client, TextChannel } from 'discord.js';
 import { postLtGroupAnnouncement } from '../../vrchat/postLtAnnouncement';
 import { postTweet, postTweetWithImage } from '../../x/xBot';
-import { config } from '../config';
+import { config, ltAnnounceRoleId } from '../config';
+import { xPostUrl } from '../../x/postUrl';
 import {
   buildDiscordAnnounceText,
   buildVrchatAnnounce,
@@ -19,6 +20,15 @@ export const ANNOUNCE_TARGET_LABELS: Record<AnnounceTarget, string> = {
   discord: 'Discord',
   vrchat: 'VRChatグループ',
 };
+
+/** 前日告知（木曜の `/pre-announce`）に乗せる媒体。 */
+export const PRE_ANNOUNCE_TARGETS: readonly AnnounceTarget[] = ['x'];
+
+/**
+ * 当日の開催告知（`/post-announcement`）に乗せる媒体。
+ * Discord も VRChat グループも、集会が始まるタイミングで一緒に出す運用に合わせている。
+ */
+export const MEETUP_DAY_TARGETS: readonly AnnounceTarget[] = ['discord', 'vrchat'];
 
 export interface AnnounceOutcome {
   target: AnnounceTarget;
@@ -60,14 +70,19 @@ async function announceToDiscord(
   const channel = await client.channels.fetch(channelId) as TextChannel | null;
   if (!channel) throw new Error(`お知らせチャンネルを取得できません: ${channelId}`);
 
+  const roleId = ltAnnounceRoleId();
   const image = entry.materials.announceImagePath;
   const message = await channel.send({
-    content: buildDiscordAnnounceText(entry, config.ltAnnounceRoleId),
+    content: buildDiscordAnnounceText(entry, {
+      roleId,
+      // X の告知が先に出ていれば、詳細はそちらへ誘導する
+      xPostUrl: entry.announce.x.ref ? xPostUrl(entry.announce.x.ref, isProd) : null,
+    }),
     files: materialExists(image)
       ? [new AttachmentBuilder(image, { name: 'lt-announce.png' })]
       : [],
     // 自由記述を含む本文なので、明示したロール以外にはメンションを飛ばさない
-    allowedMentions: { roles: config.ltAnnounceRoleId ? [config.ltAnnounceRoleId] : [] },
+    allowedMentions: { roles: roleId ? [roleId] : [] },
   });
 
   return message.url;
@@ -122,17 +137,27 @@ async function runTarget(
  *
  * 媒体ごとに独立して実行し、成功したものだけレコードに記録する。
  * 1 つでも投稿できていれば「告知済み」に進める（どこまで出せたかは埋め込みで確認できる）。
+ *
+ * `targets` で媒体を絞れる。普段の運用では X は前日告知（木曜）、Discord は当日の
+ * 開催告知に乗せているので、呼び出し側がタイミングに応じて絞り込む。
  */
 export async function announceLt(
   client: Client,
   entry: LtEntry,
   isProd: boolean,
+  targets: readonly AnnounceTarget[] = ANNOUNCE_TARGETS,
 ): Promise<{ entry: LtEntry; outcomes: AnnounceOutcome[] }> {
-  const outcomes = [
-    await runTarget('x', entry.announce.x, () => announceToX(entry, isProd)),
-    await runTarget('discord', entry.announce.discord, () => announceToDiscord(client, entry, isProd)),
-    await runTarget('vrchat', entry.announce.vrchat, () => announceToVrchat(entry, isProd)),
-  ];
+  const post: Record<AnnounceTarget, () => Promise<string | null>> = {
+    x: () => announceToX(entry, isProd),
+    discord: () => announceToDiscord(client, entry, isProd),
+    vrchat: () => announceToVrchat(entry, isProd),
+  };
+
+  const outcomes: AnnounceOutcome[] = [];
+  for (const target of ANNOUNCE_TARGETS) {
+    if (!targets.includes(target)) continue;
+    outcomes.push(await runTarget(target, entry.announce[target], post[target]));
+  }
 
   const announce = { ...entry.announce };
   for (const outcome of outcomes) {

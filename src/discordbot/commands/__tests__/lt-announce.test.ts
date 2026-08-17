@@ -16,7 +16,11 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../config', () => ({ config: mocks.config, ltForumChannelId: () => '' }));
+vi.mock('../../config', () => ({
+  config: mocks.config,
+  ltForumChannelId: () => '',
+  ltAnnounceRoleId: () => mocks.config.ltAnnounceRoleId,
+}));
 
 vi.mock('../../lt/announce', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../lt/announce')>()),

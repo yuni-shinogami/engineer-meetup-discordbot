@@ -18,7 +18,13 @@ vi.mock('../storage', () => ({
   },
 }));
 
+vi.mock('../lt/weekly-announce', () => ({
+  runWeeklyLtAnnounce: vi.fn().mockResolvedValue(null),
+}));
+
 import { triggerConfirmMeetup, triggerPreAnnounce } from '../scheduler';
+import { runWeeklyLtAnnounce } from '../lt/weekly-announce';
+import { PRE_ANNOUNCE_TARGETS } from '../lt/announce';
 import { sendConfirmMeetupToChannel, executePreAnnounce } from '../meetup';
 import { storage } from '../storage';
 import type { Client } from 'discord.js';
@@ -51,8 +57,12 @@ describe('triggerConfirmMeetup', () => {
 });
 
 describe('triggerPreAnnounce', () => {
+  const mockedRunWeeklyLt = vi.mocked(runWeeklyLtAnnounce);
+
   beforeEach(() => {
     mockedExecutePreAnnounce.mockReset();
+    mockedRunWeeklyLt.mockReset();
+    mockedRunWeeklyLt.mockResolvedValue(null);
     storage.isScheduled = true;
   });
 
@@ -63,7 +73,39 @@ describe('triggerPreAnnounce', () => {
     await triggerPreAnnounce(client, true);
 
     expect(mockedExecutePreAnnounce).not.toHaveBeenCalled();
+    expect(mockedRunWeeklyLt).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  // 普段の運用どおり、前日告知と同じタイミングで LT のお知らせも出す
+  it('事前告知に続けて翌日の LT 告知も投稿し、結果を運営チャンネルに流す', async () => {
+    mockedExecutePreAnnounce.mockResolvedValue('https://x.com/foo/status/1');
+    mockedRunWeeklyLt.mockResolvedValue('📣 9月4日(金) の LT 告知\n✅ X: tweet-1');
+    const { client, send } = makeClient();
+
+    await triggerPreAnnounce(client, true);
+
+    expect(mockedRunWeeklyLt).toHaveBeenCalledWith(client, true, { targets: PRE_ANNOUNCE_TARGETS });
+    expect(send).toHaveBeenLastCalledWith(expect.stringContaining('✅ X: tweet-1'));
+  });
+
+  it('LT の予定が無ければ運営チャンネルに余計な通知を出さない', async () => {
+    mockedExecutePreAnnounce.mockResolvedValue('https://x.com/foo/status/1');
+    const { client, send } = makeClient();
+
+    await triggerPreAnnounce(client, true);
+
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  // LT 告知は事前告知とは独立した投稿なので、片方の失敗で巻き添えにしない
+  it('事前告知が失敗しても LT 告知は実行する', async () => {
+    mockedExecutePreAnnounce.mockRejectedValue(new Error('X API error'));
+    const { client } = makeClient();
+
+    await triggerPreAnnounce(client, true);
+
+    expect(mockedRunWeeklyLt).toHaveBeenCalled();
   });
 
   it('成功時は事前告知URLを添えて運営チャンネルに通知する', async () => {

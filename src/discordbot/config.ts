@@ -43,8 +43,9 @@ export const config = {
    */
   ltMaxMaterialMb: intEnv('LT_MAX_MATERIAL_MB', 50),
   /**
-   * LT 告知でメンションするロール。週次告知の ANNOUNCE_ROLE_ID とは分けている。
-   * LT は開催のたびに増えるので、既定（未設定）ではメンションしない。
+   * LT 告知でメンションするロール。未設定なら週次告知と同じ ANNOUNCE_ROLE_ID を使う
+   * （実運用でも LT の告知は同じ「お知らせping」を飛ばしている）。
+   * LT だけ別のロールに向けたい場合にここを設定する。
    */
   ltAnnounceRoleId: process.env.LT_ANNOUNCE_ROLE_ID || '',
   /**
@@ -52,8 +53,19 @@ export const config = {
    * 週次告知（GROUP_POST_SEND_NOTIFICATION）と違い LT は本数が多いので既定は false。
    */
   ltGroupPostNotify: boolEnv('LT_GROUP_POST_NOTIFY', false),
+  /**
+   * 週次フロー（木曜の事前告知・当日の開催告知）に LT 告知を同乗させるか。
+   * 普段の運用に合わせて既定は true。告知はポストのボタンから手動でも出せるので、
+   * 自動化だけを止めたいときに false にする。
+   */
+  ltAutoAnnounce: boolEnv('LT_AUTO_ANNOUNCE', true),
 };
 
 export function ltForumChannelId(isProd: boolean): string {
   return isProd ? config.ltForumChannelId : config.testLtForumChannelId;
+}
+
+/** LT 告知でメンションするロール。専用の指定が無ければ週次告知と同じロールに送る。 */
+export function ltAnnounceRoleId(): string {
+  return config.ltAnnounceRoleId || config.announceRoleId;
 }

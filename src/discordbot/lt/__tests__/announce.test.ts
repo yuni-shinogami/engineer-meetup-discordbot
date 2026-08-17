@@ -6,17 +6,22 @@ const mocks = vi.hoisted(() => ({
   postTweet: vi.fn(async () => 'tweet-1'),
   postTweetWithImage: vi.fn(async () => 'tweet-img-1'),
   postLtGroupAnnouncement: vi.fn(async () => 'vrc-post-1'),
-  channelSend: vi.fn(async () => ({ url: 'https://discord.com/channels/1/2/3' })),
+  channelSend: vi.fn(async (_payload: { content: string }) => ({ url: 'https://discord.com/channels/1/2/3' })),
   config: {
     publicChannelId: 'public-ch',
     testChannelId: 'test-ch',
     vrcStateDir: '/state',
     ltAnnounceRoleId: '',
     ltGroupPostNotify: false,
+    xAccount: 'prod-account',
+    testXAccount: 'test-account',
   },
 }));
 
-vi.mock('../../config', () => ({ config: mocks.config }));
+vi.mock('../../config', () => ({
+  config: mocks.config,
+  ltAnnounceRoleId: () => mocks.config.ltAnnounceRoleId,
+}));
 vi.mock('../../../x/xBot', () => ({
   postTweet: mocks.postTweet,
   postTweetWithImage: mocks.postTweetWithImage,
@@ -32,7 +37,13 @@ vi.mock('../store', () => ({
 }));
 
 import { ltStore } from '../store';
-import { announceLt, announceSummary, missingForAnnounce } from '../announce';
+import {
+  MEETUP_DAY_TARGETS,
+  PRE_ANNOUNCE_TARGETS,
+  announceLt,
+  announceSummary,
+  missingForAnnounce,
+} from '../announce';
 
 const entry = (patch: Partial<LtEntry> = {}): LtEntry => ({
   id: 't1',
@@ -181,6 +192,41 @@ describe('announceLt', () => {
     expect(outcomes.find(o => o.target === 'discord')).toMatchObject({ status: 'skipped' });
     expect(outcomes.find(o => o.target === 'vrchat')).toMatchObject({ status: 'skipped' });
     expect(outcomes.find(o => o.target === 'x')).toMatchObject({ status: 'posted' });
+  });
+
+  // X は前日告知、Discord と VRChat は当日の開催告知に乗せるので、呼び出し側が媒体を絞る
+  it('targets で指定した媒体だけに投稿する', async () => {
+    const { outcomes } = await announceLt(client, entry(), true, MEETUP_DAY_TARGETS);
+
+    expect(mocks.channelSend).toHaveBeenCalled();
+    expect(mocks.postLtGroupAnnouncement).toHaveBeenCalled();
+    expect(mocks.postTweetWithImage).not.toHaveBeenCalled();
+    expect(outcomes.map(o => o.target)).toEqual(['discord', 'vrchat']);
+  });
+
+  it('前日告知では X だけに投稿する', async () => {
+    const { outcomes } = await announceLt(client, entry(), true, PRE_ANNOUNCE_TARGETS);
+
+    expect(mocks.postTweetWithImage).toHaveBeenCalled();
+    expect(mocks.channelSend).not.toHaveBeenCalled();
+    expect(mocks.postLtGroupAnnouncement).not.toHaveBeenCalled();
+    expect(outcomes.map(o => o.target)).toEqual(['x']);
+  });
+
+  it('X の告知が済んでいれば Discord 本文にその URL を載せる', async () => {
+    const posted = entry();
+    posted.announce.x = { ref: '2060342403836649944', postedAt: 'now' };
+
+    await announceLt(client, posted, true, ['discord']);
+
+    expect(mocks.channelSend.mock.calls[0]![0].content)
+      .toContain('https://x.com/prod-account/status/2060342403836649944');
+  });
+
+  it('X が未投稿なら Discord 本文に URL を入れない', async () => {
+    await announceLt(client, entry(), true, ['discord']);
+
+    expect(mocks.channelSend.mock.calls[0]![0].content).not.toContain('https://x.com/');
   });
 
   it('テストモードではテストチャンネルへ投稿する', async () => {
