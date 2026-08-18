@@ -24,7 +24,10 @@ export class LtStore {
     if (!fs.existsSync(this.storePath)) return { ...defaultData, entries: [] };
     try {
       const parsed = JSON.parse(fs.readFileSync(this.storePath, 'utf-8')) as Partial<LtStoreData>;
-      return { entries: Array.isArray(parsed.entries) ? parsed.entries : [] };
+      const entries = Array.isArray(parsed.entries) ? parsed.entries : [];
+      // isProd を持たない旧レコードはテスト扱いにする。本番の枠を誤って埋めるより、
+      // 本番の応募が漏れるほうが運営から見えて気づける（告知前に /status に出ない）。
+      return { entries: entries.map(entry => ({ ...entry, isProd: entry.isProd ?? false })) };
     } catch (e) {
       console.error('Failed to load LT store:', e);
       return { ...defaultData, entries: [] };
@@ -41,8 +44,9 @@ export class LtStore {
     fs.renameSync(tmp, this.storePath);
   }
 
-  list(): LtEntry[] {
-    return [...this.data.entries];
+  /** `isProd` を渡すとその応募先のぶんだけ返す。省略時は本番・テスト両方。 */
+  list(isProd?: boolean): LtEntry[] {
+    return this.data.entries.filter(entry => isProd === undefined || entry.isProd === isProd);
   }
 
   get(id: string): LtEntry | undefined {
@@ -80,24 +84,30 @@ export class LtStore {
     return true;
   }
 
-  findBySpeaker(speakerId: string, statuses?: readonly LtStatus[]): LtEntry[] {
+  findBySpeaker(speakerId: string, isProd: boolean, statuses?: readonly LtStatus[]): LtEntry[] {
     return this.data.entries.filter(entry =>
-      entry.speakerId === speakerId && (!statuses || statuses.includes(entry.status)),
+      entry.speakerId === speakerId
+      && entry.isProd === isProd
+      && (!statuses || statuses.includes(entry.status)),
     );
   }
 
-  /** その開催日に確定済みで枠を消費しているレコード（取り下げは除く）。 */
-  entriesOnDate(eventDate: string): LtEntry[] {
-    return this.data.entries.filter(
-      entry => entry.eventDate === eventDate && entry.status !== 'cancelled',
+  /**
+   * その開催日に確定済みで枠を消費しているレコード（取り下げは除く）。
+   * 枠は本番とテストで別勘定にする。テストの応募が本番の候補日を塞ぐと、
+   * 本物の応募者が日程を選べなくなるため。
+   */
+  entriesOnDate(eventDate: string, isProd: boolean): LtEntry[] {
+    return this.data.entries.filter(entry =>
+      entry.eventDate === eventDate && entry.isProd === isProd && entry.status !== 'cancelled',
     );
   }
 
   /** 開催日ごとの使用枠数。日程候補セレクトの満枠判定に使う。 */
-  slotUsageByDate(): Map<string, number> {
+  slotUsageByDate(isProd: boolean): Map<string, number> {
     const usage = new Map<string, number>();
     for (const entry of this.data.entries) {
-      if (!entry.eventDate || entry.status === 'cancelled') continue;
+      if (!entry.eventDate || entry.isProd !== isProd || entry.status === 'cancelled') continue;
       usage.set(entry.eventDate, (usage.get(entry.eventDate) ?? 0) + 1);
     }
     return usage;

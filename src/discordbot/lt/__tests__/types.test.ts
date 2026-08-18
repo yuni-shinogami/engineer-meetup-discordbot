@@ -68,6 +68,7 @@ describe('ポリシーの判定', () => {
 describe('newLtEntry', () => {
   const input = {
     id: '1',
+    isProd: true,
     speakerId: 'u1',
     speakerName: 'ゆに',
     title: '未定',
@@ -169,6 +170,7 @@ describe('outstandingItems', () => {
   it('応募直後は X アカウントが未登録として残る', () => {
     const entry = newLtEntry({
       id: 't1',
+      isProd: true,
       speakerId: 'u1',
       speakerName: 'ゆに',
       title: 'LTのタイトル',

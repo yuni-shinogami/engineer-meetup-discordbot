@@ -152,6 +152,7 @@ export async function handleLtApplyModal(interaction: ModalSubmitInteraction, ar
   }
 
   const draft = {
+    isProd,
     speakerId: interaction.user.id,
     speakerName: interaction.fields.getTextInputValue('speakerName').trim(),
     title: interaction.fields.getTextInputValue('title').trim(),
@@ -165,7 +166,7 @@ export async function handleLtApplyModal(interaction: ModalSubmitInteraction, ar
     const forum = await fetchLtForum(interaction.client, isProd);
     const tagIds = requireLtTagIds(forum);
 
-    thread = await createLtPost(forum, draft, tagIds.applied, ltStore.slotUsageByDate());
+    thread = await createLtPost(forum, draft, tagIds.applied, ltStore.slotUsageByDate(isProd));
     // スレッド ID を主キーにするため、レコード作成はスレッド作成後。
     // ここで失敗するとポストだけが残るので、片付けてからエラーを返す。
     ltStore.create({ id: thread.id, ...draft });

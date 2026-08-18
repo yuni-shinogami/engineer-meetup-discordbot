@@ -18,7 +18,7 @@ export async function handleLtVideoSelect(interaction: StringSelectMenuInteracti
 
     await interaction.update({
       embeds: [buildLtEmbed(updated)],
-      components: buildLtComponents(updated, ltStore.slotUsageByDate()),
+      components: buildLtComponents(updated, ltStore.slotUsageByDate(updated.isProd)),
     });
 
     if (videoPlayback) {

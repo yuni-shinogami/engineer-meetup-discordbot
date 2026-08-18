@@ -6,7 +6,12 @@ import {
 } from 'discord.js';
 import { fetchXProfileImageUrl } from '../../x/profileImage';
 import { buildAnnounceImage, missingForAnnounceImage, postAnnounceImage } from '../lt/announce-image';
-import { applyLtEntryToPost, fetchLtThread, isProdLtThread } from '../lt/forum';
+import {
+  applyLtEntryToPost,
+  fetchLtThread,
+  isProdLtApplyContext,
+  isProdLtThread,
+} from '../lt/forum';
 import { resolveSpeakerEntry } from '../lt/guard';
 import { MaterialError, materialExists, saveMaterialFromUrl } from '../lt/materials';
 import { ltStore } from '../lt/store';
@@ -36,7 +41,12 @@ function findEntryId(interaction: ChatInputCommandInteraction): string | { error
   const channelId = interaction.channelId;
   if (interaction.channel?.isThread() && ltStore.get(channelId)) return channelId;
 
-  const mine = ltStore.findBySpeaker(interaction.user.id, ACTIVE_STATUSES);
+  // 応募先も実行した場所から決める（テストの応募を本物と取り違えないため）
+  const isProd = isProdLtApplyContext(
+    channelId,
+    interaction.channel?.isThread() ? interaction.channel.parentId : null,
+  );
+  const mine = ltStore.findBySpeaker(interaction.user.id, isProd, ACTIVE_STATUSES);
   if (mine.length === 1) return mine[0]!.id;
   if (mine.length === 0) {
     return { error: '❌ 進行中の LT 応募が見つかりません。まず `/lt-apply` で応募してください。' };
@@ -89,7 +99,7 @@ export async function handleLtMaterialCommand(interaction: ChatInputCommandInter
       updated = await tryBuildAnnounceImage(updated, thread, notes);
     }
 
-    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate());
+    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate(updated.isProd));
     await interaction.editReply(notes.join('\n') || 'ℹ️ 変更はありませんでした。');
   } catch (error) {
     console.error('handleLtMaterialCommand failed:', error);
