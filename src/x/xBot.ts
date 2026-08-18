@@ -14,6 +14,8 @@ function createClient(isProd: boolean): TwitterApi {
   return new TwitterApi({ appKey: key, appSecret: secret, accessToken: token, accessSecret: tSecret });
 }
 
+export { createClient as createXClient };
+
 export async function postTweet(text: string, isProd: boolean): Promise<string> {
   const client = createClient(isProd);
   const result = await client.readWrite.v2.tweet(text);

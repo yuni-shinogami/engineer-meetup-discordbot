@@ -1,8 +1,13 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { existsSync } from 'fs';
-import { config } from '../config';
+import { config, ltForumChannelId } from '../config';
 import { storage } from '../storage';
 import { CRON_SCHEDULES } from '../scheduler';
+import { formatDateKey, formatMeetupDate } from '../lt/dates';
+import { fetchLtForum } from '../lt/forum';
+import { LT_STATUS_LABELS, resolveLtTags } from '../lt/status';
+import { ltStore } from '../lt/store';
+import { LT_STATUSES } from '../lt/types';
 import { requireOperatorRole, formatNextRun } from './utils';
 
 export const statusCommand = new SlashCommandBuilder()
@@ -40,6 +45,36 @@ export async function handleStatusCommand(interaction: ChatInputCommandInteracti
     }
   }));
 
+  const ltForumChecks = await Promise.all([true, false].map(async (isProd) => {
+    const label = isProd ? 'LTフォーラム（本番）' : 'LTフォーラム（テスト）';
+    const id = ltForumChannelId(isProd);
+    if (!id) return `${ng} ${label}: 未設定`;
+    try {
+      const forum = await fetchLtForum(interaction.client, isProd);
+      const { missing } = resolveLtTags(forum);
+      if (missing.length > 0) {
+        const names = missing.map(s => `「${LT_STATUS_LABELS[s]}」`).join('、');
+        return `${ng} ${label}: <#${id}> タグ不足 → ${names}`;
+      }
+      return `${ok} ${label}: <#${id}> タグ6種OK`;
+    } catch (error) {
+      return `${ng} ${label}: <#${id}> ${error instanceof Error ? error.message : '取得失敗'}`;
+    }
+  }));
+
+  const entries = ltStore.list();
+  const activeCounts = LT_STATUSES
+    .filter(status => status !== 'done' && status !== 'cancelled')
+    .map(status => `${LT_STATUS_LABELS[status]} ${entries.filter(e => e.status === status).length}件`);
+
+  const today = formatDateKey(new Date());
+  const upcoming = entries
+    .filter(e => e.eventDate && e.eventDate >= today && e.status !== 'cancelled')
+    .sort((a, b) => a.eventDate!.localeCompare(b.eventDate!))
+    .slice(0, 5)
+    .map(e => `　${formatMeetupDate(e.eventDate!)} ${e.speakerName}「${e.title}」`
+      + `（${LT_STATUS_LABELS[e.status]}）`);
+
   const lines = [
     '📊 **システム状態**',
     '',
@@ -56,6 +91,11 @@ export async function handleStatusCommand(interaction: ChatInputCommandInteracti
     '',
     '**チャンネル確認**',
     ...channelChecks,
+    '',
+    '**LT 応募**',
+    ...ltForumChecks,
+    `・進行中: ${activeCounts.join(' / ')}（全 ${entries.length} 件）`,
+    upcoming.length ? `・確定済みの登壇:\n${upcoming.join('\n')}` : '・確定済みの登壇: なし',
     '',
     '**自動実行スケジュール**',
     ...CRON_SCHEDULES.map(({ label, expr, description }) =>

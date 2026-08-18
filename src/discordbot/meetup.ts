@@ -2,6 +2,16 @@ import { Client, TextChannel, ActionRowBuilder, ButtonBuilder, ButtonStyle } fro
 import { config } from './config';
 import { storage } from './storage';
 import { postAnnouncement } from '../x/postAnnouncement';
+import { xPostUrl } from '../x/postUrl';
+
+/**
+ * 開催確認ボタンの customId。
+ * コロンを含まない旧形式だが、interactions.ts のディスパッチャが
+ * 単一セグメントの ID を文字列全体のキーとして扱うため、
+ * 既に投稿済みのボタンを壊さないようこのまま維持している。
+ */
+export const CONFIRM_MEETUP_YES = 'confirm_meetup_yes';
+export const CONFIRM_MEETUP_NO = 'confirm_meetup_no';
 
 export async function sendConfirmMeetupToChannel(client: Client, channelId: string): Promise<void> {
   const channel = await client.channels.fetch(channelId) as TextChannel;
@@ -10,11 +20,11 @@ export async function sendConfirmMeetupToChannel(client: Client, channelId: stri
   const row = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
       new ButtonBuilder()
-        .setCustomId('confirm_meetup_yes')
+        .setCustomId(CONFIRM_MEETUP_YES)
         .setLabel('YES (開催する)')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId('confirm_meetup_no')
+        .setCustomId(CONFIRM_MEETUP_NO)
         .setLabel('NO (開催しない)')
         .setStyle(ButtonStyle.Secondary),
     );
@@ -28,8 +38,7 @@ export async function sendConfirmMeetupToChannel(client: Client, channelId: stri
 export async function executePreAnnounce(isProd: boolean): Promise<string> {
   const tweetId = await postAnnouncement(isProd);
 
-  const xAccount = isProd ? config.xAccount : config.testXAccount;
-  const postUrl = xAccount ? `https://x.com/${xAccount}/status/${tweetId}` : tweetId;
+  const postUrl = xPostUrl(tweetId, isProd);
 
   storage.lastTweetId = tweetId;
   storage.preAnnouncePostUrl = postUrl;

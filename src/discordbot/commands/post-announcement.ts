@@ -4,6 +4,10 @@ import { storage } from '../storage';
 import { requireOperatorRole } from './utils';
 import { postGroupAnnouncement, AuthError } from '../../vrchat/postGroupAnnouncement';
 import { postQuoteAnnouncement } from '../../x/quotePost';
+import { xPostUrl } from '../../x/postUrl';
+import { formatMeetupDate } from '../lt/dates';
+import { MEETUP_DAY_TARGETS } from '../lt/announce';
+import { nextMeetupDate, runWeeklyLtAnnounce } from '../lt/weekly-announce';
 
 export const postAnnouncementCommand = new SlashCommandBuilder()
   .setName('post-announcement')
@@ -11,6 +15,14 @@ export const postAnnouncementCommand = new SlashCommandBuilder()
   .addBooleanOption(option =>
     option.setName('production')
       .setDescription('本番環境で実行する場合はTrueにしてください（デフォルトはFalse: テストモード）')
+  )
+  .addBooleanOption(option =>
+    option.setName('lt-only')
+      .setDescription('LT告知（Discord・VRCGroup）だけを投稿します（開催告知は出しません）')
+  )
+  .addBooleanOption(option =>
+    option.setName('skip-lt')
+      .setDescription('当日のLT告知を同時に投稿しない場合はTrueにしてください')
   );
 
 export async function handlePostAnnouncementCommand(interaction: ChatInputCommandInteraction) {
@@ -18,6 +30,27 @@ export async function handlePostAnnouncementCommand(interaction: ChatInputComman
   await interaction.deferReply();
 
   const isProd = interaction.options.getBoolean('production') ?? false;
+  const ltOnly = interaction.options.getBoolean('lt-only') ?? false;
+  const skipLt = interaction.options.getBoolean('skip-lt') ?? false;
+
+  if (ltOnly && skipLt) {
+    await interaction.editReply('❌ `lt-only` と `skip-lt` は同時に指定できません。');
+    return;
+  }
+
+  if (ltOnly) {
+    // LT 告知はインスタンスに依存しないので、招待 URL が無くても実行できる
+    await interaction.editReply(`LT 告知を確認しています (${isProd ? '本番' : 'テスト'}モード)...`);
+    const report = await runWeeklyLtAnnounce(interaction.client, isProd, {
+      force: true,
+      targets: MEETUP_DAY_TARGETS,
+    });
+    await interaction.editReply(report ?? [
+      `ℹ️ ${formatMeetupDate(nextMeetupDate())} に確定している LT はありません。(${isProd ? '本番' : 'テスト'})`,
+      '　運営ボタンで日程を確定すると対象になります。',
+    ].join('\n'));
+    return;
+  }
 
   const inviteUrl = storage.lastInviteUrl;
   if (!inviteUrl) {
@@ -36,9 +69,7 @@ export async function handlePostAnnouncementCommand(interaction: ChatInputComman
   } else {
     try {
       const quoteTweetId = await postQuoteAnnouncement(inviteUrl, storage.lastTweetId, isProd);
-      const xAccount = isProd ? config.xAccount : config.testXAccount;
-      const quoteTweetUrl = xAccount ? `https://x.com/${xAccount}/status/${quoteTweetId}` : quoteTweetId;
-      steps.push(`✅ X告知: ${quoteTweetUrl}`);
+      steps.push(`✅ X告知: ${xPostUrl(quoteTweetId, isProd)}`);
     } catch (error) {
       console.error('X quote RT failed:', error);
       steps.push(`❌ X告知: 失敗 — ${error instanceof Error ? error.message : String(error)}`);
@@ -91,12 +122,19 @@ export async function handlePostAnnouncementCommand(interaction: ChatInputComman
     }
   }
 
+  // 4. LT 告知（Discord・VRChat グループ）。週次の告知とは別メッセージで、当日出す運用。
+  //    週次の告知が失敗していても LT は独立して出す。
+  const ltReport = skipLt ? null : await runWeeklyLtAnnounce(interaction.client, isProd, {
+    targets: MEETUP_DAY_TARGETS,
+  });
+
   const resultMessage = [
     hasError ? '⚠️ 一部の告知でエラーが発生しました' : `✅ 告知が完了しました！ (${isProd ? '本番' : 'テスト'})`,
     '',
     ...steps,
     '',
     `**招待URL:** ${inviteUrl}`,
+    ...(ltReport ? ['', ltReport] : []),
   ].join('\n');
 
   await interaction.editReply(resultMessage);
