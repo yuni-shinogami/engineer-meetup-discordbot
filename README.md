@@ -396,14 +396,26 @@ npm start
 ```bash
 # 初回セットアップ
 npm install -g pm2
-npm run build
-pm2 start dist/discordbot/index.js --name engineer-meetup-bot
+npm run deploy
 pm2 save
 pm2 startup  # 出力されたコマンドを実行するとサーバー再起動後も自動起動
-
-# コード変更後のデプロイ（ビルド + pm2 再起動）
-npm run deploy
 ```
+
+以降、コード変更の反映は `npm run deploy` だけです。
+
+| npm script | 実行内容 |
+| :--- | :--- |
+| `npm run deploy` | ビルドして pm2 のプロセスを入れ替える（**通常はこれだけ**） |
+| `npm run pm2:restart` | ビルドせずに再起動する。`.env` を変えただけのときに使う |
+| `npm run pm2:start` | pm2 に登録して起動する（`pm2:restart` が未登録を検知したときに自動で呼ばれる） |
+| `npm run pm2:stop` | 停止する（登録は残るので `deploy` で戻せる） |
+| `npm run pm2:logs` | 直近 50 行を表示して追従する |
+
+**`deploy` は pm2 に未登録でも通ります。** `pm2 restart` は対象が無いと失敗するため、その場合だけ `pm2:start` にフォールバックします
+（`pm2 restart engineer-meetup-bot --update-env || npm run pm2:start`）。
+
+**プロセスは pm2 に一本化してください。** `npm start`（ts-node での直接起動）と併用すると Bot が二重に動き、
+同じスラッシュコマンドを取り合って**古いコードのプロセスが応答することがあります**。`npm start` は開発時のみに使ってください。
 
 ## コマンド一覧
 

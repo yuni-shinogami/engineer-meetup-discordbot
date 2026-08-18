@@ -5,10 +5,14 @@
   "main": "index.js",
   "scripts": {
     "build": "rm -rf dist && tsc && cp -r src/image-gen/assets dist/image-gen/ && cp -r src/x/assets dist/x/ && cp -r src/vrchat/assets dist/vrchat/",
-    "deploy": "npm run build && pm2 restart engineer-meetup-bot",
     "start": "ts-node src/discordbot/index.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "deploy": "npm run build && npm run pm2:restart",
+    "pm2:start": "pm2 start dist/discordbot/index.js --name engineer-meetup-bot --time",
+    "pm2:restart": "pm2 restart engineer-meetup-bot --update-env || npm run pm2:start",
+    "pm2:stop": "pm2 stop engineer-meetup-bot",
+    "pm2:logs": "pm2 logs engineer-meetup-bot --lines 50"
   },
   "keywords": [],
   "author": "",
