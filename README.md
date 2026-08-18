@@ -302,7 +302,7 @@ body:  今日はさみっとさんの LT がありますーーー！！
 掲示板の一覧で読み切れるよう、**タイトルには LT のタイトルを入れず登壇者名だけ**にしています
 （`VRCHAT_TITLE_MAX = 64` を超える場合は末尾を詰めますが、登壇者名が極端に長くない限り発生しません）。
 本文の括弧だけ全角「」なのも実際の投稿に合わせたものです（X と Discord は半角 ｢｣）。
-メンバー全員への通知は既定で飛ばしません（`LT_GROUP_POST_NOTIFY`）。
+メンバー全員への通知はインスタンス告知と同じく既定で飛ばします（`LT_GROUP_POST_NOTIFY`）。
 
 応募時に聞いている**撮影・拡散の可否（`capturePolicy`）は告知文には出しません**。
 応募ポストの埋め込みには表示されるので、当日のアナウンスで扱ってください。
@@ -320,9 +320,10 @@ body:  今日はさみっとさんの LT がありますーーー！！
 - チャンネルや `VRC_STATE_DIR` が未設定の媒体は「スキップ」として扱い、失敗にはしません。
 - 告知画像がまだ無くても投稿できます（テキストのみ）。プレビューで警告します。
 
-**メンションと通知は既定でおとなしくしています。** Discord のロールメンションは `LT_ANNOUNCE_ROLE_ID`
-（週次の `ANNOUNCE_ROLE_ID` とは別。未設定ならメンションなし）、VRChat グループのメンバー全員への通知は
-`LT_GROUP_POST_NOTIFY`（既定 `false`）です。LT は開催のたびに増えるため、週次告知と同じ頻度で通知を飛ばさない判断です。
+**通知は週次の告知と同じ強さで飛ばします。** Discord のロールメンションは `LT_ANNOUNCE_ROLE_ID`
+（未設定なら週次と同じ `ANNOUNCE_ROLE_ID` = お知らせping）、VRChat グループのメンバー全員への通知は
+`LT_GROUP_POST_NOTIFY`（既定 `true`、インスタンス告知の `GROUP_POST_SEND_NOTIFICATION` と同じ扱い）です。
+掲示板に載るだけでは気づかれないため、どちらも既定で通知します。LT だけ静かに出したい場合にこの 2 つを下げてください。
 
 ### ステータスとタグ
 
@@ -375,7 +376,7 @@ npm install
 | `LT_MATERIALS_DIR` | LT 素材の保存先ディレクトリ（任意、デフォルト `./state/lt-materials`） |
 | `LT_MAX_MATERIAL_MB` | 素材画像1枚あたりの上限MB（任意、デフォルト `50`） |
 | `LT_ANNOUNCE_ROLE_ID` | LT 告知でメンションするロール ID（任意、未設定なら `ANNOUNCE_ROLE_ID` と同じロール） |
-| `LT_GROUP_POST_NOTIFY` | VRChat グループ告知でメンバー全員に通知するか（任意、デフォルト `false`） |
+| `LT_GROUP_POST_NOTIFY` | VRChat グループ告知でメンバー全員に通知するか（任意、デフォルト `true`） |
 | `LT_AUTO_ANNOUNCE` | 週次フローに LT 告知を同乗させるか（任意、デフォルト `true`） |
 
 `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` の木曜は**開催前日**の確認・事前告知であり、開催日そのものではありません。LT の日程候補は cron 式ではなく `MEETUP_WEEKDAY` から算出します。

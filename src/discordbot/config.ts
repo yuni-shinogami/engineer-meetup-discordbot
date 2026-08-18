@@ -50,9 +50,10 @@ export const config = {
   ltAnnounceRoleId: process.env.LT_ANNOUNCE_ROLE_ID || '',
   /**
    * VRChat グループ掲示板への LT 告知でメンバー全員に通知を飛ばすか。
-   * 週次告知（GROUP_POST_SEND_NOTIFICATION）と違い LT は本数が多いので既定は false。
+   * インスタンス告知（GROUP_POST_SEND_NOTIFICATION）と揃えて既定は true。
+   * 掲示板に載るだけでは気づかれないため、通知を飛ばさないと告知の意味が薄い。
    */
-  ltGroupPostNotify: boolEnv('LT_GROUP_POST_NOTIFY', false),
+  ltGroupPostNotify: boolEnv('LT_GROUP_POST_NOTIFY', true),
   /**
    * 週次フロー（木曜の事前告知・当日の開催告知）に LT 告知を同乗させるか。
    * 普段の運用に合わせて既定は true。告知はポストのボタンから手動でも出せるので、

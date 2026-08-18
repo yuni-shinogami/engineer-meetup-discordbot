@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
     testChannelId: 'test-ch',
     vrcStateDir: '/state',
     ltAnnounceRoleId: '',
-    ltGroupPostNotify: false,
+    ltGroupPostNotify: true,
     xAccount: 'prod-account',
     testXAccount: 'test-account',
   },
@@ -257,11 +257,12 @@ describe('announceLt', () => {
     );
   });
 
-  it('グループ通知の既定は飛ばさない', async () => {
+  // 掲示板に載るだけでは気づかれないので、インスタンス告知と同じく通知を飛ばす
+  it('グループ通知の設定をそのまま渡す', async () => {
     await announceLt(client, entry(), true);
 
     expect(mocks.postLtGroupAnnouncement).toHaveBeenCalledWith(
-      expect.objectContaining({ sendNotification: false }),
+      expect.objectContaining({ sendNotification: true }),
     );
   });
 });

@@ -81,7 +81,7 @@ function buildPreview(entry: LtEntry, isProd: boolean): string {
     lines.push('⚠️ **告知画像がまだありません。** 画像なしのテキストのみで投稿されます。');
   }
   if (config.ltGroupPostNotify) {
-    lines.push('⚠️ VRChat グループのメンバー全員に通知が飛びます（`LT_GROUP_POST_NOTIFY`）。');
+    lines.push('ℹ️ VRChat グループのメンバー全員に通知が飛びます（`LT_GROUP_POST_NOTIFY`）。');
   }
 
   // ephemeral の本文も 2000 文字までなので、長い場合は末尾を落とす

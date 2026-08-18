@@ -11,7 +11,7 @@ export interface LtGroupPostOptions {
   stateDir: string;
   title: string;
   body: string;
-  /** メンバー全員に通知を飛ばすか。LT は本数が多いので既定では飛ばさない想定 */
+  /** メンバー全員に通知を飛ばすか（呼び出し側の `LT_GROUP_POST_NOTIFY`） */
   sendNotification: boolean;
 }
 
