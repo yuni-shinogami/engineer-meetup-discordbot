@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   fetchXProfileImageUrl: vi.fn(async (): Promise<string | null> => 'https://pbs.twimg.com/a_400x400.jpg'),
   buildAnnounceImage: vi.fn(),
   missingForAnnounceImage: vi.fn(() => [] as string[]),
+  postAnnounceImage: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../../config', () => ({
@@ -30,6 +31,7 @@ vi.mock('../../lt/materials', () => ({
 vi.mock('../../lt/announce-image', () => ({
   buildAnnounceImage: mocks.buildAnnounceImage,
   missingForAnnounceImage: mocks.missingForAnnounceImage,
+  postAnnounceImage: mocks.postAnnounceImage,
 }));
 
 vi.mock('../../../x/profileImage', () => ({ fetchXProfileImageUrl: mocks.fetchXProfileImageUrl }));
@@ -174,8 +176,9 @@ describe('handleLtMaterialCommand', () => {
     await handleLtMaterialCommand(interaction);
 
     expect(mocks.buildAnnounceImage).toHaveBeenCalled();
-    expect(mocks.threadSend).toHaveBeenCalledWith(
-      expect.objectContaining({ allowedMentions: { users: ['speaker'] } }),
+    expect(mocks.postAnnounceImage).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 't1' }),
+      expect.anything(),
     );
     expect(interaction.editReply.mock.calls[0]![0]).toContain('告知画像を生成');
   });

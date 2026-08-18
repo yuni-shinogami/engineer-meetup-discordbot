@@ -14,10 +14,11 @@ import {
 } from 'discord.js';
 import { config } from '../config';
 import { buildCustomId } from '../interactions';
-import { regenerateAnnounceImage } from '../lt/announce-image';
+import { postAnnounceImage, syncAnnounceImage } from '../lt/announce-image';
 import { formatDateKey, formatMeetupDate, parseDateKey, upcomingMeetupDates } from '../lt/dates';
 import { applyLtEntryToPost, fetchLtThread } from '../lt/forum';
 import { resolveOperatorEntry } from '../lt/guard';
+import { materialExists } from '../lt/materials';
 import { ltStore } from '../lt/store';
 import { LtEntry, LtStatus, outstandingItems } from '../lt/types';
 import { formatError } from './utils';
@@ -188,8 +189,10 @@ async function applySchedule(
   }
 
   const previous = entry.eventDate;
-  // 開催日は告知画像に載るので、生成済みなら新しい日付で作り直す
-  const updated = await regenerateAnnounceImage(ltStore.update(entry.id, {
+  // 素材が先にそろっている場合、この確定で初めて告知画像を作れるようになる。
+  // 既に画像があるときは、新しい日付で作り直す。
+  const hadAnnounceImage = materialExists(entry.materials.announceImagePath);
+  const updated = await syncAnnounceImage(ltStore.update(entry.id, {
     eventDate,
     status: scheduledStatus(entry.status),
   }));
@@ -197,6 +200,7 @@ async function applySchedule(
   const thread = await fetchLtThread(interaction.client, entry.id);
   await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate());
   await notifySpeaker(thread, updated, interaction.user.id, previous);
+  if (!hadAnnounceImage) await postAnnounceImage(thread, updated);
 
   const headline = previous
     ? `✅ ${formatMeetupDate(previous)} → **${formatMeetupDate(eventDate)}** に変更しました。`
@@ -227,14 +231,18 @@ async function notifySpeaker(
       'タイトルと X アカウントは「✏️ タイトル・Xアカウントを登録」から入力できます。',
     );
   }
-  if (!previous) {
-    lines.push(
-      '',
-      '**告知画像に使う素材**',
-      '・アイコン: X のプロフィール画像を使わせていただきます'
-      + `${entry.xAccount ? '' : '（X が無い場合はアイコン画像をご用意ください）'}`,
-      '・タイトルスライド（発表の1枚目）の画像 — 提出方法は運営から改めてご案内します。',
-    );
+  // 素材は日程確定より先に届いていることがあるので、まだ無いものだけをお願いする
+  const materials: string[] = [];
+  if (!materialExists(entry.materials.speakerIconPath)) {
+    materials.push(entry.xAccount
+      ? '・アイコン: X のプロフィール画像を使わせていただきます'
+      : '・アイコン画像（X アカウントを登録いただければプロフィール画像を使います）');
+  }
+  if (!materialExists(entry.materials.titleSlidePath)) {
+    materials.push('・タイトルスライド（発表の1枚目）の画像 — `/lt-material` で登録できます');
+  }
+  if (!previous && materials.length > 0) {
+    lines.push('', '**告知画像に使う素材**', ...materials);
   }
 
   await sendToThread(thread, lines.join('\n'), entry.speakerId);

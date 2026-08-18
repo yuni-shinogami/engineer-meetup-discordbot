@@ -1,3 +1,4 @@
+import { AttachmentBuilder, ThreadChannel } from 'discord.js';
 import { generateImage } from '../../image-gen/generate';
 import { formatImageDate } from './dates';
 import { materialExists, readMaterialAsDataUrl, writeMaterial } from './materials';
@@ -49,19 +50,36 @@ export async function buildAnnounceImage(entry: LtEntry): Promise<LtEntry> {
 }
 
 /**
- * 既に生成済みの告知画像を、レコードの現在値に合わせて作り直す。
+ * レコードの現在値に合わせて告知画像を用意する。素材がそろっていれば未生成でも生成する。
  *
- * タイトルや開催日が変わると画像の内容が古くなるため、変更のたびに追従させる。
+ * 素材の登録が日程確定やタイトル登録より先になることがあるため、作り直しだけでなく
+ * 初回生成もここで拾う（`/lt-material` の時点では開催日が未確定で作れないことがある）。
  * 表示の同期と同じ扱いで、失敗しても呼び出し元の操作は止めない。
  */
-export async function regenerateAnnounceImage(entry: LtEntry): Promise<LtEntry> {
-  if (!materialExists(entry.materials.announceImagePath)) return entry;
+export async function syncAnnounceImage(entry: LtEntry): Promise<LtEntry> {
   if (missingForAnnounceImage(entry).length > 0) return entry;
 
   try {
     return await buildAnnounceImage(entry);
   } catch (error) {
-    console.error(`告知画像の再生成に失敗しました (${entry.id}):`, error);
+    console.error(`告知画像の生成に失敗しました (${entry.id}):`, error);
     return entry;
+  }
+}
+
+/** 生成した告知画像を応募ポストに投稿する。表示の同期と同じ扱いで、失敗しても操作は止めない。 */
+export async function postAnnounceImage(thread: ThreadChannel, entry: LtEntry): Promise<void> {
+  const filePath = entry.materials.announceImagePath;
+  if (!materialExists(filePath)) return;
+
+  try {
+    await thread.send({
+      content: `🖼️ <@${entry.speakerId}> の LT 告知画像ができました。`
+        + '\n修正が必要な場合は素材を送り直すか、運営にご連絡ください。',
+      files: [new AttachmentBuilder(filePath, { name: 'lt-announce.png' })],
+      allowedMentions: { users: [entry.speakerId] },
+    });
+  } catch (error) {
+    console.error(`告知画像の投稿に失敗しました (${entry.id}):`, error);
   }
 }

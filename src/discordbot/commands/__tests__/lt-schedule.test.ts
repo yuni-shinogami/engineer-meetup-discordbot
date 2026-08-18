@@ -14,7 +14,17 @@ vi.mock('../../config', () => ({
 }));
 
 // vi.mock はファイル先頭へ巻き上げられるため、参照する変数も同じく巻き上げる
-const { threadSend } = vi.hoisted(() => ({ threadSend: vi.fn().mockResolvedValue(undefined) }));
+const { threadSend, syncAnnounceImage, postAnnounceImage } = vi.hoisted(() => ({
+  threadSend: vi.fn().mockResolvedValue(undefined),
+  syncAnnounceImage: vi.fn(async (e: LtEntry) => e),
+  postAnnounceImage: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../../lt/announce-image', () => ({ syncAnnounceImage, postAnnounceImage }));
+
+vi.mock('../../lt/materials', () => ({
+  materialExists: (path: unknown) => typeof path === 'string' && path !== '',
+}));
 
 vi.mock('../../lt/forum', () => ({
   applyLtEntryToPost: vi.fn().mockResolvedValue(undefined),
@@ -197,6 +207,70 @@ describe('日程の確定', () => {
       eventDate: '2026-09-04',
       status: 'ready',
     });
+  });
+
+  // 素材が日程確定より先に届くと、この確定が告知画像の初回生成になる。
+  // 生成しそこねると画像なしで X に告知が出てしまう。
+  it('素材がそろっていれば確定時に告知画像を作り、ポストに投稿する', async () => {
+    const withMaterials = {
+      speakerIconPath: '/materials/t1/speakerIcon.png',
+      titleSlidePath: '/materials/t1/titleSlide.png',
+      announceImagePath: null,
+    };
+    vi.mocked(ltStore.get).mockReturnValue(entry({ materials: withMaterials }));
+    vi.mocked(ltStore.update).mockImplementation((id, patch) => ({
+      ...entry({ id, materials: withMaterials }), ...patch,
+    }));
+    syncAnnounceImage.mockImplementationOnce(async (e: LtEntry) => ({
+      ...e,
+      materials: { ...withMaterials, announceImagePath: '/materials/t1/announceImage.png' },
+    }));
+
+    await handleLtScheduleSelect(selectInteraction(['2026-09-04']), ['t1']);
+
+    expect(syncAnnounceImage).toHaveBeenCalled();
+    expect(postAnnounceImage).toHaveBeenCalled();
+  });
+
+  it('生成済みの画像を作り直した場合はポストに投げ直さない', async () => {
+    vi.mocked(ltStore.get).mockReturnValue(entry({
+      materials: {
+        speakerIconPath: '/materials/t1/speakerIcon.png',
+        titleSlidePath: '/materials/t1/titleSlide.png',
+        announceImagePath: '/materials/t1/announceImage.png',
+      },
+    }));
+
+    await handleLtScheduleSelect(selectInteraction(['2026-09-04']), ['t1']);
+
+    expect(syncAnnounceImage).toHaveBeenCalled();
+    expect(postAnnounceImage).not.toHaveBeenCalled();
+  });
+
+  // 出してもらった素材をもう一度お願いすると、登壇者が二度手間になる
+  it('登録済みの素材は確定の連絡で改めて求めない', async () => {
+    const withMaterials = {
+      speakerIconPath: '/materials/t1/speakerIcon.png',
+      titleSlidePath: '/materials/t1/titleSlide.png',
+      announceImagePath: null,
+    };
+    vi.mocked(ltStore.get).mockReturnValue(entry({ materials: withMaterials }));
+    vi.mocked(ltStore.update).mockImplementation((id, patch) => ({
+      ...entry({ id, materials: withMaterials }), ...patch,
+    }));
+
+    await handleLtScheduleSelect(selectInteraction(['2026-09-04']), ['t1']);
+
+    const { content } = threadSend.mock.calls[0]![0] as { content: string };
+    expect(content).not.toContain('タイトルスライド');
+    expect(content).not.toContain('告知画像に使う素材');
+  });
+
+  it('素材が未登録なら確定の連絡で提出をお願いする', async () => {
+    await handleLtScheduleSelect(selectInteraction(['2026-09-04']), ['t1']);
+
+    const { content } = threadSend.mock.calls[0]![0] as { content: string };
+    expect(content).toContain('タイトルスライド');
   });
 
   it('枠が埋まっている日には確定できない', async () => {

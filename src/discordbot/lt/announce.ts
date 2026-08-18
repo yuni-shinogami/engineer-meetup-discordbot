@@ -153,10 +153,18 @@ export async function announceLt(
     vrchat: () => announceToVrchat(entry, isProd),
   };
 
+  // 画像は無くても投稿できる仕様なので、黙って出すと画像なしの告知に気づけない。
+  // 画像を使う媒体だけ、投稿できた旨に添えて運営に知らせる。
+  const noImage = !materialExists(entry.materials.announceImagePath);
+  const imageTargets: readonly AnnounceTarget[] = ['x', 'discord'];
+
   const outcomes: AnnounceOutcome[] = [];
   for (const target of ANNOUNCE_TARGETS) {
     if (!targets.includes(target)) continue;
-    outcomes.push(await runTarget(target, entry.announce[target], post[target]));
+    const outcome = await runTarget(target, entry.announce[target], post[target]);
+    outcomes.push(noImage && outcome.status === 'posted' && imageTargets.includes(target)
+      ? { ...outcome, message: `${outcome.message}（⚠️ 告知画像なしで投稿）` }
+      : outcome);
   }
 
   const announce = { ...entry.announce };

@@ -1,12 +1,11 @@
 import {
   Attachment,
-  AttachmentBuilder,
   ChatInputCommandInteraction,
   SlashCommandBuilder,
   ThreadChannel,
 } from 'discord.js';
 import { fetchXProfileImageUrl } from '../../x/profileImage';
-import { buildAnnounceImage, missingForAnnounceImage } from '../lt/announce-image';
+import { buildAnnounceImage, missingForAnnounceImage, postAnnounceImage } from '../lt/announce-image';
 import { applyLtEntryToPost, fetchLtThread, isProdLtThread } from '../lt/forum';
 import { resolveSpeakerEntry } from '../lt/guard';
 import { MaterialError, materialExists, saveMaterialFromUrl } from '../lt/materials';
@@ -151,14 +150,7 @@ async function tryBuildAnnounceImage(
 
   const updated = await buildAnnounceImage(entry);
   notes.push('', '🖼️ 告知画像を生成し、ポストに投稿しました。内容をご確認ください。');
-
-  const filePath = updated.materials.announceImagePath!;
-  await thread.send({
-    content: `🖼️ <@${updated.speakerId}> の LT 告知画像ができました。`
-      + '\n修正が必要な場合は素材を送り直すか、運営にご連絡ください。',
-    files: [new AttachmentBuilder(filePath, { name: 'lt-announce.png' })],
-    allowedMentions: { users: [updated.speakerId] },
-  });
+  await postAnnounceImage(thread, updated);
 
   return updated;
 }

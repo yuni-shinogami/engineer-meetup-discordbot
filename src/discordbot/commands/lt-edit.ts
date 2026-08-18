@@ -7,9 +7,10 @@ import {
   TextInputStyle,
 } from 'discord.js';
 import { buildCustomId } from '../interactions';
-import { regenerateAnnounceImage } from '../lt/announce-image';
+import { postAnnounceImage, syncAnnounceImage } from '../lt/announce-image';
 import { applyLtEntryToPost, fetchLtThread } from '../lt/forum';
 import { resolveSpeakerEntry } from '../lt/guard';
+import { materialExists } from '../lt/materials';
 import { ltStore } from '../lt/store';
 import { LtEntry, needsTitle, normalizeXAccount, outstandingItems } from '../lt/types';
 import { formatError } from './utils';
@@ -77,11 +78,13 @@ export async function handleLtEditModal(interaction: ModalSubmitInteraction, arg
       return;
     }
 
-    // タイトルは告知画像に載るので、生成済みなら新しいタイトルで作り直す
-    const updated = await regenerateAnnounceImage(ltStore.update(entry.id, { title, xAccount }));
+    // タイトルは告知画像に載る。ここで初めて素材がそろうこともあるので、未生成なら生成する。
+    const hadAnnounceImage = materialExists(entry.materials.announceImagePath);
+    const updated = await syncAnnounceImage(ltStore.update(entry.id, { title, xAccount }));
 
     const thread = await fetchLtThread(interaction.client, entry.id);
     await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate());
+    if (!hadAnnounceImage) await postAnnounceImage(thread, updated);
 
     await interaction.editReply(buildEditFeedback(updated));
   } catch (error) {

@@ -134,6 +134,25 @@ describe('announceLt', () => {
     expect(mocks.postTweetWithImage).not.toHaveBeenCalled();
   });
 
+  // 黙って画像なしで出ると、運営が気づかないまま本番の告知になる
+  it('画像なしで投稿したことを結果に明記する', async () => {
+    const { outcomes } = await announceLt(client, entry({
+      materials: { speakerIconPath: null, titleSlidePath: null, announceImagePath: null },
+    }), true);
+
+    const message = (target: string) => outcomes.find(o => o.target === target)!.message;
+    expect(message('x')).toContain('告知画像なし');
+    expect(message('discord')).toContain('告知画像なし');
+    // 画像を使わない媒体には付けない
+    expect(message('vrchat')).not.toContain('告知画像なし');
+  });
+
+  it('画像があれば余計な注記は付けない', async () => {
+    const { outcomes } = await announceLt(client, entry(), true);
+
+    expect(outcomes.every(o => !o.message.includes('告知画像なし'))).toBe(true);
+  });
+
   // 告知は取り消せないので、再実行で二重投稿しないことが最優先
   it('投稿済みの媒体は再投稿しない', async () => {
     const posted = entry();

@@ -21,7 +21,8 @@ import { ltStore } from '../store';
 import {
   buildAnnounceImage,
   missingForAnnounceImage,
-  regenerateAnnounceImage,
+  postAnnounceImage,
+  syncAnnounceImage,
   renderAnnounceImage,
 } from '../announce-image';
 
@@ -118,36 +119,84 @@ describe('buildAnnounceImage', () => {
   });
 });
 
-describe('regenerateAnnounceImage', () => {
-  it('まだ生成していなければ何もしない', async () => {
-    const current = entry();
-    expect(await regenerateAnnounceImage(current)).toBe(current);
-    expect(generateImage).not.toHaveBeenCalled();
+describe('syncAnnounceImage', () => {
+  // 素材の登録が日程確定より先だと、ここが初回生成になる（未生成でも作らないと画像なしで告知される）
+  it('素材がそろっていれば未生成でも生成する', async () => {
+    const updated = await syncAnnounceImage(entry());
+
+    expect(generateImage).toHaveBeenCalled();
+    expect(updated.materials.announceImagePath).toBe('/materials/t1/announceImage.png');
   });
 
   it('生成済みならレコードの現在値で作り直す', async () => {
-    const current = entry({
+    await syncAnnounceImage(entry({
       materials: {
         speakerIconPath: '/materials/t1/speakerIcon.png',
         titleSlidePath: '/materials/t1/titleSlide.png',
         announceImagePath: '/materials/t1/announceImage.png',
       },
-    });
+    }));
 
-    await regenerateAnnounceImage(current);
     expect(generateImage).toHaveBeenCalled();
   });
 
+  it('素材が足りなければ何もしない', async () => {
+    const current = entry({ eventDate: null });
+
+    expect(await syncAnnounceImage(current)).toBe(current);
+    expect(generateImage).not.toHaveBeenCalled();
+  });
+
   it('生成に失敗しても呼び出し元は止めずレコードをそのまま返す', async () => {
-    const current = entry({
+    const current = entry();
+    generateImage.mockRejectedValueOnce(new Error('satori failed'));
+
+    expect(await syncAnnounceImage(current)).toBe(current);
+  });
+});
+
+describe('postAnnounceImage', () => {
+  interface SendPayload {
+    content: string;
+    files: unknown[];
+    allowedMentions: { users: string[] };
+  }
+  const thread = () => ({ send: vi.fn(async (_payload: SendPayload) => undefined) });
+
+  it('生成済みの画像を登壇者宛にポストへ投稿する', async () => {
+    const t = thread();
+    await postAnnounceImage(t as never, entry({
       materials: {
         speakerIconPath: '/materials/t1/speakerIcon.png',
         titleSlidePath: '/materials/t1/titleSlide.png',
         announceImagePath: '/materials/t1/announceImage.png',
       },
-    });
-    generateImage.mockRejectedValueOnce(new Error('satori failed'));
+    }));
 
-    expect(await regenerateAnnounceImage(current)).toBe(current);
+    const payload = t.send.mock.calls[0]![0];
+    expect(payload.content).toContain('<@speaker>');
+    expect(payload.files).toHaveLength(1);
+    // 本文に登壇者以外へのメンションを飛ばさない
+    expect(payload.allowedMentions).toEqual({ users: ['speaker'] });
+  });
+
+  it('画像が無ければ投稿しない', async () => {
+    const t = thread();
+    await postAnnounceImage(t as never, entry());
+
+    expect(t.send).not.toHaveBeenCalled();
+  });
+
+  // 表示の同期と同じ扱い。投稿に失敗しても日程確定そのものは成立させる
+  it('投稿に失敗しても例外を投げない', async () => {
+    const t = { send: vi.fn(async (_payload: SendPayload) => { throw new Error('Missing Permissions'); }) };
+
+    await expect(postAnnounceImage(t as never, entry({
+      materials: {
+        speakerIconPath: '/materials/t1/speakerIcon.png',
+        titleSlidePath: '/materials/t1/titleSlide.png',
+        announceImagePath: '/materials/t1/announceImage.png',
+      },
+    }))).resolves.toBeUndefined();
   });
 });
