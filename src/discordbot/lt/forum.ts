@@ -95,6 +95,23 @@ export function isProdLtThread(thread: ThreadChannel): boolean {
   return !!config.ltForumChannelId && thread.parentId === config.ltForumChannelId;
 }
 
+/**
+ * `/lt-apply` の応募先を、実行した場所から決める。
+ *
+ * 応募するのは一般の登壇者なので、本番／テストの区別をコマンドの引数で問わない。
+ * 運営がテストする場所（テストチャンネル・テスト LT フォーラムの中）で実行したときだけ
+ * テスト扱いにし、**それ以外はすべて本番**に送る。
+ * 既定を本番にしているのは、テストフォーラムに落ちた応募は運営の目に触れず、
+ * 登壇者からは受理されたように見えてしまうため。
+ *
+ * @param channelId 実行したチャンネル（スレッド内ならスレッド ID）
+ * @param parentId  スレッド内で実行した場合の親チャンネル
+ */
+export function isProdLtApplyContext(channelId: string, parentId: string | null): boolean {
+  const testIds = [config.testChannelId, config.testLtForumChannelId].filter(Boolean);
+  return !testIds.includes(channelId) && !(parentId !== null && testIds.includes(parentId));
+}
+
 /** レコードの主キー（＝スレッド ID）から応募ポストを取り出す。 */
 export async function fetchLtThread(client: Client, threadId: string): Promise<ThreadChannel> {
   const channel = await client.channels.fetch(threadId);

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { config } from '../../config';
 import { upcomingMeetupDates } from '../dates';
 import { emptyAnnounce } from '../types';
@@ -10,6 +10,7 @@ import {
   buildOperatorRow,
   buildPreferredDatesRow,
   buildVideoPlaybackRow,
+  isProdLtApplyContext,
   LT_DATES_CONSULT_VALUE,
 } from '../forum';
 
@@ -250,5 +251,47 @@ describe('allCandidatesFull', () => {
 
   it('候補期間外の日が埋まっていても影響しない', () => {
     expect(allCandidatesFull(new Map([['2020-01-03', 99]]))).toBe(false);
+  });
+});
+
+describe('isProdLtApplyContext', () => {
+  const original = {
+    testChannelId: config.testChannelId,
+    testLtForumChannelId: config.testLtForumChannelId,
+  };
+
+  afterEach(() => {
+    config.testChannelId = original.testChannelId;
+    config.testLtForumChannelId = original.testLtForumChannelId;
+  });
+
+  function withTestChannels(testChannelId: string, testLtForumChannelId: string) {
+    config.testChannelId = testChannelId;
+    config.testLtForumChannelId = testLtForumChannelId;
+  }
+
+  // テストフォーラムに落ちた応募は運営の目に触れないので、既定は本番でなければならない
+  it('心当たりのない場所からの応募はすべて本番に送る', () => {
+    withTestChannels('test-channel', 'test-forum');
+
+    expect(isProdLtApplyContext('general', null)).toBe(true);
+    expect(isProdLtApplyContext('some-post', 'prod-forum')).toBe(true);
+  });
+
+  it('運営のテストチャンネルとテスト LT フォーラムだけテスト扱いにする', () => {
+    withTestChannels('test-channel', 'test-forum');
+
+    expect(isProdLtApplyContext('test-channel', null)).toBe(false);
+    expect(isProdLtApplyContext('test-forum', null)).toBe(false);
+    expect(isProdLtApplyContext('some-post', 'test-forum')).toBe(false);
+  });
+
+  // 未設定を空文字のまま突き合わせると、あらゆる実行がテスト扱いに倒れてしまう
+  it('テスト用チャンネルが未設定なら常に本番', () => {
+    withTestChannels('', '');
+
+    expect(isProdLtApplyContext('general', null)).toBe(true);
+    expect(isProdLtApplyContext('', null)).toBe(true);
+    expect(isProdLtApplyContext('some-post', '')).toBe(true);
   });
 });

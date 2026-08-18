@@ -12,7 +12,12 @@ import {
   ThreadChannel,
 } from 'discord.js';
 import { buildCustomId } from '../interactions';
-import { createLtPost, fetchLtForum, operationsChannelIdFor } from '../lt/forum';
+import {
+  createLtPost,
+  fetchLtForum,
+  isProdLtApplyContext,
+  operationsChannelIdFor,
+} from '../lt/forum';
 import { requireLtTagIds } from '../lt/status';
 import { ltStore } from '../lt/store';
 import {
@@ -31,11 +36,7 @@ const DURATION_MAX = 120;
 
 export const ltApplyCommand = new SlashCommandBuilder()
   .setName('lt-apply')
-  .setDescription('LT（ライトニングトーク）に応募します')
-  .addBooleanOption(option =>
-    option.setName('production')
-      .setDescription('本番フォーラムに応募する場合はTrueにしてください（デフォルトはFalse: テストフォーラム）')
-  );
+  .setDescription('LT（ライトニングトーク）に応募します');
 
 /**
  * 応募モーダル。
@@ -47,7 +48,11 @@ export const ltApplyCommand = new SlashCommandBuilder()
  */
 export async function handleLtApplyCommand(interaction: ChatInputCommandInteraction) {
   // 応募は登壇者本人が行うため、運営ロールは要求しない。
-  const isProd = interaction.options.getBoolean('production') ?? false;
+  // 応募先も引数では問わず、実行した場所から決める（登壇者に production を意識させない）。
+  const isProd = isProdLtApplyContext(
+    interaction.channelId,
+    interaction.channel?.isThread() ? interaction.channel.parentId : null,
+  );
 
   const defaultName = interaction.member instanceof GuildMember
     ? interaction.member.displayName
@@ -55,7 +60,8 @@ export async function handleLtApplyCommand(interaction: ChatInputCommandInteract
 
   const modal = new ModalBuilder()
     .setCustomId(buildCustomId(LT_APPLY_MODAL, isProd ? '1' : '0'))
-    .setTitle('LT応募フォーム')
+    // テスト応募であることは送信前に分かる必要がある（本番の応募と取り違えないため）
+    .setTitle(isProd ? 'LT応募フォーム' : 'LT応募フォーム（テスト）')
     .addLabelComponents(
       new LabelBuilder()
         .setLabel('発表者の名前')
@@ -165,10 +171,12 @@ export async function handleLtApplyModal(interaction: ModalSubmitInteraction, ar
     ltStore.create({ id: thread.id, ...draft });
 
     await notifyOperations(interaction, thread, draft.speakerId, isProd);
-    await interaction.editReply(
-      `✅ LT応募を受け付けました！\n${thread.url}\n\n`
-      + 'ポスト内のメニューから **登壇できる日** と **動画を流す予定があるか** を選んでください。',
-    );
+    await interaction.editReply([
+      `✅ LT応募を受け付けました！${isProd ? '' : '（テストフォーラム）'}`,
+      thread.url,
+      '',
+      'ポスト内のメニューから **登壇できる日** と **動画を流す予定があるか** を選んでください。',
+    ].join('\n'));
   } catch (error) {
     console.error('handleLtApplyModal failed:', error);
     if (thread && !ltStore.get(thread.id)) {
