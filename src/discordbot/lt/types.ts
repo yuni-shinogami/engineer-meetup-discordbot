@@ -149,6 +149,15 @@ export interface LtAnnounceResult {
 export interface LtEntry {
   /** フォーラムスレッド ID（主キー） */
   id: string;
+  /**
+   * 本番 LT フォーラムの応募か。
+   *
+   * 1 つのストアに本番とテストの応募が同居するため、これが無いと
+   * テストの応募が本番の枠を埋め、候補日が「埋まっています」になってしまう。
+   * ポストの置き場所（`isProdLtThread`）でも判定できるが、枠の集計は
+   * API を叩かずに済ませたいのでレコード自身に持たせる。
+   */
+  isProd: boolean;
   speakerId: string;
   /** 呼ばれたい名前。告知画像・告知文に載せる */
   speakerName: string;
@@ -204,6 +213,7 @@ export interface LtEntry {
  */
 export interface LtEntryInput {
   id: string;
+  isProd: boolean;
   speakerId: string;
   speakerName: string;
   title: string;

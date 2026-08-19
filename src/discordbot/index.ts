@@ -14,6 +14,7 @@ import {
   handleGenerateLtImageCommand,
   handleLtApplyCommand,
   handleLtMaterialCommand,
+  handleSlidesCommand,
   registerCommands,
 } from './commands';
 
@@ -47,6 +48,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         case 'generate-lt-image':   await handleGenerateLtImageCommand(interaction); break;
         case 'lt-apply':            await handleLtApplyCommand(interaction); break;
         case 'lt-material':         await handleLtMaterialCommand(interaction); break;
+        case 'slides':              await handleSlidesCommand(interaction); break;
       }
     } else if (interaction.isButton()) {
       if (!await dispatchButton(interaction)) {

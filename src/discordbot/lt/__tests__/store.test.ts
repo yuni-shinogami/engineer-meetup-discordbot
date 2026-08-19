@@ -7,6 +7,7 @@ import { LtEntryInput } from '../types';
 
 const draft = (over: Partial<LtEntryInput> = {}): LtEntryInput => ({
   id: '1000',
+  isProd: true,
   speakerId: 'user-1',
   speakerName: 'ゆに',
   title: 'TypeScript の型で遊ぶ',
@@ -88,9 +89,9 @@ describe('LtStore', () => {
     store.create(draft({ id: '3', speakerId: 'user-2' }));
     store.update('2', { status: 'done' });
 
-    expect(store.findBySpeaker('user-1')).toHaveLength(2);
-    expect(store.findBySpeaker('user-1', ['applied'])).toHaveLength(1);
-    expect(store.findBySpeaker('user-2', ['applied'])).toHaveLength(1);
+    expect(store.findBySpeaker('user-1', true)).toHaveLength(2);
+    expect(store.findBySpeaker('user-1', true, ['applied'])).toHaveLength(1);
+    expect(store.findBySpeaker('user-2', true, ['applied'])).toHaveLength(1);
   });
 
   it('slotUsageByDate は取り下げと日程未定を数えない', () => {
@@ -102,8 +103,32 @@ describe('LtStore', () => {
     store.update('2', { status: 'ready', eventDate: '2026-08-14' });
     store.update('3', { status: 'cancelled', eventDate: '2026-08-14' });
 
-    expect(store.slotUsageByDate().get('2026-08-14')).toBe(2);
-    expect(store.entriesOnDate('2026-08-14')).toHaveLength(2);
+    expect(store.slotUsageByDate(true).get('2026-08-14')).toBe(2);
+    expect(store.entriesOnDate('2026-08-14', true)).toHaveLength(2);
+  });
+
+  // テストの応募が本番の候補日を塞ぐと、本物の応募者が日程を選べなくなる
+  it('枠は本番とテストで別勘定にする', () => {
+    const store = new LtStore(storePath);
+    store.create(draft({ id: '1', isProd: true }));
+    store.create(draft({ id: '2', isProd: false }));
+    store.update('1', { status: 'scheduled', eventDate: '2026-08-14' });
+    store.update('2', { status: 'scheduled', eventDate: '2026-08-14' });
+
+    expect(store.slotUsageByDate(true).get('2026-08-14')).toBe(1);
+    expect(store.slotUsageByDate(false).get('2026-08-14')).toBe(1);
+    expect(store.entriesOnDate('2026-08-14', true).map(e => e.id)).toEqual(['1']);
+    expect(store.list(true).map(e => e.id)).toEqual(['1']);
+    expect(store.list()).toHaveLength(2);
+  });
+
+  it('同じ登壇者でも応募先が違えば別扱いにする', () => {
+    const store = new LtStore(storePath);
+    store.create(draft({ id: '1', isProd: true }));
+    store.create(draft({ id: '2', isProd: false }));
+
+    expect(store.findBySpeaker('user-1', true).map(e => e.id)).toEqual(['1']);
+    expect(store.findBySpeaker('user-1', false).map(e => e.id)).toEqual(['2']);
   });
 
   it('保存時に一時ファイルを残さない', () => {

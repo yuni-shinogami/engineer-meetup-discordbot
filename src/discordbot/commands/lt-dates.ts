@@ -48,7 +48,7 @@ export async function handleLtDatesSelect(interaction: StringSelectMenuInteracti
 
     await interaction.update({
       embeds: [buildLtEmbed(updated)],
-      components: buildLtComponents(updated, ltStore.slotUsageByDate()),
+      components: buildLtComponents(updated, ltStore.slotUsageByDate(updated.isProd)),
     });
     await renameThread(interaction, updated);
     await interaction.followUp({
@@ -61,7 +61,7 @@ export async function handleLtDatesSelect(interaction: StringSelectMenuInteracti
 }
 
 function buildConsultModal(entry: LtEntry): ModalBuilder {
-  const usage = ltStore.slotUsageByDate();
+  const usage = ltStore.slotUsageByDate(entry.isProd);
   const description = allCandidatesFull(usage)
     ? '現在の候補日はすべて埋まっています。登壇できそうな時期をお知らせください'
     : `例: 「10月中旬以降なら可能」「${formatMeetupDate(upcomingMeetupDates(1)[0] ?? '')}以外の平日」`;
@@ -99,7 +99,7 @@ export async function handleLtConsultModal(interaction: ModalSubmitInteraction, 
     // モーダルはセレクトから開かれているので、元のポストのメッセージを更新できる。
     await interaction.message?.edit({
       embeds: [buildLtEmbed(updated)],
-      components: buildLtComponents(updated, ltStore.slotUsageByDate()),
+      components: buildLtComponents(updated, ltStore.slotUsageByDate(updated.isProd)),
     });
 
     await renameThread(interaction, updated);

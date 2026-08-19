@@ -43,9 +43,9 @@ export function nextMeetupDate(now: Date = new Date()): string {
 }
 
 /** その開催日に確定している登壇。取り下げ済みは entriesOnDate が、登壇済みはここで除く。 */
-export function ltEntriesForMeetup(eventDate: string): LtEntry[] {
+export function ltEntriesForMeetup(eventDate: string, isProd: boolean): LtEntry[] {
   if (!eventDate) return [];
-  return ltStore.entriesOnDate(eventDate)
+  return ltStore.entriesOnDate(eventDate, isProd)
     .filter(entry => entry.status !== 'done')
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
@@ -65,7 +65,7 @@ export async function announceLtsForMeetup(
   const eventDate = nextMeetupDate(now);
   const results: WeeklyLtOutcome[] = [];
 
-  for (const entry of ltEntriesForMeetup(eventDate)) {
+  for (const entry of ltEntriesForMeetup(eventDate, isProd)) {
     let thread;
     try {
       thread = await fetchLtThread(client, entry.id);
@@ -90,7 +90,7 @@ export async function announceLtsForMeetup(
     }
 
     const { entry: updated, outcomes } = await announceLt(client, entry, isProd, targets);
-    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate());
+    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate(isProd));
     results.push({ entry: updated, status: 'announced', outcomes, missing: [] });
   }
 

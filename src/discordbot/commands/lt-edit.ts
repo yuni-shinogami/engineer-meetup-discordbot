@@ -83,7 +83,7 @@ export async function handleLtEditModal(interaction: ModalSubmitInteraction, arg
     const updated = await syncAnnounceImage(ltStore.update(entry.id, { title, xAccount }));
 
     const thread = await fetchLtThread(interaction.client, entry.id);
-    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate());
+    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate(updated.isProd));
     if (!hadAnnounceImage) await postAnnounceImage(thread, updated);
 
     await interaction.editReply(buildEditFeedback(updated));

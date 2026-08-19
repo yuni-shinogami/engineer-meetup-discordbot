@@ -49,12 +49,13 @@ export function scheduleDateChoices(
 }
 
 /** その日に既に確定している他の応募（自分自身は除く）。 */
-function competitorsOn(eventDate: string, entryId: string): LtEntry[] {
-  return ltStore.entriesOnDate(eventDate).filter(other => other.id !== entryId);
+/** 同じ開催日の枠を争う他の応募。枠は応募先（本番／テスト）ごとの別勘定。 */
+function competitorsOn(eventDate: string, entry: LtEntry): LtEntry[] {
+  return ltStore.entriesOnDate(eventDate, entry.isProd).filter(other => other.id !== entry.id);
 }
 
 function describeDate(date: string, entry: LtEntry): string {
-  const others = competitorsOn(date, entry.id);
+  const others = competitorsOn(date, entry);
   if (others.length >= config.ltSlotsPerDay) {
     return `⛔ ${others.map(other => other.speakerName).join('、')} で埋まっています`.slice(0, 100);
   }
@@ -181,7 +182,7 @@ async function applySchedule(
 ): Promise<string> {
   // ボタンを押した時点の空き状況で判断する。
   // コンポーネントは作られた時点の状態を持っているため、別の応募が先に確定している可能性がある。
-  const others = competitorsOn(eventDate, entry.id);
+  const others = competitorsOn(eventDate, entry);
   if (others.length >= config.ltSlotsPerDay) {
     const names = others.map(other => `**${other.speakerName}**（<#${other.id}>）`).join('、');
     return `⛔ ${formatMeetupDate(eventDate)} は既に ${names} で埋まっています。\n`
@@ -198,7 +199,7 @@ async function applySchedule(
   }));
 
   const thread = await fetchLtThread(interaction.client, entry.id);
-  await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate());
+  await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate(updated.isProd));
   await notifySpeaker(thread, updated, interaction.user.id, previous);
   if (!hadAnnounceImage) await postAnnounceImage(thread, updated);
 
@@ -328,7 +329,7 @@ export async function handleLtUnscheduleButton(interaction: ButtonInteraction, a
     const thread = await fetchLtThread(interaction.client, entry.id);
     // 確定 → 取り消し → 再確定と続けるとスレッド名の変更が
     // 10 分あたり 2 回の上限に触れるが、失敗してもレコードと本文は正しいまま。
-    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate());
+    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate(updated.isProd));
     await sendToThread(
       thread,
       `↩️ <@${updated.speakerId}> ${formatMeetupDate(previous)} の確定を取り消しました。`

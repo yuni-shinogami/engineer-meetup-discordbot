@@ -102,7 +102,7 @@ export async function handleLtAnnounceConfirm(interaction: ButtonInteraction, ar
       interaction.client, entry, isProdLtThread(thread),
     );
 
-    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate());
+    await applyLtEntryToPost(thread, updated, ltStore.slotUsageByDate(updated.isProd));
 
     const failed = outcomes.filter(outcome => outcome.status === 'failed');
     const header = failed.length > 0

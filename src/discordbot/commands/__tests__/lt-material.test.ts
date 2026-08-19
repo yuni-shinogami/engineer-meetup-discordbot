@@ -20,6 +20,7 @@ vi.mock('../../lt/forum', () => ({
   applyLtEntryToPost: vi.fn().mockResolvedValue(undefined),
   fetchLtThread: vi.fn().mockResolvedValue({ id: 't1', parentId: 'prod-forum', send: mocks.threadSend }),
   isProdLtThread: () => true,
+  isProdLtApplyContext: () => true,
 }));
 
 vi.mock('../../lt/materials', () => ({
@@ -50,6 +51,7 @@ import { handleLtMaterialCommand } from '../lt-material';
 
 const entry = (patch: Partial<LtEntry> = {}): LtEntry => ({
   id: 't1',
+  isProd: true,
   speakerId: 'speaker',
   speakerName: 'ゆに',
   title: '型で殴る話',

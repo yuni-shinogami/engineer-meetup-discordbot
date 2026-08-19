@@ -46,6 +46,7 @@ import {
 
 const entry = (patch: Partial<LtEntry> = {}): LtEntry => ({
   id: 't1',
+  isProd: true,
   speakerId: 'speaker',
   speakerName: 'ゆに',
   title: '型で殴るLT',
@@ -112,11 +113,11 @@ describe('ltEntriesForMeetup', () => {
       entry({ id: 'a', createdAt: '2026-08-10T00:00:00.000Z' }),
     ]);
 
-    expect(ltEntriesForMeetup('2026-09-04').map(e => e.id)).toEqual(['a', 'b']);
+    expect(ltEntriesForMeetup('2026-09-04', true).map(e => e.id)).toEqual(['a', 'b']);
   });
 
   it('開催日が空なら何も返さない', () => {
-    expect(ltEntriesForMeetup('')).toEqual([]);
+    expect(ltEntriesForMeetup('', true)).toEqual([]);
   });
 });
 
@@ -126,7 +127,7 @@ describe('announceLtsForMeetup', () => {
 
     const result = await announceLtsForMeetup(client, true, { now: THURSDAY });
 
-    expect(ltStore.entriesOnDate).toHaveBeenCalledWith('2026-09-04');
+    expect(ltStore.entriesOnDate).toHaveBeenCalledWith('2026-09-04', true);
     expect(mocks.announceLt).toHaveBeenCalledWith(
       client, expect.objectContaining({ id: 't1' }), true, ANNOUNCE_TARGETS,
     );

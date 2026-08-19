@@ -62,7 +62,9 @@ export async function handleStatusCommand(interaction: ChatInputCommandInteracti
     }
   }));
 
-  const entries = ltStore.list();
+  // 本番の応募だけを数える。テストの応募が混ざると運営が実態を読み違える
+  const entries = ltStore.list(true);
+  const testCount = ltStore.list(false).length;
   const activeCounts = LT_STATUSES
     .filter(status => status !== 'done' && status !== 'cancelled')
     .map(status => `${LT_STATUS_LABELS[status]} ${entries.filter(e => e.status === status).length}件`);
@@ -94,7 +96,8 @@ export async function handleStatusCommand(interaction: ChatInputCommandInteracti
     '',
     '**LT 応募**',
     ...ltForumChecks,
-    `・進行中: ${activeCounts.join(' / ')}（全 ${entries.length} 件）`,
+    `・進行中: ${activeCounts.join(' / ')}（本番 全 ${entries.length} 件`
+    + `${testCount ? ` ／ テスト ${testCount} 件` : ''}）`,
     upcoming.length ? `・確定済みの登壇:\n${upcoming.join('\n')}` : '・確定済みの登壇: なし',
     '',
     '**自動実行スケジュール**',

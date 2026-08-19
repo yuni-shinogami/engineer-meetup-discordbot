@@ -25,6 +25,7 @@ import { handleLtEditModal } from '../lt-edit';
 
 const entry = (patch: Partial<LtEntry> = {}): LtEntry => ({
   id: 't1',
+  isProd: true,
   speakerId: 'speaker',
   speakerName: 'ゆに',
   title: '未定',
