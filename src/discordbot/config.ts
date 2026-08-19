@@ -60,6 +60,16 @@ export const config = {
    * 自動化だけを止めたいときに false にする。
    */
   ltAutoAnnounce: boolEnv('LT_AUTO_ANNOUNCE', true),
+
+  // --- Canva（司会進行スライドの取得） ---
+  canvaClientId: process.env.CANVA_CLIENT_ID || '',
+  canvaClientSecret: process.env.CANVA_CLIENT_SECRET || '',
+  /** 司会進行スライドのデザイン ID。Canva の編集 URL /design/<ここ>/edit */
+  canvaSlideDesignId: process.env.CANVA_SLIDE_DESIGN_ID || '',
+  /** 初回認可のコールバック先。Developer Portal に登録した値と一致していないと弾かれる。 */
+  canvaRedirectUri: process.env.CANVA_REDIRECT_URI || 'http://127.0.0.1:8976/callback',
+  /** リフレッシュトークンの置き場所。VRChat の cookies.json と同じ state ディレクトリ。 */
+  canvaStateDir: process.env.CANVA_STATE_DIR || './state',
 };
 
 export function ltForumChannelId(isProd: boolean): string {
