@@ -24,6 +24,8 @@ export const config = {
   testXAccount: process.env.TEST_X_ACCOUNT || '',
   vrcStateDir: process.env.VRC_STATE_DIR || '',
   storagePath: process.env.STORAGE_PATH || './storage.json',
+  /** Discord ユーザー → VRChat ユーザーID の対応表。個人に紐づくので Git には載せない。 */
+  vrcLinkStorePath: process.env.VRC_LINK_STORE_PATH || './vrc-links.json',
 
   // --- LT (ライトニングトーク) ---
   ltForumChannelId: process.env.LT_FORUM_CHANNEL_ID || '',
