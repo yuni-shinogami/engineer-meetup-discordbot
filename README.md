@@ -439,6 +439,23 @@ https://vrchat.com/home/user/usr_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 登録内容は `VRC_STATE_DIR/vrc-links.json` に保存されます（`VRC_LINK_STORE_PATH` で変更可）。
 cookie やインスタンス情報と同じ VRChat 側の状態なので、保存先も揃えています。個人に紐づくので Git には載せません。
 
+## 状態ファイルの置き場所
+
+実行時に書き換わるデータは、すべて **`state/`** にまとめています（`state/` は `.gitignore` 済み）。
+バックアップや別マシンへの移設は、このディレクトリごと運べば済みます。
+
+| ファイル | 内容 | 環境変数 |
+| :--- | :--- | :--- |
+| `state/storage.json` | 週次の開催予定・直近のツイートID・招待URL | `STORAGE_PATH` |
+| `state/lt-store.json` | LT 応募レコード | `LT_STORE_PATH` |
+| `state/lt-materials/` | LT 告知の素材画像 | `LT_MATERIALS_DIR` |
+| `state/cookies.json` | VRChat のセッション | `VRC_STATE_DIR` |
+| `state/latest.json` | 直近に作成したインスタンス情報 | `VRC_STATE_DIR` |
+| `state/vrc-links.json` | Discord ↔ VRChat アカウント対応表 | `VRC_LINK_STORE_PATH` |
+
+`VRC_STATE_DIR` 以外は**プロセスの cwd 相対**です。pm2 はリポジトリを cwd にして起動するので
+通常は意識不要ですが、別のディレクトリから `npm start` すると別の場所を見にいきます。
+
 ## セットアップ
 
 ### 1. 依存関係のインストール
@@ -473,12 +490,12 @@ npm install
 | `INSTANCE_REGION` | インスタンスのリージョン（任意、デフォルト `jp`） |
 | `VRC_LINK_STORE_PATH` | Discord ↔ VRChat アカウント対応表の保存先（任意、デフォルトは `VRC_STATE_DIR/vrc-links.json`） |
 | `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` | 自動実行の cron 式（任意、デフォルトは毎週木曜 12:00 / 19:00） |
-| `STORAGE_PATH` | 状態保存ファイルのパス（デフォルト: `./storage.json`） |
+| `STORAGE_PATH` | 週次状態の保存先（任意、デフォルト `./state/storage.json`） |
 | `LT_FORUM_CHANNEL_ID` / `TEST_LT_FORUM_CHANNEL_ID` | 本番／テスト用の LT 応募フォーラムチャンネル ID |
 | `MEETUP_WEEKDAY` | 集会の開催曜日（0=日 … 5=金、任意、デフォルト `5`） |
 | `LT_SLOTS_PER_DAY` | 1回の集会あたりの LT 枠数（任意、デフォルト `1`） |
 | `LT_DATE_CANDIDATES` | 日程選択で提示する候補の開催回数（任意、デフォルト `8`） |
-| `LT_STORE_PATH` | LT レコードの保存先（任意、デフォルト `./lt-store.json`） |
+| `LT_STORE_PATH` | LT レコードの保存先（任意、デフォルト `./state/lt-store.json`） |
 | `LT_MATERIALS_DIR` | LT 素材の保存先ディレクトリ（任意、デフォルト `./state/lt-materials`） |
 | `LT_MAX_MATERIAL_MB` | 素材画像1枚あたりの上限MB（任意、デフォルト `50`） |
 | `LT_ANNOUNCE_ROLE_ID` | LT 告知でメンションするロール ID（任意、未設定なら `ANNOUNCE_ROLE_ID` と同じロール） |
@@ -558,14 +575,14 @@ src/
     config.ts        環境変数の読み込み
     scheduler.ts      定期実行タスク（木曜 confirm / pre-announce + LT 告知）
     meetup.ts         開催確認・事前告知の実行ロジック
-    storage.ts        週次状態の永続化（storage.json）
+    storage.ts        週次状態の永続化（state/storage.json）
     interactions.ts   customId のルーティング（ボタン・モーダル・セレクト）
     handlers.ts       ハンドラと customId キーの紐づけ
     executor.ts       外部スクリプト実行ユーティリティ
     lt/
       types.ts        LtEntry / LtStatus の定義、未入力項目の判定
       status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決
-      store.ts        LT レコードの永続化（lt-store.json、原子的書き込み）
+      store.ts        LT レコードの永続化（state/lt-store.json、原子的書き込み）
       dates.ts        開催日候補の算出と日付整形
       forum.ts        フォーラムポストの作成・タグ同期・ポスト内コンポーネント
       materials.ts    告知素材のダウンロードとローカル保存

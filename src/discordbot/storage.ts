@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import { config } from './config';
 
 interface StorageData {
@@ -35,6 +36,11 @@ export class Storage {
   }
 
   private save(): void {
+    // 既定の保存先が state/ 配下なので、初回起動時にディレクトリが無いことがある
+    const dir = path.dirname(config.storagePath);
+    if (dir && dir !== '.' && !fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
     fs.writeFileSync(config.storagePath, JSON.stringify(this.data, null, 2));
   }
 
