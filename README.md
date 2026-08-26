@@ -436,7 +436,8 @@ https://vrchat.com/home/user/usr_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 招待の報告に「あなた」として出るようになります。
 
 `/vrc-link` は運営ロール（`OPERATOR_ROLE_ID`）限定です。
-登録内容は `vrc-links.json`（`VRC_LINK_STORE_PATH`）に保存され、個人に紐づくので Git には載せません。
+登録内容は `VRC_STATE_DIR/vrc-links.json` に保存されます（`VRC_LINK_STORE_PATH` で変更可）。
+cookie やインスタンス情報と同じ VRChat 側の状態なので、保存先も揃えています。個人に紐づくので Git には載せません。
 
 ## セットアップ
 
@@ -470,7 +471,7 @@ npm install
 | `WORLD_ID` | インスタンスを作成するワールドの ID |
 | `GROUP_ID` / `TEST_GROUP_ID` | 本番／テスト用の VRChat グループ ID |
 | `INSTANCE_REGION` | インスタンスのリージョン（任意、デフォルト `jp`） |
-| `VRC_LINK_STORE_PATH` | Discord ↔ VRChat アカウント対応表の保存先（任意、デフォルト `./vrc-links.json`） |
+| `VRC_LINK_STORE_PATH` | Discord ↔ VRChat アカウント対応表の保存先（任意、デフォルトは `VRC_STATE_DIR/vrc-links.json`） |
 | `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` | 自動実行の cron 式（任意、デフォルトは毎週木曜 12:00 / 19:00） |
 | `STORAGE_PATH` | 状態保存ファイルのパス（デフォルト: `./storage.json`） |
 | `LT_FORUM_CHANNEL_ID` / `TEST_LT_FORUM_CHANNEL_ID` | 本番／テスト用の LT 応募フォーラムチャンネル ID |
