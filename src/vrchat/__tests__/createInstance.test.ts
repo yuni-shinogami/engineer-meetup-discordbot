@@ -86,14 +86,27 @@ describe('createInstance', () => {
     expect(result.inviteUrl).toBe('https://vrchat.com/i/abcd');
   });
 
-  // 担当者がメインアカウント本人・サブ垢本人のケースが実際にある
-  it('メインアカウント自身は招待先から除く', async () => {
-    await createInstance(true, '/state', {
+  // 慕狼ゆに本人が実行するケース。自分自身とはフレンドになれないので確認に回してはいけない
+  it('メインアカウント自身はフレンド確認に回さず self-invite の結果で報告する', async () => {
+    const result = await createInstance(true, '/state', {
       extraInvites: [{ userId: 'usr_main', label: 'あなた' }],
     });
 
     expect(mocks.inviteWithFriendCheck.mock.calls.map(c => (c[1] as { userId: string }).userId))
       .toEqual(['usr_sub']);
+    expect(result.invites).toContainEqual({ userId: 'usr_main', label: 'あなた', status: 'sent' });
+  });
+
+  it('メインアカウント自身が担当者のとき、self-invite の失敗をその人の結果として返す', async () => {
+    mocks.inviteSelf.mockRejectedValue(new Error('self-invite 失敗 (500)'));
+
+    const result = await createInstance(true, '/state', {
+      extraInvites: [{ userId: 'usr_main', label: 'あなた' }],
+    });
+
+    const self = result.invites.find(i => i.userId === 'usr_main');
+    expect(self?.status).toBe('failed');
+    expect(self?.error).toContain('self-invite 失敗');
   });
 
   it('サブアカウントと同じ相手には二重に送らない', async () => {

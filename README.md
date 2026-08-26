@@ -430,6 +430,11 @@ https://vrchat.com/home/user/usr_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 本人が何もしていないのに本人の VRChat に申請が飛ぶので、応答に出る VRChat 表示名を必ず確認してください。
 誰が登録したかは `vrc-links.json` の `linkedBy` に残ります。
 
+**Bot がログインしているメインアカウント（`VRC_MAIN_USERNAME`、慕狼ゆに）自身を登録する場合**は、
+フレンド状態の確認も申請も行いません。自分自身とはフレンドになれないためです。
+このアカウントは `/create-instance` が self-invite で招待するので、登録しておくと
+招待の報告に「あなた」として出るようになります。
+
 `/vrc-link` は運営ロール（`OPERATOR_ROLE_ID`）限定です。
 登録内容は `vrc-links.json`（`VRC_LINK_STORE_PATH`）に保存され、個人に紐づくので Git には載せません。
 

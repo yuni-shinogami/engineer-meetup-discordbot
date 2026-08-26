@@ -49,22 +49,34 @@ export async function createInstance(
     });
     console.log(`[createInstance] saved state -> ${stateFile}`);
 
+    let selfInviteError: string | null = null;
     try {
       await inviteSelf(client, user.userId, worldId, instance.instanceId);
       console.log('[createInstance] self-invite sent');
     } catch (e) {
       // self-invite が落ちてもインスタンスは使える。招待URLで入れるので続行する。
+      selfInviteError = e instanceof Error ? e.message : String(e);
       console.error('[createInstance] self-invite failed:', e);
     }
 
-    const targets = dedupeTargets(
-      [{ userId: subUserId, label: 'サブアカウント' }, ...(options.extraInvites ?? [])],
-      user.userId,
-    );
+    const targets = dedupeTargets([
+      { userId: subUserId, label: 'サブアカウント' },
+      ...(options.extraInvites ?? []),
+    ]);
 
     // レートリミットを踏まないよう逐次で送る
     const invites: InviteOutcome[] = [];
     for (const target of targets) {
+      // 担当者がメインアカウント本人のことがある。自分自身とはフレンドになれないので
+      // フレンド確認には回さず、済ませてある self-invite の結果をそのまま報告する。
+      if (target.userId === user.userId) {
+        invites.push(
+          selfInviteError === null
+            ? { ...target, status: 'sent' }
+            : { ...target, status: 'failed', error: selfInviteError },
+        );
+        continue;
+      }
       invites.push(await inviteWithFriendCheck(client, target, worldId, instance.instanceId));
     }
 
@@ -72,12 +84,9 @@ export async function createInstance(
   });
 }
 
-/**
- * 同じ相手へ二重に送らないようにする。ログイン中のメインアカウントは self-invite 済みなので除く
- * （担当者がメインアカウント本人のケースが実際にある）。
- */
-function dedupeTargets(targets: InviteTarget[], selfUserId: string): InviteTarget[] {
-  const seen = new Set<string>([selfUserId]);
+/** 同じ相手へ二重に送らないようにする（担当者がサブアカウント本人のケースがある）。 */
+function dedupeTargets(targets: InviteTarget[]): InviteTarget[] {
+  const seen = new Set<string>();
   return targets.filter(target => {
     if (!target.userId || seen.has(target.userId)) return false;
     seen.add(target.userId);

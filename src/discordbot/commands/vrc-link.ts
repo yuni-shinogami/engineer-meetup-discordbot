@@ -9,10 +9,20 @@ import {
   sendFriendRequest,
 } from '../../vrchat/api/friends';
 import { AuthError, withSession } from '../../vrchat/session';
+import { LoginResult } from '../../vrchat/api/auth';
 import { VRChatClient } from '../../vrchat/api/client';
 import { formatError, requireOperatorRole } from './utils';
 
 const PROFILE_EXAMPLE = 'https://vrchat.com/home/user/usr_...';
+
+/**
+ * Bot がログインに使っているメインアカウント自身を登録したときの案内。
+ * 自分自身にはフレンド申請を送れないが、`/create-instance` は self-invite で招待するので
+ * 登録しておく意味はある（招待の報告にも出る）。
+ */
+const SELF_ACCOUNT_NOTE =
+  'これは Bot がログインしているメインアカウント自身です。フレンド申請は不要で、'
+  + '`/create-instance` では self-invite で招待が飛びます。';
 
 export const vrcLinkCommand = new SlashCommandBuilder()
   .setName('vrc-link')
@@ -115,7 +125,7 @@ async function handleSet(interaction: ChatInputCommandInteraction, target: User)
 
     // フレンド処理が落ちても登録は済んでいる。エラーで応答ごと差し替えず、1 行の警告に留める
     try {
-      lines.push(await ensureFriend(client, user.displayName, vrcUser.id, target.id));
+      lines.push(await ensureFriend(client, user, vrcUser.id, target.id));
     } catch (e) {
       console.error('[vrc-link] friend handling failed:', e);
       lines.push(
@@ -137,10 +147,14 @@ async function handleSet(interaction: ChatInputCommandInteraction, target: User)
  */
 async function ensureFriend(
   client: VRChatClient,
-  senderName: string,
+  self: LoginResult,
   vrcUserId: string,
   targetDiscordId: string,
 ): Promise<string> {
+  // 自分自身とはフレンドになれない。慕狼ゆに本人が登録するとここに来る
+  if (vrcUserId === self.userId) return SELF_ACCOUNT_NOTE;
+
+  const senderName = self.displayName;
   const status = await getFriendStatus(client, vrcUserId);
 
   if (status.isFriend) {
@@ -179,6 +193,8 @@ async function handleShow(interaction: ChatInputCommandInteraction, target: User
   // フレンド状態はキャッシュせず毎回引く。取れなくても登録内容は見せる。
   try {
     const friendLine = await withSession(config.vrcStateDir, async ({ client, user }) => {
+      if (link.vrcUserId === user.userId) return `フレンド: — ${SELF_ACCOUNT_NOTE}`;
+
       const status = await getFriendStatus(client, link.vrcUserId);
       if (status.isFriend) return `フレンド: ✅ **${user.displayName}** とフレンド（招待が飛びます）`;
       if (status.outgoingRequest) return `フレンド: ⏳ **${user.displayName}** からの申請が承認待ち`;

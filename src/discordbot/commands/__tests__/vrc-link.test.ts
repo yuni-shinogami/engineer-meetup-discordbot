@@ -130,6 +130,21 @@ describe('/vrc-link set', () => {
     expect(reply(interaction)).toContain('<@discord-other>');
   });
 
+  // 慕狼ゆに本人（Bot がログインしているアカウント）を登録するケース
+  it('メインアカウント自身なら登録するがフレンド申請は送らない', async () => {
+    mocks.getUser.mockResolvedValue({ id: 'usr_main', displayName: '慕狼ゆに' });
+    const interaction = interactionWith('set', { profile: 'usr_main' });
+
+    await handleVrcLinkCommand(interaction);
+
+    expect(mocks.store.set).toHaveBeenCalledWith('discord-actor', {
+      vrcUserId: 'usr_main', displayName: '慕狼ゆに', linkedBy: 'discord-actor',
+    });
+    expect(mocks.getFriendStatus).not.toHaveBeenCalled();
+    expect(mocks.sendFriendRequest).not.toHaveBeenCalled();
+    expect(reply(interaction)).toContain('self-invite');
+  });
+
   it('存在しないユーザーは登録しない', async () => {
     mocks.getUser.mockResolvedValue(null);
     const interaction = interactionWith('set', { profile: USER_ID });
@@ -196,6 +211,19 @@ describe('/vrc-link show', () => {
     expect(reply(interaction)).toContain(`https://vrchat.com/home/user/${USER_ID}`);
     expect(reply(interaction)).toContain('2026-08-26');
     expect(reply(interaction)).toContain('フレンド: ✅');
+  });
+
+  it('メインアカウント自身なら friendStatus を引かない', async () => {
+    mocks.store.get.mockReturnValue({
+      vrcUserId: 'usr_main', displayName: '慕狼ゆに',
+      linkedAt: '2026-08-26T12:00:00.000Z', linkedBy: 'discord-actor', friendRequestSentAt: null,
+    });
+    const interaction = interactionWith('show');
+
+    await handleVrcLinkCommand(interaction);
+
+    expect(mocks.getFriendStatus).not.toHaveBeenCalled();
+    expect(reply(interaction)).toContain('self-invite');
   });
 
   it('フレンド状態が取れなくても登録内容は見せる', async () => {
