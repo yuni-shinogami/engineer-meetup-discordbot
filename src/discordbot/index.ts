@@ -8,6 +8,7 @@ import {
   handleConfirmMeetupCommand,
   handlePreAnnounceCommand,
   handleCreateInstanceCommand,
+  handleVrcLinkCommand,
   handlePostAnnouncementCommand,
   handleCheckPermissionsCommand,
   handleStatusCommand,
@@ -42,6 +43,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         case 'confirm-meetup':      await handleConfirmMeetupCommand(interaction); break;
         case 'pre-announce':        await handlePreAnnounceCommand(interaction); break;
         case 'create-instance':     await handleCreateInstanceCommand(interaction); break;
+        case 'vrc-link':            await handleVrcLinkCommand(interaction); break;
         case 'post-announcement':   await handlePostAnnouncementCommand(interaction); break;
         case 'check-permissions':   await handleCheckPermissionsCommand(interaction); break;
         case 'status':              await handleStatusCommand(interaction); break;

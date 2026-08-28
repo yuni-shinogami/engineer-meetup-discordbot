@@ -17,7 +17,9 @@
 
 3. **インスタンス起動 (`/create-instance`)**
    - VRChat にログインし、Group+ インスタンスを作成、自分とサブアカウントを招待します。
+   - **コマンドを実行した担当者にも招待を送ります**（`/vrc-link` で VRChat アカウントを登録している場合）。
    - 招待 URL を取得し `storage.json` に保存します（告知は行いません）。
+   - 招待やフレンド申請が失敗してもインスタンス情報は保存されるので、続けて `/post-announcement` を実行できます。
 
 4. **開催告知 (`/post-announcement`)**
    - X への引用リポスト・Discord のお知らせチャンネルへの投稿・VRChat グループ告知（掲示板投稿）を一括実行します。
@@ -379,6 +381,81 @@ Discord 側のタグ名を変える場合はこの定数も合わせて変更し
 
 `/confirm-meetup`・`/pre-announce`・`/create-instance`・`/post-announcement` には `production` オプション（Boolean、デフォルト `False`）があり、`False`（テストモード）ではテスト用アカウント・テストチャンネル・テスト用 VRChat グループを使用します。**`/pre-announce` と `/post-announcement` は同じ `production` 値で実行してください**（片方が本番・もう片方がテストだと、X 側の「引用元の投稿に自分がメンションされていない」制限に引っかかり引用リポストが 403 で失敗します）。
 
+## VRChat アカウントの登録と招待
+
+`/create-instance` は、インスタンスを立てた**担当者本人にも VRChat の招待**を送ります。
+そのために Discord ユーザーと VRChat アカウントの対応を `/vrc-link` で登録しておきます。
+
+### 招待はフレンド限定という制約
+
+VRChat の招待 API（`POST /invite/{userId}`）は、**フレンドでない相手には 403
+`You need to be friends with that user first.`** を返します。
+そのため `/vrc-link set` は、登録と同時にフレンド状態を確認し、フレンドでなければ
+メインアカウント（`VRC_MAIN_USERNAME`）から**フレンド申請を送ります**。
+
+フレンド申請は相手の承認待ちなのでその場では完結しません。だから申請は
+インスタンス作成時ではなく**登録した時点で前倒しに送り**、集会当日までに承認が済んだ状態を作ります。
+`/create-instance` 側は保険として毎回フレンド状態を確認し、まだ非フレンドならその場で申請します。
+
+なお VRChat API は**フレンド申請にメッセージを添えられません**（このエンドポイントは
+リクエストボディを持ちません）。「誰からの申請か」は `/vrc-link` の応答に
+メインアカウントの表示名を出すことで伝えています。
+
+インスタンスは Group+ なので、招待が飛ばなくてもグループメンバーは招待 URL から入室できます。
+**招待とフレンド申請の失敗はすべて非致命扱い**で、インスタンス作成を巻き込みません。
+
+### `/vrc-link` の使い方
+
+| サブコマンド | 説明 |
+| :--- | :--- |
+| `/vrc-link set profile:<プロフィールURL> [user:<@メンバー>]` | VRChat アカウントを登録し、必要ならフレンド申請を送る |
+| `/vrc-link show [user:<@メンバー>]` | 登録内容とフレンド状態を表示 |
+| `/vrc-link clear [user:<@メンバー>]` | 登録を解除（フレンド関係・送信済みの申請には触れません） |
+
+`profile` には **VRChat のプロフィール URL をそのまま貼ってください**。
+プロフィールの Copy Link で取れるので、ユーザーIDの探し方を知らなくても登録できます。
+
+```
+https://vrchat.com/home/user/usr_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+末尾のスラッシュ・クエリ・`www.` 付き・スキーム無しも受け付けます。`usr_...` 単体でも構いません。
+ワールドやグループの URL を貼った場合は、何を貼るべきかを指摘して弾きます。
+
+ユーザーIDの形式は**厳密に検証していません**。VRChat のレガシーアカウントは `usr_` プレフィックスを
+持たず `8JoV9XEdpo` のような ID になるため、厳しくすると古参アカウントが登録できなくなります。
+実在するかどうかは `GET /users/{userId}` の応答で判定し、表示名を応答に出して貼り間違いに気づけるようにしています。
+
+`user` を指定すると**代理登録**になります。本人に頼むより分かっている人がまとめて登録するほうが早いためですが、
+本人が何もしていないのに本人の VRChat に申請が飛ぶので、応答に出る VRChat 表示名を必ず確認してください。
+誰が登録したかは `vrc-links.json` の `linkedBy` に残ります。
+
+**Bot がログインしているメインアカウント（`VRC_MAIN_USERNAME`、慕狼ゆに）自身を登録する場合**は、
+フレンド状態の確認も申請も行いません。自分自身とはフレンドになれないためです。
+このアカウントは `/create-instance` が self-invite で招待するので、登録しておくと
+招待の報告に「あなた」として出るようになります。
+
+`/vrc-link` は運営ロール（`OPERATOR_ROLE_ID`）限定です。
+登録内容は `VRC_STATE_DIR/vrc-links.json` に保存されます（`VRC_LINK_STORE_PATH` で変更可）。
+cookie やインスタンス情報と同じ VRChat 側の状態なので、保存先も揃えています。個人に紐づくので Git には載せません。
+
+## 状態ファイルの置き場所
+
+実行時に書き換わるデータは、すべて **`state/`** にまとめています（`state/` は `.gitignore` 済み）。
+バックアップや別マシンへの移設は、このディレクトリごと運べば済みます。
+
+| ファイル | 内容 | 環境変数 |
+| :--- | :--- | :--- |
+| `state/storage.json` | 週次の開催予定・直近のツイートID・招待URL | `STORAGE_PATH` |
+| `state/lt-store.json` | LT 応募レコード | `LT_STORE_PATH` |
+| `state/lt-materials/` | LT 告知の素材画像 | `LT_MATERIALS_DIR` |
+| `state/cookies.json` | VRChat のセッション | `VRC_STATE_DIR` |
+| `state/latest.json` | 直近に作成したインスタンス情報 | `VRC_STATE_DIR` |
+| `state/vrc-links.json` | Discord ↔ VRChat アカウント対応表 | `VRC_LINK_STORE_PATH` |
+
+`VRC_STATE_DIR` 以外は**プロセスの cwd 相対**です。pm2 はリポジトリを cwd にして起動するので
+通常は意識不要ですが、別のディレクトリから `npm start` すると別の場所を見にいきます。
+
 ## セットアップ
 
 ### 1. 依存関係のインストール
@@ -411,13 +488,14 @@ npm install
 | `WORLD_ID` | インスタンスを作成するワールドの ID |
 | `GROUP_ID` / `TEST_GROUP_ID` | 本番／テスト用の VRChat グループ ID |
 | `INSTANCE_REGION` | インスタンスのリージョン（任意、デフォルト `jp`） |
+| `VRC_LINK_STORE_PATH` | Discord ↔ VRChat アカウント対応表の保存先（任意、デフォルトは `VRC_STATE_DIR/vrc-links.json`） |
 | `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` | 自動実行の cron 式（任意、デフォルトは毎週木曜 12:00 / 19:00） |
-| `STORAGE_PATH` | 状態保存ファイルのパス（デフォルト: `./storage.json`） |
+| `STORAGE_PATH` | 週次状態の保存先（任意、デフォルト `./state/storage.json`） |
 | `LT_FORUM_CHANNEL_ID` / `TEST_LT_FORUM_CHANNEL_ID` | 本番／テスト用の LT 応募フォーラムチャンネル ID |
 | `MEETUP_WEEKDAY` | 集会の開催曜日（0=日 … 5=金、任意、デフォルト `5`） |
 | `LT_SLOTS_PER_DAY` | 1回の集会あたりの LT 枠数（任意、デフォルト `1`） |
 | `LT_DATE_CANDIDATES` | 日程選択で提示する候補の開催回数（任意、デフォルト `8`） |
-| `LT_STORE_PATH` | LT レコードの保存先（任意、デフォルト `./lt-store.json`） |
+| `LT_STORE_PATH` | LT レコードの保存先（任意、デフォルト `./state/lt-store.json`） |
 | `LT_MATERIALS_DIR` | LT 素材の保存先ディレクトリ（任意、デフォルト `./state/lt-materials`） |
 | `LT_MAX_MATERIAL_MB` | 素材画像1枚あたりの上限MB（任意、デフォルト `50`） |
 | `LT_ANNOUNCE_ROLE_ID` | LT 告知でメンションするロール ID（任意、未設定なら `ANNOUNCE_ROLE_ID` と同じロール） |
@@ -468,7 +546,8 @@ pm2 startup  # 出力されたコマンドを実行するとサーバー再起�
 | :--- | :--- |
 | `/confirm-meetup` | 今週の開催確認 YES/NO ボタンを運営チャンネルに送信 |
 | `/pre-announce` | X に事前告知（画像付き）を投稿し、翌日の LT 告知（X）も投稿（`lt-only:True` で LT だけ / `skip-lt:True` で LT を省略） |
-| `/create-instance` | VRChat インスタンスを作成し招待 URL を取得 |
+| `/create-instance` | VRChat インスタンスを作成し招待 URL を取得。実行者が `/vrc-link` 登録済みなら本人にも招待を送る |
+| `/vrc-link` | VRChat アカウントを登録し、招待を受け取れるようにする（`set` / `show` / `clear`） |
 | `/post-announcement` | X 引用リポスト・Discord・VRCGroup への告知を一括実行し、当日 LT があれば Discord・VRCGroup の LT 告知も投稿（`lt-only:True` で LT だけ / `skip-lt:True` で LT を省略） |
 | `/status` | Bot の設定状態と今週のスケジュール状況を確認 |
 | `/check-permissions` | Bot が各チャンネルで必要な権限を持っているか確認 |
@@ -496,14 +575,14 @@ src/
     config.ts        環境変数の読み込み
     scheduler.ts      定期実行タスク（木曜 confirm / pre-announce + LT 告知）
     meetup.ts         開催確認・事前告知の実行ロジック
-    storage.ts        週次状態の永続化（storage.json）
+    storage.ts        週次状態の永続化（state/storage.json）
     interactions.ts   customId のルーティング（ボタン・モーダル・セレクト）
     handlers.ts       ハンドラと customId キーの紐づけ
     executor.ts       外部スクリプト実行ユーティリティ
     lt/
       types.ts        LtEntry / LtStatus の定義、未入力項目の判定
       status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決
-      store.ts        LT レコードの永続化（lt-store.json、原子的書き込み）
+      store.ts        LT レコードの永続化（state/lt-store.json、原子的書き込み）
       dates.ts        開催日候補の算出と日付整形
       forum.ts        フォーラムポストの作成・タグ同期・ポスト内コンポーネント
       materials.ts    告知素材のダウンロードとローカル保存
@@ -521,8 +600,10 @@ src/
     quotePost.ts      開催告知の引用リポスト
     assets/           投稿テンプレート・画像
   vrchat/
-    api/              VRChat API クライアント（認証・インスタンス作成・投稿）
+    api/              VRChat API クライアント（認証・ユーザー・フレンド・インスタンス作成・投稿）
     actions/          VRChat 上のアクション（グループ投稿・招待）
+    session.ts        VRChat セッションの共通化（cookie 再利用・同時実行の直列化）
+    links.ts          プロフィールURLの解釈と Discord ↔ VRChat 対応表の永続化
     postLtAnnouncement.ts  LT 告知のグループ掲示板投稿（インスタンス情報に依存しない）
     createInstance.ts     インスタンス作成フロー
     postGroupAnnouncement.ts  グループ掲示板への告知フロー

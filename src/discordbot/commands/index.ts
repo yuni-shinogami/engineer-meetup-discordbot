@@ -22,6 +22,7 @@ export {
 } from './lt-schedule';
 export { preAnnounceCommand, handlePreAnnounceCommand } from './pre-announce';
 export { createInstanceCommand, handleCreateInstanceCommand } from './create-instance';
+export { vrcLinkCommand, handleVrcLinkCommand } from './vrc-link';
 export { postAnnouncementCommand, handlePostAnnouncementCommand } from './post-announcement';
 export { checkPermissionsCommand, handleCheckPermissionsCommand } from './check-permissions';
 export { statusCommand, handleStatusCommand } from './status';
@@ -31,6 +32,7 @@ export { slidesCommand, handleSlidesCommand } from './slides';
 import { confirmMeetupCommand } from './confirm-meetup';
 import { preAnnounceCommand } from './pre-announce';
 import { createInstanceCommand } from './create-instance';
+import { vrcLinkCommand } from './vrc-link';
 import { postAnnouncementCommand } from './post-announcement';
 import { checkPermissionsCommand } from './check-permissions';
 import { statusCommand } from './status';
@@ -46,6 +48,7 @@ export async function registerCommands() {
     ltMaterialCommand.toJSON(),
     preAnnounceCommand.toJSON(),
     createInstanceCommand.toJSON(),
+    vrcLinkCommand.toJSON(),
     postAnnouncementCommand.toJSON(),
     checkPermissionsCommand.toJSON(),
     statusCommand.toJSON(),

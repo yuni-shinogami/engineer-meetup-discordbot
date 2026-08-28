@@ -1,3 +1,4 @@
+import { join } from 'path';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -23,12 +24,20 @@ export const config = {
   xAccount: process.env.X_ACCOUNT || '',
   testXAccount: process.env.TEST_X_ACCOUNT || '',
   vrcStateDir: process.env.VRC_STATE_DIR || '',
-  storagePath: process.env.STORAGE_PATH || './storage.json',
+  /** 週次の開催状態。実行時に書き換わるデータは state/ にまとめる。 */
+  storagePath: process.env.STORAGE_PATH || './state/storage.json',
+  /**
+   * Discord ユーザー → VRChat ユーザーID の対応表。
+   * cookie やインスタンス情報と同じ VRChat 側の状態なので、既定では VRC_STATE_DIR に置く。
+   * 個人に紐づくデータなので Git には載せない。
+   */
+  vrcLinkStorePath: process.env.VRC_LINK_STORE_PATH
+    || join(process.env.VRC_STATE_DIR || './state', 'vrc-links.json'),
 
   // --- LT (ライトニングトーク) ---
   ltForumChannelId: process.env.LT_FORUM_CHANNEL_ID || '',
   testLtForumChannelId: process.env.TEST_LT_FORUM_CHANNEL_ID || '',
-  ltStorePath: process.env.LT_STORE_PATH || './lt-store.json',
+  ltStorePath: process.env.LT_STORE_PATH || './state/lt-store.json',
   ltMaterialsDir: process.env.LT_MATERIALS_DIR || './state/lt-materials',
   /** 集会の開催曜日（0=日 ... 5=金 ... 6=土） */
   meetupWeekday: intEnv('MEETUP_WEEKDAY', 5),
