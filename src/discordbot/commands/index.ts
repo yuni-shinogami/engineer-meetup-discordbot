@@ -27,6 +27,7 @@ export { postAnnouncementCommand, handlePostAnnouncementCommand } from './post-a
 export { checkPermissionsCommand, handleCheckPermissionsCommand } from './check-permissions';
 export { statusCommand, handleStatusCommand } from './status';
 export { generateLtImageCommand, handleGenerateLtImageCommand } from './generate-lt-image';
+export { slidesCommand, handleSlidesCommand } from './slides';
 
 import { confirmMeetupCommand } from './confirm-meetup';
 import { preAnnounceCommand } from './pre-announce';
@@ -36,6 +37,7 @@ import { postAnnouncementCommand } from './post-announcement';
 import { checkPermissionsCommand } from './check-permissions';
 import { statusCommand } from './status';
 import { generateLtImageCommand } from './generate-lt-image';
+import { slidesCommand } from './slides';
 import { ltApplyCommand } from './lt-apply';
 import { ltMaterialCommand } from './lt-material';
 
@@ -51,6 +53,7 @@ export async function registerCommands() {
     checkPermissionsCommand.toJSON(),
     statusCommand.toJSON(),
     generateLtImageCommand.toJSON(),
+    slidesCommand.toJSON(),
   ];
   const rest = new REST({ version: '10' }).setToken(config.discordToken);
 

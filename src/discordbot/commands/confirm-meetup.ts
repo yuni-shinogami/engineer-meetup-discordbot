@@ -3,6 +3,7 @@ import { config } from '../config';
 import { storage } from '../storage';
 import { CONFIRM_MEETUP_YES, sendConfirmMeetupToChannel } from '../meetup';
 import { requireOperatorRole, formatError } from './utils';
+import { postSlidesToChannel } from '../slides';
 
 export const confirmMeetupCommand = new SlashCommandBuilder()
   .setName('confirm-meetup')
@@ -41,4 +42,10 @@ export async function handleConfirmMeetupButton(interaction: ButtonInteraction) 
     content: `【確認】今週エンジニア集会やる？\n→ **${answer}** が選択されました。${result}\n\n<@${interaction.user.id}> が選択しました。`,
     components: [],
   });
+
+  // 開催が決まった時点で司会進行スライドを配る。当日までに司会が中身を確認できるよう、
+  // 事前告知（木19時）ではなくここに置いている。失敗は postSlidesToChannel 側で握るので、開催確認の応答は妨げない。
+  if (isYes && config.canvaAutoPostSlides && interaction.channelId) {
+    await postSlidesToChannel(interaction.client, interaction.channelId);
+  }
 }

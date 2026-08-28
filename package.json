@@ -12,7 +12,8 @@
     "pm2:start": "pm2 start dist/discordbot/index.js --name engineer-meetup-bot --time",
     "pm2:restart": "pm2 restart engineer-meetup-bot --update-env || npm run pm2:start",
     "pm2:stop": "pm2 stop engineer-meetup-bot",
-    "pm2:logs": "pm2 logs engineer-meetup-bot --lines 50"
+    "pm2:logs": "pm2 logs engineer-meetup-bot --lines 50",
+    "canva:login": "ts-node src/canva/login.ts"
   },
   "keywords": [],
   "author": "",

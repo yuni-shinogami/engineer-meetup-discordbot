@@ -69,6 +69,34 @@ export const config = {
    * 自動化だけを止めたいときに false にする。
    */
   ltAutoAnnounce: boolEnv('LT_AUTO_ANNOUNCE', true),
+
+  // --- Canva（司会進行スライドの PDF 配布） ---
+  canvaClientId: process.env.CANVA_CLIENT_ID || '',
+  canvaClientSecret: process.env.CANVA_CLIENT_SECRET || '',
+  /** 司会進行スライドのデザイン ID。Canva の編集 URL /design/<ここ>/edit */
+  canvaSlideDesignId: process.env.CANVA_SLIDE_DESIGN_ID || '',
+  /** 初回認可のコールバック先。Developer Portal に登録した値と一致していないと弾かれる。 */
+  canvaRedirectUri: process.env.CANVA_REDIRECT_URI || 'http://127.0.0.1:8976/callback',
+  /** リフレッシュトークンの置き場所。VRChat の cookies.json と同じ state ディレクトリ。 */
+  canvaStateDir: process.env.CANVA_STATE_DIR || './state',
+  /**
+   * 添付できる PDF の上限（MB）。超えたら投稿せずサイズを知らせる。
+   * LT 素材（LT_MAX_MATERIAL_MB）と同じサーバーの添付上限に合わせて 50MB を既定にしている。
+   */
+  canvaMaxPdfMb: intEnv('CANVA_MAX_PDF_MB', 50),
+  /**
+   * 開催確認で「開催する」を選んだときに、司会進行スライドを自動投稿するか。
+   * 事前告知（木19時）ではなく開催確認（木12時）に寄せているのは、
+   * 司会が当日までに中身を確認する時間を取るため。
+   */
+  canvaAutoPostSlides: boolEnv('CANVA_AUTO_POST_SLIDES', true),
+  /**
+   * 司会進行スライド動画の 1 ページあたりの表示秒数。
+   * VRChat の動画プレイヤーでシークしてページを送る使い方なので、既定は 1 秒。
+   */
+  slidesVideoSeconds: intEnv('SLIDES_VIDEO_SECONDS', 1),
+  /** 司会進行スライド動画の高さ(px)。横幅は PDF の縦横比から決まる。 */
+  slidesVideoHeight: intEnv('SLIDES_VIDEO_HEIGHT', 1080),
 };
 
 export function ltForumChannelId(isProd: boolean): string {
