@@ -9,12 +9,15 @@ vi.mock('../config', () => ({
   config: {
     operationsChannelId: 'ops-channel-id',
     testChannelId: 'test-channel-id',
+    operatorRoleId: 'operator-role-id',
   },
 }));
 
 vi.mock('../storage', () => ({
   storage: {
     isScheduled: true,
+    confirmAnswered: false,
+    preAnnounceMissed: false,
   },
 }));
 
@@ -54,6 +57,28 @@ describe('triggerConfirmMeetup', () => {
     await triggerConfirmMeetup(client, false);
     expect(mockedSendConfirm).toHaveBeenCalledWith(client, 'test-channel-id');
   });
+
+  it('定期の開催確認で前の週の回答と見送りをリセットする', async () => {
+    storage.confirmAnswered = true;
+    storage.preAnnounceMissed = true;
+    const { client } = makeClient();
+
+    await triggerConfirmMeetup(client, true);
+
+    expect(storage.confirmAnswered).toBe(false);
+    expect(storage.preAnnounceMissed).toBe(false);
+  });
+
+  it('テストチャンネルへの送信では本番の週次状態に触れない', async () => {
+    storage.confirmAnswered = true;
+    storage.preAnnounceMissed = true;
+    const { client } = makeClient();
+
+    await triggerConfirmMeetup(client, false);
+
+    expect(storage.confirmAnswered).toBe(true);
+    expect(storage.preAnnounceMissed).toBe(true);
+  });
 });
 
 describe('triggerPreAnnounce', () => {
@@ -64,10 +89,13 @@ describe('triggerPreAnnounce', () => {
     mockedRunWeeklyLt.mockReset();
     mockedRunWeeklyLt.mockResolvedValue(null);
     storage.isScheduled = true;
+    storage.confirmAnswered = false;
+    storage.preAnnounceMissed = false;
   });
 
-  it('今週開催予定でない場合は何もせずスキップする', async () => {
+  it('NO が回答済みの場合は何も投稿せず、見送ったことだけ記録する', async () => {
     storage.isScheduled = false;
+    storage.confirmAnswered = true;
     const { client, fetch } = makeClient();
 
     await triggerPreAnnounce(client, true);
@@ -75,6 +103,22 @@ describe('triggerPreAnnounce', () => {
     expect(mockedExecutePreAnnounce).not.toHaveBeenCalled();
     expect(mockedRunWeeklyLt).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
+    expect(storage.preAnnounceMissed).toBe(true);
+  });
+
+  // 開催決定が遅れると X の告知を忘れるので、時刻になったら運営に知らせる
+  it('開催確認が未回答の場合は運営ロールにメンションしてリマインドする', async () => {
+    storage.isScheduled = false;
+    const { client, fetch, send } = makeClient();
+
+    await triggerPreAnnounce(client, true);
+
+    expect(mockedExecutePreAnnounce).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledWith('ops-channel-id');
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledWith(expect.stringContaining('<@&operator-role-id>'));
+    expect(send).toHaveBeenCalledWith(expect.stringContaining('開催確認がまだ回答されていない'));
+    expect(storage.preAnnounceMissed).toBe(true);
   });
 
   // 普段の運用どおり、前日告知と同じタイミングで LT のお知らせも出す

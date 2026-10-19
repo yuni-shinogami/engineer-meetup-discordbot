@@ -1,7 +1,12 @@
 import { REST, Routes } from 'discord.js';
 import { config } from '../config';
 
-export { confirmMeetupCommand, handleConfirmMeetupCommand, handleConfirmMeetupButton } from './confirm-meetup';
+export {
+  confirmMeetupCommand,
+  handleConfirmMeetupCommand,
+  handleConfirmMeetupButton,
+  handleLatePreAnnounceButton,
+} from './confirm-meetup';
 export { ltApplyCommand, handleLtApplyCommand, handleLtApplyModal, LT_APPLY_MODAL } from './lt-apply';
 export { handleLtDatesSelect, handleLtConsultModal, LT_CONSULT_MODAL } from './lt-dates';
 export { handleLtVideoSelect } from './lt-video';

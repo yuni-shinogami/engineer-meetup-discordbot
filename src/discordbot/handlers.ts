@@ -1,5 +1,5 @@
 import { registerButtonHandler, registerModalHandler, registerSelectHandler } from './interactions';
-import { CONFIRM_MEETUP_NO, CONFIRM_MEETUP_YES } from './meetup';
+import { CONFIRM_MEETUP_NO, CONFIRM_MEETUP_YES, LATE_PRE_ANNOUNCE_BUTTON } from './meetup';
 import {
   LT_ANNOUNCE_BUTTON,
   LT_DATES_SELECT,
@@ -10,6 +10,7 @@ import {
 } from './lt/forum';
 import {
   handleConfirmMeetupButton,
+  handleLatePreAnnounceButton,
   handleLtAnnounceButton,
   handleLtAnnounceConfirm,
   handleLtApplyModal,
@@ -34,6 +35,7 @@ import {
 export function registerInteractionHandlers(): void {
   registerButtonHandler(CONFIRM_MEETUP_YES, handleConfirmMeetupButton);
   registerButtonHandler(CONFIRM_MEETUP_NO, handleConfirmMeetupButton);
+  registerButtonHandler(LATE_PRE_ANNOUNCE_BUTTON, handleLatePreAnnounceButton);
   registerButtonHandler(LT_SCHEDULE_BUTTON, handleLtScheduleButton);
   registerButtonHandler(LT_UNSCHEDULE_BUTTON, handleLtUnscheduleButton);
   registerButtonHandler(LT_EDIT_BUTTON, handleLtEditButton);

@@ -7,6 +7,10 @@ interface StorageData {
   lastTweetId: string | null;
   preAnnouncePostUrl: string | null;
   lastInviteUrl: string | null;
+  /** 今週の開催確認に YES/NO のどちらかが回答されたか。木曜19時に未回答をリマインドするのに使う。 */
+  confirmAnswered: boolean;
+  /** 事前告知の時刻を開催未定のまま過ぎたか。後から YES が押されたら投稿を促すのに使う。 */
+  preAnnounceMissed: boolean;
 }
 
 const defaultData: StorageData = {
@@ -14,6 +18,8 @@ const defaultData: StorageData = {
   lastTweetId: null,
   preAnnouncePostUrl: null,
   lastInviteUrl: null,
+  confirmAnswered: false,
+  preAnnounceMissed: false,
 };
 
 export class Storage {
@@ -77,6 +83,24 @@ export class Storage {
 
   set lastInviteUrl(value: string | null) {
     this.data.lastInviteUrl = value;
+    this.save();
+  }
+
+  get confirmAnswered(): boolean {
+    return this.data.confirmAnswered;
+  }
+
+  set confirmAnswered(value: boolean) {
+    this.data.confirmAnswered = value;
+    this.save();
+  }
+
+  get preAnnounceMissed(): boolean {
+    return this.data.preAnnounceMissed;
+  }
+
+  set preAnnounceMissed(value: boolean) {
+    this.data.preAnnounceMissed = value;
     this.save();
   }
 }
