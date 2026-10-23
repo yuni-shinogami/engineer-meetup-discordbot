@@ -4,9 +4,9 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-User=bot
-Group=bot
-WorkingDirectory=/home/bot/app
+User=engineer-meetup
+Group=engineer-meetup
+WorkingDirectory=/home/engineer-meetup/app
 ExecStart=/usr/bin/node dist/discordbot/index.js
 Restart=always
 RestartSec=10
@@ -16,7 +16,7 @@ Environment=NODE_ENV=production
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/home/bot/app/state /home/bot/app/assets/fonts
+ReadWritePaths=/home/engineer-meetup/app/state /home/engineer-meetup/app/assets/fonts
 PrivateTmp=yes
 PrivateDevices=yes
 

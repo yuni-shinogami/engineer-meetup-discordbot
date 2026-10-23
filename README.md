@@ -516,14 +516,14 @@ npm start
 
 #### 本番モード（systemd）
 
-本番は Proxmox 上の LXC コンテナ `discord-bot`（Debian 13）で、systemd サービス `engineer-meetup-bot` として動かしています。
-Bot 専用ユーザー `bot` で `/home/bot/app` から起動し、落ちても 10 秒後に自動で再起動します。
+本番は Proxmox 上の LXC コンテナ `engineer-meetup-bot`（Debian 13、この Bot 専用）で、systemd サービス `engineer-meetup-bot` として動かしています。
+専用ユーザー `engineer-meetup` で `/home/engineer-meetup/app` から起動し、落ちても 10 秒後に自動で再起動します。
 書き込めるのは `state/` とフォントキャッシュ（`assets/fonts/`）だけです。
 
 コード変更の反映は、`main` にマージしてから次を実行するだけです。
 
 ```bash
-ssh discord-bot /home/bot/app/deploy/deploy.sh
+ssh engineer-meetup-bot /home/engineer-meetup/app/deploy/deploy.sh
 ```
 
 `deploy/deploy.sh` は `git pull` → `npm ci` → `npm run build` → サービス再起動を行い、
@@ -545,14 +545,14 @@ Node.js 24 と、動画変換に使う ffmpeg・poppler-utils を入れておき
 
 ```bash
 apt install git ffmpeg poppler-utils   # Node.js 24 は NodeSource の apt リポジトリから入れる
-useradd --system --create-home --home-dir /home/bot --shell /usr/sbin/nologin bot
-runuser -u bot -- git clone https://github.com/yuni-shinogami/engineer-meetup-discordbot.git /home/bot/app
-cd /home/bot/app
-runuser -u bot -- npm ci && runuser -u bot -- npm run build
+useradd --system --create-home --home-dir /home/engineer-meetup --shell /usr/sbin/nologin engineer-meetup
+runuser -u engineer-meetup -- git clone https://github.com/yuni-shinogami/engineer-meetup-discordbot.git /home/engineer-meetup/app
+cd /home/engineer-meetup/app
+runuser -u engineer-meetup -- npm ci && runuser -u engineer-meetup -- npm run build
 
-# .env と state/ を置く（移設なら旧サーバーから両方を運ぶ）。VRC_STATE_DIR は /home/bot/app/state にする
-install -d -o bot -g bot -m 700 state assets/fonts
-chown bot:bot .env && chmod 600 .env
+# .env と state/ を置く（移設なら旧サーバーから両方を運ぶ）。VRC_STATE_DIR は /home/engineer-meetup/app/state にする
+install -d -o engineer-meetup -g engineer-meetup -m 700 state assets/fonts
+chown engineer-meetup:engineer-meetup .env && chmod 600 .env
 
 install -m 644 deploy/engineer-meetup-bot.service /etc/systemd/system/
 systemctl daemon-reload

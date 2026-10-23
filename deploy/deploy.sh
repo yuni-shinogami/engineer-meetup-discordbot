@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # 本番サーバーでコード変更を反映する。root で実行する。
-#   ssh discord-bot /home/bot/app/deploy/deploy.sh
+#   ssh engineer-meetup-bot /home/engineer-meetup/app/deploy/deploy.sh
 set -euo pipefail
 
-APP_DIR=/home/bot/app
+APP_DIR=/home/engineer-meetup/app
 SERVICE=engineer-meetup-bot
 
 cd "$APP_DIR"
-as_bot() { runuser -u bot -- "$@"; }
+as_app_user() { runuser -u engineer-meetup -- "$@"; }
 
-as_bot git pull --ff-only
-as_bot npm ci --no-audit --no-fund
-as_bot npm run build
+as_app_user git pull --ff-only
+as_app_user npm ci --no-audit --no-fund
+as_app_user npm run build
 
 started=$(date '+%Y-%m-%d %H:%M:%S')
 systemctl restart "$SERVICE"
