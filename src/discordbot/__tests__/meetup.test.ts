@@ -15,10 +15,11 @@ vi.mock('../storage', () => ({
   storage: {
     lastTweetId: null as string | null,
     preAnnouncePostUrl: null as string | null,
+    preAnnounceMissed: false,
   },
 }));
 
-import { sendConfirmMeetupToChannel, executePreAnnounce } from '../meetup';
+import { sendConfirmMeetupToChannel, executePreAnnounce, buildLatePreAnnounceRow } from '../meetup';
 import { postAnnouncement } from '../../x/postAnnouncement';
 import { config } from '../config';
 import { storage } from '../storage';
@@ -67,6 +68,12 @@ describe('executePreAnnounce', () => {
     expect(storage.preAnnouncePostUrl).toBe('https://x.com/MainAccount/status/tweet-id-123');
   });
 
+  it('投稿できたら事前告知の見送りを解消する', async () => {
+    storage.preAnnounceMissed = true;
+    await executePreAnnounce(true);
+    expect(storage.preAnnounceMissed).toBe(false);
+  });
+
   it('テストアカウントのツイートURLを組み立てる', async () => {
     const url = await executePreAnnounce(false);
 
@@ -83,5 +90,14 @@ describe('executePreAnnounce', () => {
     } finally {
       config.xAccount = original;
     }
+  });
+});
+
+describe('buildLatePreAnnounceRow', () => {
+  it('本番／テストを customId に載せる', () => {
+    const customId = (isProd: boolean) =>
+      (buildLatePreAnnounceRow(isProd).components[0]!.toJSON() as { custom_id: string }).custom_id;
+    expect(customId(true)).toBe('meetup:late-pre-announce:prod');
+    expect(customId(false)).toBe('meetup:late-pre-announce:test');
   });
 });

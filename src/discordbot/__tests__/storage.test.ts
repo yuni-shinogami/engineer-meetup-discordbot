@@ -28,6 +28,8 @@ describe('Storage', () => {
     expect(storage.lastTweetId).toBeNull();
     expect(storage.preAnnouncePostUrl).toBeNull();
     expect(storage.lastInviteUrl).toBeNull();
+    expect(storage.confirmAnswered).toBe(false);
+    expect(storage.preAnnounceMissed).toBe(false);
   });
 
   it('setter を呼ぶと即座にファイルへ保存される', () => {
