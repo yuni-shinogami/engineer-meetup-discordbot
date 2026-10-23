@@ -453,7 +453,7 @@ cookie やインスタンス情報と同じ VRChat 側の状態なので、保�
 | `state/latest.json` | 直近に作成したインスタンス情報 | `VRC_STATE_DIR` |
 | `state/vrc-links.json` | Discord ↔ VRChat アカウント対応表 | `VRC_LINK_STORE_PATH` |
 
-`VRC_STATE_DIR` 以外は**プロセスの cwd 相対**です。pm2 はリポジトリを cwd にして起動するので
+`VRC_STATE_DIR` 以外は**プロセスの cwd 相対**です。本番の systemd サービスはリポジトリを cwd にして起動するので
 通常は意識不要ですが、別のディレクトリから `npm start` すると別の場所を見にいきます。
 
 ## セットアップ
@@ -514,31 +514,50 @@ npm install
 npm start
 ```
 
-#### 本番モード（PM2）
+#### 本番モード（systemd）
+
+本番は Proxmox 上の LXC コンテナ `discord-bot`（Debian 13）で、systemd サービス `engineer-meetup-bot` として動かしています。
+Bot 専用ユーザー `bot` で `/home/bot/app` から起動し、落ちても 10 秒後に自動で再起動します。
+書き込めるのは `state/` とフォントキャッシュ（`assets/fonts/`）だけです。
+
+コード変更の反映は、`main` にマージしてから次を実行するだけです。
 
 ```bash
-# 初回セットアップ
-npm install -g pm2
-npm run deploy
-pm2 save
-pm2 startup  # 出力されたコマンドを実行するとサーバー再起動後も自動起動
+ssh discord-bot /home/bot/app/deploy/deploy.sh
 ```
 
-以降、コード変更の反映は `npm run deploy` だけです。
+`deploy/deploy.sh` は `git pull` → `npm ci` → `npm run build` → サービス再起動を行い、
+Discord へのログイン（`Ready! Logged in`）をログで確認できたら完了を表示します。30 秒以内に確認できなければ失敗で終わります。
 
-| npm script | 実行内容 |
+| 操作 | コマンド（コンテナ上で root） |
 | :--- | :--- |
-| `npm run deploy` | ビルドして pm2 のプロセスを入れ替える（**通常はこれだけ**） |
-| `npm run pm2:restart` | ビルドせずに再起動する。`.env` を変えただけのときに使う |
-| `npm run pm2:start` | pm2 に登録して起動する（`pm2:restart` が未登録を検知したときに自動で呼ばれる） |
-| `npm run pm2:stop` | 停止する（登録は残るので `deploy` で戻せる） |
-| `npm run pm2:logs` | 直近 50 行を表示して追従する |
+| `.env` だけ変えたときの再起動 | `systemctl restart engineer-meetup-bot` |
+| 停止 | `systemctl stop engineer-meetup-bot` |
+| 状態の確認 | `systemctl status engineer-meetup-bot` |
+| ログの追従 | `journalctl -u engineer-meetup-bot -f` |
 
-**`deploy` は pm2 に未登録でも通ります。** `pm2 restart` は対象が無いと失敗するため、その場合だけ `pm2:start` にフォールバックします
-（`pm2 restart engineer-meetup-bot --update-env || npm run pm2:start`）。
-
-**プロセスは pm2 に一本化してください。** `npm start`（ts-node での直接起動）と併用すると Bot が二重に動き、
+**Bot を動かすのは本番の 1 か所だけにしてください。** 別のマシンや `npm start`（ts-node での直接起動）と併用すると Bot が二重に動き、
 同じスラッシュコマンドを取り合って**古いコードのプロセスが応答することがあります**。`npm start` は開発時のみに使ってください。
+
+##### 初回セットアップ
+
+Node.js 24 と、動画変換に使う ffmpeg・poppler-utils を入れておきます。
+
+```bash
+apt install git ffmpeg poppler-utils   # Node.js 24 は NodeSource の apt リポジトリから入れる
+useradd --system --create-home --home-dir /home/bot --shell /usr/sbin/nologin bot
+runuser -u bot -- git clone https://github.com/yuni-shinogami/engineer-meetup-discordbot.git /home/bot/app
+cd /home/bot/app
+runuser -u bot -- npm ci && runuser -u bot -- npm run build
+
+# .env と state/ を置く（移設なら旧サーバーから両方を運ぶ）。VRC_STATE_DIR は /home/bot/app/state にする
+install -d -o bot -g bot -m 700 state assets/fonts
+chown bot:bot .env && chmod 600 .env
+
+install -m 644 deploy/engineer-meetup-bot.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now engineer-meetup-bot
+```
 
 ## コマンド一覧
 
@@ -617,6 +636,9 @@ src/
       images/             テンプレートで使用する画像素材
 assets/
   fonts/              フォントキャッシュ（自動生成、.gitignore 対象）
+deploy/
+  deploy.sh                    本番でのデプロイ（pull・ビルド・再起動・起動確認）
+  engineer-meetup-bot.service  本番の systemd ユニット
 ```
 
 ## テスト

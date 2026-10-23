@@ -1,0 +1,24 @@
+[Unit]
+Description=Engineer Meetup Discord Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=bot
+Group=bot
+WorkingDirectory=/home/bot/app
+ExecStart=/usr/bin/node dist/discordbot/index.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+
+# 書き込みは状態ファイルとフォントキャッシュだけに絞る
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/bot/app/state /home/bot/app/assets/fonts
+PrivateTmp=yes
+PrivateDevices=yes
+
+[Install]
+WantedBy=multi-user.target
