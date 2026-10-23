@@ -520,17 +520,28 @@ npm start
 専用ユーザー `engineer-meetup` で `/home/engineer-meetup/app` から起動し、落ちても 10 秒後に自動で再起動します。
 書き込めるのは `state/` とフォントキャッシュ（`assets/fonts/`）だけです。
 
-コード変更の反映は、`main` にマージしてから次を実行するだけです。
+**`main` にマージすれば、1 分以内に自動でデプロイされます。** 手作業は要りません。
+
+本番のタイマー `engineer-meetup-deploy.timer` が 1 分ごとに `deploy/auto-deploy.sh` を実行し、
+`origin/main` に新しいコミットがあれば `deploy/deploy.sh` でデプロイします。
+コンテナから GitHub を見にいく方式なので、GitHub Actions も、外からコンテナに入る経路も使いません。
+
+`deploy/deploy.sh` は `git pull` → `npm ci` → `npm run build` → サービス再起動を行い、
+Discord へのログイン（`Ready! Logged in`）をログで確認できたら完了とします。30 秒以内に確認できなければ失敗です。
+
+**デプロイに失敗したとき**は、直前のコミットに自動で戻し、運営チャンネルに Bot から知らせます。
+失敗したコミットは、`main` に次のコミットが入るまで再試行しません。修正を `main` にマージすれば、それが改めてデプロイされます。
+
+手動でデプロイしたいとき（自動デプロイを止めているときなど）は、次を実行します。
 
 ```bash
 ssh engineer-meetup-bot /home/engineer-meetup/app/deploy/deploy.sh
 ```
 
-`deploy/deploy.sh` は `git pull` → `npm ci` → `npm run build` → サービス再起動を行い、
-Discord へのログイン（`Ready! Logged in`）をログで確認できたら完了を表示します。30 秒以内に確認できなければ失敗で終わります。
-
 | 操作 | コマンド（コンテナ上で root） |
 | :--- | :--- |
+| 自動デプロイのログ | `journalctl -u engineer-meetup-deploy` |
+| 自動デプロイを止める／再開する | `systemctl disable --now engineer-meetup-deploy.timer` ／ `systemctl enable --now engineer-meetup-deploy.timer` |
 | `.env` だけ変えたときの再起動 | `systemctl restart engineer-meetup-bot` |
 | 停止 | `systemctl stop engineer-meetup-bot` |
 | 状態の確認 | `systemctl status engineer-meetup-bot` |
@@ -554,9 +565,9 @@ runuser -u engineer-meetup -- npm ci && runuser -u engineer-meetup -- npm run bu
 install -d -o engineer-meetup -g engineer-meetup -m 700 state assets/fonts
 chown engineer-meetup:engineer-meetup .env && chmod 600 .env
 
-install -m 644 deploy/engineer-meetup-bot.service /etc/systemd/system/
+install -m 644 deploy/engineer-meetup-bot.service deploy/engineer-meetup-deploy.service deploy/engineer-meetup-deploy.timer /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now engineer-meetup-bot
+systemctl enable --now engineer-meetup-bot engineer-meetup-deploy.timer
 ```
 
 ## コマンド一覧
@@ -637,8 +648,11 @@ src/
 assets/
   fonts/              フォントキャッシュ（自動生成、.gitignore 対象）
 deploy/
-  deploy.sh                    本番でのデプロイ（pull・ビルド・再起動・起動確認）
-  engineer-meetup-bot.service  本番の systemd ユニット
+  deploy.sh                       本番でのデプロイ（pull・ビルド・再起動・起動確認）
+  auto-deploy.sh                  main に新しいコミットがあれば deploy.sh を実行し、失敗したら巻き戻す
+  engineer-meetup-bot.service     本番の systemd ユニット
+  engineer-meetup-deploy.service  auto-deploy.sh を実行するユニット
+  engineer-meetup-deploy.timer    上を 1 分ごとに起動するタイマー
 ```
 
 ## テスト
