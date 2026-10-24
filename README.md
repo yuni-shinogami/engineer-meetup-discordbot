@@ -23,6 +23,9 @@
    - **コマンドを実行した担当者にも招待を送ります**（`/vrc-link` で VRChat アカウントを登録している場合）。
    - 招待 URL を取得し `storage.json` に保存します（告知は行いません）。
    - 招待やフレンド申請が失敗してもインスタンス情報は保存されるので、続けて `/post-announcement` を実行できます。
+   - `VRC_LAUNCHER_SSH_TARGET` と `VRC_LAUNCHER_SSH_KEY` を設定していれば、結果に **「🖥️ サブアカウントで入る」ボタン**が付きます。
+     押すと、別の PC（gaming-laptop）でサブアカウントの VRChat をデスクトップモードで起動し、そのインスタンスに直接入ります（運営ロール限定）。
+     ボタンは最新のインスタンスにだけ有効で、後から別のインスタンスを作った場合は古いボタンでは入りません。
 
 4. **開催告知 (`/post-announcement`)**
    - X への引用リポスト・Discord のお知らせチャンネルへの投稿・VRChat グループ告知（掲示板投稿）を一括実行します。
@@ -491,6 +494,7 @@ npm install
 | `WORLD_ID` | インスタンスを作成するワールドの ID |
 | `GROUP_ID` / `TEST_GROUP_ID` | 本番／テスト用の VRChat グループ ID |
 | `INSTANCE_REGION` | インスタンスのリージョン（任意、デフォルト `jp`） |
+| `VRC_LAUNCHER_SSH_TARGET` / `VRC_LAUNCHER_SSH_KEY` | 「サブアカウントで入る」ボタンで VRChat を起動する PC の SSH 接続先（`ユーザー名@ホスト`）と秘密鍵のパス（任意、両方そろったときだけボタンを出す）。接続先ではこの鍵を `authorized_keys` の `command=` で起動スクリプトに固定し、Bot からは location だけを送る |
 | `VRC_LINK_STORE_PATH` | Discord ↔ VRChat アカウント対応表の保存先（任意、デフォルトは `VRC_STATE_DIR/vrc-links.json`） |
 | `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` | 自動実行の cron 式（任意、デフォルトは毎週木曜 12:00 / 19:00） |
 | `STORAGE_PATH` | 週次状態の保存先（任意、デフォルト `./state/storage.json`） |
@@ -612,6 +616,7 @@ src/
     interactions.ts   customId のルーティング（ボタン・モーダル・セレクト）
     handlers.ts       ハンドラと customId キーの紐づけ
     executor.ts       外部スクリプト実行ユーティリティ
+    vrc-launcher.ts   「サブアカウントで入る」ボタン（別の PC の VRChat を SSH で起動）
     lt/
       types.ts        LtEntry / LtStatus の定義、未入力項目の判定
       status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決

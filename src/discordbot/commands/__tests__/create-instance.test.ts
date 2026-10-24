@@ -5,9 +5,10 @@ const mocks = vi.hoisted(() => ({
   createInstance: vi.fn(),
   store: { get: vi.fn() },
   storage: { lastInviteUrl: null as string | null },
+  config: { vrcStateDir: '/state', vrcLauncherSshTarget: '', vrcLauncherSshKey: '' },
 }));
 
-vi.mock('../../config', () => ({ config: { vrcStateDir: '/state' } }));
+vi.mock('../../config', () => ({ config: mocks.config }));
 vi.mock('../../storage', () => ({ storage: mocks.storage }));
 vi.mock('../../vrc-links', () => ({ vrcLinkStore: mocks.store }));
 vi.mock('../../../vrchat/createInstance', () => ({
@@ -32,17 +33,55 @@ function interaction() {
   } as unknown as ChatInputCommandInteraction & { editReply: ReturnType<typeof vi.fn> };
 }
 
-function reply(i: { editReply: ReturnType<typeof vi.fn> }): string {
+type Reply = string | { content: string; components: { toJSON(): { components: { custom_id: string }[] } }[] };
+
+function lastReply(i: { editReply: ReturnType<typeof vi.fn> }): Reply {
   const calls = i.editReply.mock.calls;
-  return calls[calls.length - 1]![0] as string;
+  return calls[calls.length - 1]![0] as Reply;
 }
+
+function reply(i: { editReply: ReturnType<typeof vi.fn> }): string {
+  const last = lastReply(i);
+  return typeof last === 'string' ? last : last.content;
+}
+
+function buttonIds(i: { editReply: ReturnType<typeof vi.fn> }): string[] {
+  const last = lastReply(i);
+  if (typeof last === 'string') return [];
+  return last.components.flatMap(row => row.toJSON().components.map(c => c.custom_id));
+}
+
+const LOCATION = 'wrld_585f45ea-c6a6-4ba5-ad6a-188dd822f574:45350~group(grp_5a802e77-a436-491a-9edb-39fca4ff7805)~groupAccessType(plus)~region(jp)';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.config.vrcLauncherSshTarget = '';
+  mocks.config.vrcLauncherSshKey = '';
   mocks.store.get.mockReturnValue(undefined);
   mocks.createInstance.mockResolvedValue({
     inviteUrl: 'https://vrchat.com/i/abcd',
+    location: LOCATION,
     invites: [{ userId: 'usr_sub', label: 'サブアカウント', status: 'sent' }],
+  });
+});
+
+describe('サブアカウントで入るボタン', () => {
+  it('起動先の PC が設定されていればインスタンス名付きのボタンを出す', async () => {
+    mocks.config.vrcLauncherSshTarget = 'user@vrchat-pc';
+    mocks.config.vrcLauncherSshKey = '/path/to/key';
+    const i = interaction();
+
+    await handleCreateInstanceCommand(i);
+
+    expect(buttonIds(i)).toEqual(['vrc:join-sub:45350']);
+  });
+
+  it('設定されていなければボタンを出さない', async () => {
+    const i = interaction();
+
+    await handleCreateInstanceCommand(i);
+
+    expect(buttonIds(i)).toEqual([]);
   });
 });
 

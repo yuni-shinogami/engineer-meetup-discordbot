@@ -16,6 +16,8 @@ export interface CreateInstanceOptions {
 
 export interface CreateInstanceResult {
   inviteUrl: string;
+  /** `wrld_...:<インスタンス名>~group(...)...` の形。`vrchat://launch?id=` に続けると直接入室できる。 */
+  location: string;
   /** メインアカウント自身への self-invite を除いた、各招待先の結果。 */
   invites: InviteOutcome[];
 }
@@ -80,7 +82,7 @@ export async function createInstance(
       invites.push(await inviteWithFriendCheck(client, target, worldId, instance.instanceId));
     }
 
-    return { inviteUrl: state.invite_url, invites };
+    return { inviteUrl: state.invite_url, location: state.location, invites };
   });
 }
 
