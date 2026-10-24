@@ -2,6 +2,7 @@ import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { config } from '../config';
 import { storage } from '../storage';
 import { vrcLinkStore } from '../vrc-links';
+import { isVrcLauncherConfigured, joinSubButtonRow } from '../vrc-launcher';
 import { requireOperatorRole, formatError } from './utils';
 import {
   AuthError,
@@ -49,7 +50,10 @@ export async function handleCreateInstanceCommand(interaction: ChatInputCommandI
       );
     }
 
-    await interaction.editReply(lines.join('\n'));
+    await interaction.editReply({
+      content: lines.join('\n'),
+      components: isVrcLauncherConfigured() ? [joinSubButtonRow(result.location)] : [],
+    });
   } catch (error) {
     console.error('handleCreateInstanceCommand failed:', error);
     if (error instanceof AuthError) {

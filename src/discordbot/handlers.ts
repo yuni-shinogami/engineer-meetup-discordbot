@@ -1,5 +1,6 @@
 import { registerButtonHandler, registerModalHandler, registerSelectHandler } from './interactions';
 import { CONFIRM_MEETUP_NO, CONFIRM_MEETUP_YES, LATE_PRE_ANNOUNCE_BUTTON } from './meetup';
+import { handleJoinSubButton, VRC_JOIN_SUB_BUTTON } from './vrc-launcher';
 import {
   LT_ANNOUNCE_BUTTON,
   LT_DATES_SELECT,
@@ -36,6 +37,7 @@ export function registerInteractionHandlers(): void {
   registerButtonHandler(CONFIRM_MEETUP_YES, handleConfirmMeetupButton);
   registerButtonHandler(CONFIRM_MEETUP_NO, handleConfirmMeetupButton);
   registerButtonHandler(LATE_PRE_ANNOUNCE_BUTTON, handleLatePreAnnounceButton);
+  registerButtonHandler(VRC_JOIN_SUB_BUTTON, handleJoinSubButton);
   registerButtonHandler(LT_SCHEDULE_BUTTON, handleLtScheduleButton);
   registerButtonHandler(LT_UNSCHEDULE_BUTTON, handleLtUnscheduleButton);
   registerButtonHandler(LT_EDIT_BUTTON, handleLtEditButton);

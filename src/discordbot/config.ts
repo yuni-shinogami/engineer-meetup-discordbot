@@ -70,6 +70,17 @@ export const config = {
    */
   ltAutoAnnounce: boolEnv('LT_AUTO_ANNOUNCE', true),
 
+  // --- サブアカウントでの入室（別の PC で VRChat を起動する） ---
+  /**
+   * VRChat を起動する PC の SSH 接続先（`ユーザー名@ホスト`）。
+   * 鍵と両方そろっているときだけ、/create-instance の結果に「サブアカウントで入る」ボタンを出す。
+   * 接続先では、この鍵を authorized_keys の command= で起動スクリプトに固定しておく
+   * （Bot から送るのはインスタンスの location だけで、任意のコマンドは実行させない）。
+   */
+  vrcLauncherSshTarget: process.env.VRC_LAUNCHER_SSH_TARGET || '',
+  /** 上の接続に使う秘密鍵のパス。 */
+  vrcLauncherSshKey: process.env.VRC_LAUNCHER_SSH_KEY || '',
+
   // --- Canva（司会進行スライドの PDF 配布） ---
   canvaClientId: process.env.CANVA_CLIENT_ID || '',
   canvaClientSecret: process.env.CANVA_CLIENT_SECRET || '',
