@@ -94,7 +94,6 @@ async function announceToVrchat(entry: LtEntry, isProd: boolean): Promise<string
   const { title, body } = buildVrchatAnnounce(entry);
   return postLtGroupAnnouncement({
     isProd,
-    stateDir: config.vrcStateDir,
     title,
     body,
     sendNotification: config.ltGroupPostNotify,

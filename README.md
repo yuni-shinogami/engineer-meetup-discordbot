@@ -397,7 +397,7 @@ Discord 側のタグ名を変える場合はこの定数も合わせて変更し
 VRChat の招待 API（`POST /invite/{userId}`）は、**フレンドでない相手には 403
 `You need to be friends with that user first.`** を返します。
 そのため `/vrc-link set` は、登録と同時にフレンド状態を確認し、フレンドでなければ
-メインアカウント（`VRC_MAIN_USERNAME`）から**フレンド申請を送ります**。
+メインアカウント（vrchat-gateway がログインしている慕狼ゆに）から**フレンド申請を送ります**。
 
 フレンド申請は相手の承認待ちなのでその場では完結しません。だから申請は
 インスタンス作成時ではなく**登録した時点で前倒しに送り**、集会当日までに承認が済んだ状態を作ります。
@@ -436,14 +436,26 @@ https://vrchat.com/home/user/usr_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 本人が何もしていないのに本人の VRChat に申請が飛ぶので、応答に出る VRChat 表示名を必ず確認してください。
 誰が登録したかは `vrc-links.json` の `linkedBy` に残ります。
 
-**Bot がログインしているメインアカウント（`VRC_MAIN_USERNAME`、慕狼ゆに）自身を登録する場合**は、
+**vrchat-gateway がログインしているメインアカウント（慕狼ゆに）自身を登録する場合**は、
 フレンド状態の確認も申請も行いません。自分自身とはフレンドになれないためです。
 このアカウントは `/create-instance` が self-invite で招待するので、登録しておくと
 招待の報告に「あなた」として出るようになります。
 
 `/vrc-link` は運営ロール（`OPERATOR_ROLE_ID`）限定です。
 登録内容は `VRC_STATE_DIR/vrc-links.json` に保存されます（`VRC_LINK_STORE_PATH` で変更可）。
-cookie やインスタンス情報と同じ VRChat 側の状態なので、保存先も揃えています。個人に紐づくので Git には載せません。
+インスタンス情報と同じ VRChat 側の状態なので、保存先も揃えています。個人に紐づくので Git には載せません。
+
+## VRChat へのログイン
+
+VRChat へのログイン（メインアカウントのパスワード・2FA・cookie）は、pve01 の LXC 108 で動く
+**vrchat-gateway**（DevServer の `~/dev/vrchat-gateway`）がまとめて持ちます。Bot は VRChat を直接呼ばず、
+ゲートウェイの `VRC_GATEWAY_URL/api/1/<VRChat API のパス>` を `VRC_GATEWAY_TOKEN` 付きで呼びます。
+Bot はパスワードも 2FA の秘密鍵も持ちません。
+
+ゲートウェイは Bot に許した API（インスタンス作成・招待・フレンド・ユーザー取得・グループ掲示板への投稿など）だけを中継し、
+それ以外は 403 を返します。**VRChat の新しい API を使うときは、ゲートウェイの `clients.json` の
+`engineer-meetup-bot` の `allow` にも足してください。** ゲートウェイがログインできないときは、
+各コマンドが「VRChat 認証エラー: vrchat-gateway が VRChat にログインできません: …」と返します。
 
 ## 状態ファイルの置き場所
 
@@ -455,7 +467,6 @@ cookie やインスタンス情報と同じ VRChat 側の状態なので、保�
 | `state/storage.json` | 週次の開催予定・直近のツイートID・招待URL | `STORAGE_PATH` |
 | `state/lt-store.json` | LT 応募レコード | `LT_STORE_PATH` |
 | `state/lt-materials/` | LT 告知の素材画像 | `LT_MATERIALS_DIR` |
-| `state/cookies.json` | VRChat のセッション | `VRC_STATE_DIR` |
 | `state/latest.json` | 直近に作成したインスタンス情報 | `VRC_STATE_DIR` |
 | `state/vrc-links.json` | Discord ↔ VRChat アカウント対応表 | `VRC_LINK_STORE_PATH` |
 
@@ -486,10 +497,8 @@ npm install
 | `X_ACCOUNT` / `TEST_X_ACCOUNT` | 本番／テスト用 X アカウントのユーザー名（投稿URL組み立てに使用） |
 | `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_SECRET` | 本番 X アカウントの API 資格情報 |
 | `TEST_X_API_KEY` / `TEST_X_API_SECRET` / `TEST_X_ACCESS_TOKEN` / `TEST_X_ACCESS_SECRET` | テスト用 X アカウントの API 資格情報 |
-| `USER_AGENT` | VRChat API 規約で必須。形式: `AppName/1.0 contact@example.com` |
-| `VRC_STATE_DIR` | VRChat セッション（cookie）・インスタンス情報の保存先ディレクトリ |
-| `VRC_MAIN_USERNAME` / `VRC_MAIN_PASSWORD` | VRChat ログイン用アカウント |
-| `VRC_MAIN_TOTP_SECRET` | 2FA が有効な場合の TOTP シークレット（任意） |
+| `VRC_GATEWAY_URL` / `VRC_GATEWAY_TOKEN` | vrchat-gateway の URL と、ゲートウェイが発行した Bot 用のトークン（下の「VRChat へのログイン」） |
+| `VRC_STATE_DIR` | インスタンス情報の保存先ディレクトリ。未設定なら VRChat への告知などを飛ばす |
 | `VRC_SUB_USER_ID` | インスタンス作成時に自動招待するサブアカウントのユーザーID |
 | `WORLD_ID` | インスタンスを作成するワールドの ID |
 | `GROUP_ID` / `TEST_GROUP_ID` | 本番／テスト用の VRChat グループ ID |
@@ -638,9 +647,9 @@ src/
     quotePost.ts      開催告知の引用リポスト
     assets/           投稿テンプレート・画像
   vrchat/
-    api/              VRChat API クライアント（認証・ユーザー・フレンド・インスタンス作成・投稿）
+    api/              VRChat API クライアント（vrchat-gateway 経由。ログイン中のアカウント・ユーザー・フレンド・インスタンス作成・投稿）
     actions/          VRChat 上のアクション（グループ投稿・招待）
-    session.ts        VRChat セッションの共通化（cookie 再利用・同時実行の直列化）
+    session.ts        ゲートウェイ経由のクライアントとログイン中のアカウントを取る
     links.ts          プロフィールURLの解釈と Discord ↔ VRChat 対応表の永続化
     postLtAnnouncement.ts  LT 告知のグループ掲示板投稿（インスタンス情報に依存しない）
     createInstance.ts     インスタンス作成フロー

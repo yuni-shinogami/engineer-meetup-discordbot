@@ -24,7 +24,7 @@ vi.mock('../../../vrchat/api/friends', () => ({
 }));
 vi.mock('../../../vrchat/session', () => ({
   AuthError: class AuthError extends Error {},
-  withSession: async (_dir: string, fn: (session: unknown) => Promise<unknown>) =>
+  withSession: async (fn: (session: unknown) => Promise<unknown>) =>
     fn({ client: {}, user: { userId: 'usr_main', displayName: '慕狼ゆに' } }),
 }));
 vi.mock('../utils', () => ({

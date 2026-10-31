@@ -1,25 +1,29 @@
 import { describe, it, expect } from 'vitest';
-import { validateUserAgent, AuthError } from '../auth';
+import { currentUser, AuthError } from '../auth';
+import type { VRChatClient } from '../client';
 
-describe('validateUserAgent', () => {
-  it('正しい形式ならエラーを投げない', () => {
-    expect(() => validateUserAgent('MyApp/1.0 me@example.org')).not.toThrow();
+function makeClient(status: number, data: unknown): VRChatClient {
+  return { http: { get: async () => ({ status, data }) } } as unknown as VRChatClient;
+}
+
+describe('currentUser', () => {
+  it('ログイン中のアカウントの ID と表示名を返す', async () => {
+    const client = makeClient(200, { id: 'usr_main', displayName: '慕狼ゆに' });
+    expect(await currentUser(client)).toEqual({ userId: 'usr_main', displayName: '慕狼ゆに' });
   });
 
-  it.each([
-    'MyApp/1.0 contact@example.com',
-    'MyApp/1.0 your-contact@foo.org',
-    'MyApp/1.0 your-email@foo.org',
-    'MyApp/1.0 yourname@foo.org',
-  ])('テンプレそのままの値 (%s) は AuthError を投げる', (userAgent) => {
-    expect(() => validateUserAgent(userAgent)).toThrow(AuthError);
+  it('ゲートウェイが VRChat にログインできないときは理由つきの AuthError', async () => {
+    const client = makeClient(503, { error: 'login_failed', message: 'レート制限です' });
+    await expect(currentUser(client)).rejects.toThrow(AuthError);
+    await expect(currentUser(client)).rejects.toThrow(/レート制限です/);
   });
 
-  it('スラッシュが無い場合は AuthError を投げる', () => {
-    expect(() => validateUserAgent('MyApp1.0 me@real-domain.org')).toThrow(AuthError);
+  it('ゲートウェイに断られたときはトークンと許可の設定を見るよう促す', async () => {
+    const client = makeClient(403, { error: 'forbidden' });
+    await expect(currentUser(client)).rejects.toThrow(/VRC_GATEWAY_TOKEN/);
   });
 
-  it('スペースが無い場合は AuthError を投げる', () => {
-    expect(() => validateUserAgent('MyApp/1.0me@real-domain.org')).toThrow(AuthError);
+  it('それ以外の応答も AuthError にする', async () => {
+    await expect(currentUser(makeClient(500, {}))).rejects.toThrow(AuthError);
   });
 });
