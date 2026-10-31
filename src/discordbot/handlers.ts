@@ -2,6 +2,20 @@ import { registerButtonHandler, registerModalHandler, registerSelectHandler } fr
 import { CONFIRM_MEETUP_NO, CONFIRM_MEETUP_YES, LATE_PRE_ANNOUNCE_BUTTON } from './meetup';
 import { handleJoinSubButton, VRC_JOIN_SUB_BUTTON } from './vrc-launcher';
 import {
+  handleLtRecordEndButton,
+  handleLtRecordMarkButton,
+  handleLtRecordStartButton,
+  handleLtRecordStatusButton,
+  handleLtRecordStopButton,
+  handleLtRecordStopConfirm,
+  LT_REC_END_BUTTON,
+  LT_REC_MARK_BUTTON,
+  LT_REC_START_BUTTON,
+  LT_REC_STATUS_BUTTON,
+  LT_REC_STOP_BUTTON,
+  LT_REC_STOP_CONFIRM,
+} from './lt-recorder';
+import {
   LT_ANNOUNCE_BUTTON,
   LT_DATES_SELECT,
   LT_EDIT_BUTTON,
@@ -38,6 +52,12 @@ export function registerInteractionHandlers(): void {
   registerButtonHandler(CONFIRM_MEETUP_NO, handleConfirmMeetupButton);
   registerButtonHandler(LATE_PRE_ANNOUNCE_BUTTON, handleLatePreAnnounceButton);
   registerButtonHandler(VRC_JOIN_SUB_BUTTON, handleJoinSubButton);
+  registerButtonHandler(LT_REC_START_BUTTON, handleLtRecordStartButton);
+  registerButtonHandler(LT_REC_MARK_BUTTON, handleLtRecordMarkButton);
+  registerButtonHandler(LT_REC_END_BUTTON, handleLtRecordEndButton);
+  registerButtonHandler(LT_REC_STATUS_BUTTON, handleLtRecordStatusButton);
+  registerButtonHandler(LT_REC_STOP_BUTTON, handleLtRecordStopButton);
+  registerButtonHandler(LT_REC_STOP_CONFIRM, handleLtRecordStopConfirm);
   registerButtonHandler(LT_SCHEDULE_BUTTON, handleLtScheduleButton);
   registerButtonHandler(LT_UNSCHEDULE_BUTTON, handleLtUnscheduleButton);
   registerButtonHandler(LT_EDIT_BUTTON, handleLtEditButton);

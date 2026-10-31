@@ -81,6 +81,18 @@ export const config = {
   /** 上の接続に使う秘密鍵のパス。 */
   vrcLauncherSshKey: process.env.VRC_LAUNCHER_SSH_KEY || '',
 
+  // --- LT の録画（サブアカウントが入っている PC の OBS で録画し、YouTube に非公開でアップする） ---
+  /**
+   * 録画する PC の SSH 接続先。未設定なら「サブアカウントで入る」と同じ PC。
+   * 鍵がそろっているときだけ、/create-instance の結果に「LT録画開始」ボタンを出す。
+   */
+  ltRecorderSshTarget: process.env.LT_RECORDER_SSH_TARGET || process.env.VRC_LAUNCHER_SSH_TARGET || '',
+  /**
+   * 上の接続に使う秘密鍵のパス。入室用とは別の鍵にし、接続先の authorized_keys の command= で
+   * 録画スクリプト（Request-Recorder.ps1）に固定しておく。
+   */
+  ltRecorderSshKey: process.env.LT_RECORDER_SSH_KEY || '',
+
   // --- Canva（司会進行スライドの PDF 配布） ---
   canvaClientId: process.env.CANVA_CLIENT_ID || '',
   canvaClientSecret: process.env.CANVA_CLIENT_SECRET || '',

@@ -26,6 +26,11 @@
    - `VRC_LAUNCHER_SSH_TARGET` と `VRC_LAUNCHER_SSH_KEY` を設定していれば、結果に **「🖥️ サブアカウントで入る」ボタン**が付きます。
      押すと、別の PC（gaming-laptop）でサブアカウントの VRChat をデスクトップモードで起動し、そのインスタンスに直接入ります（運営ロール限定）。
      ボタンは最新のインスタンスにだけ有効で、後から別のインスタンスを作った場合は古いボタンでは入りません。
+   - `LT_RECORDER_SSH_KEY` を設定していれば、**「🎥 LT録画開始」ボタン**も付きます（運営ロール限定）。
+     サブアカウントが入室したあとに押すと、サブアカウントをひな壇前にワープさせて配信用画面を 4 アングルにし、OBS で録画を始めます。
+     返信が録画パネルになり、今日の LT ごとの **「▶ 登壇者名」** で LT の始まりを、**「⏸ 区切り」** で終わりを記録します。
+     **「⏹ 録画終了」** で録画を止めると、記録した時刻で LT ごとに切り分け、YouTube に**非公開**でアップロードします（`archivePolicy` が `none` の LT はアップしません）。
+     終わるとチャンネルに動画の URL と、登壇者の希望（一般公開／限定公開）に合わせた切り替え方を報告します。途中経過は「🔄 状況」で確認できます。
 
 4. **開催告知 (`/post-announcement`)**
    - X への引用リポスト・Discord のお知らせチャンネルへの投稿・VRChat グループ告知（掲示板投稿）を一括実行します。
@@ -504,6 +509,7 @@ npm install
 | `GROUP_ID` / `TEST_GROUP_ID` | 本番／テスト用の VRChat グループ ID |
 | `INSTANCE_REGION` | インスタンスのリージョン（任意、デフォルト `jp`） |
 | `VRC_LAUNCHER_SSH_TARGET` / `VRC_LAUNCHER_SSH_KEY` | 「サブアカウントで入る」ボタンで VRChat を起動する PC の SSH 接続先（`ユーザー名@ホスト`）と秘密鍵のパス（任意、両方そろったときだけボタンを出す）。接続先ではこの鍵を `authorized_keys` の `command=` で起動スクリプトに固定し、Bot からは location だけを送る |
+| `LT_RECORDER_SSH_KEY` / `LT_RECORDER_SSH_TARGET` | 「LT録画開始」ボタンで録画する PC の秘密鍵のパスと SSH 接続先（任意。接続先の既定は `VRC_LAUNCHER_SSH_TARGET`、鍵があるときだけボタンを出す）。入室用とは別の鍵にし、接続先ではこの鍵を `authorized_keys` の `command=` で録画スクリプトに固定する |
 | `VRC_LINK_STORE_PATH` | Discord ↔ VRChat アカウント対応表の保存先（任意、デフォルトは `VRC_STATE_DIR/vrc-links.json`） |
 | `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` | 自動実行の cron 式（任意、デフォルトは毎週月曜 12:00 / 木曜 19:00） |
 | `STORAGE_PATH` | 週次状態の保存先（任意、デフォルト `./state/storage.json`） |
@@ -626,6 +632,7 @@ src/
     handlers.ts       ハンドラと customId キーの紐づけ
     executor.ts       外部スクリプト実行ユーティリティ
     vrc-launcher.ts   「サブアカウントで入る」ボタン（別の PC の VRChat を SSH で起動）
+    lt-recorder.ts    「LT録画開始」ボタンと録画パネル（別の PC の OBS で録画し、YouTube へ非公開でアップ）
     lt/
       types.ts        LtEntry / LtStatus の定義、未入力項目の判定
       status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決
