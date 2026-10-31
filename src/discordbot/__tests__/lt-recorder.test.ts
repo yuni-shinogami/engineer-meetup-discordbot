@@ -197,6 +197,26 @@ describe('renderStatus', () => {
   it('失敗したら理由を出す', () => {
     expect(renderStatus({ ...RECORDING, state: 'error', error: 'ffmpeg failed' })).toContain('ffmpeg failed');
   });
+
+  // YouTube を認可する前は編集までで止まる。アップロード済みのような案内をしない
+  it('編集だけ終わったら、アップロードしていないことと書き出したファイルを出す', () => {
+    const text = renderStatus({
+      ...RECORDING,
+      state: 'edited',
+      clips: [
+        { lt_id: '1', title: '自作OSの話', speaker: 'A', archive_policy: 'public', video_id: null, privacy: null, file: '01_自作OSの話.mp4' },
+        { lt_id: '2', title: '短い話', speaker: 'B', archive_policy: 'unlisted', video_id: null, privacy: null, file: null, skipped: '短すぎる（12秒）' },
+        { lt_id: '3', title: '非公開の話', speaker: 'C', archive_policy: 'none', video_id: null, privacy: null, file: null },
+      ],
+    });
+
+    expect(text).toContain('アップロードはしていません');
+    expect(text).toContain(RECORDING.session);
+    expect(text).toMatch(/一般公開OK → 01_自作OSの話\.mp4$/m);
+    expect(text).toMatch(/→ 切り出していません（短すぎる（12秒））$/m);
+    expect(text).toMatch(/録画の公開なし → アップロードしていません$/m);
+    expect(text).not.toContain('Studio');
+  });
 });
 
 describe('handleLtRecordStartButton', () => {
@@ -301,5 +321,31 @@ describe('handleLtRecordStopConfirm', () => {
     await vi.advanceTimersByTimeAsync(2 * 60_000);
 
     expect(channel.send).toHaveBeenCalledWith(expect.stringContaining('https://youtu.be/abc'));
+  });
+
+  it('編集だけで止まった場合も、終わったものとしてチャンネルに報告する', async () => {
+    vi.useFakeTimers();
+    const channel = {
+      messages: { fetch: vi.fn().mockResolvedValue({ edit: vi.fn().mockResolvedValue(undefined) }) },
+      isSendable: () => true,
+      send: vi.fn().mockResolvedValue(undefined),
+    };
+    recorderReplies({
+      stop: { ok: true, session: RECORDING.session, duration: '0:30:00', lts: 1 },
+      status: { ok: true, ...RECORDING, state: 'processing' },
+    });
+
+    await handleLtRecordStopConfirm(interaction({ channel }), ['panel-message']);
+    recorderReplies({
+      status: {
+        ok: true,
+        ...RECORDING,
+        state: 'edited',
+        clips: [{ lt_id: '1', title: 'Aの話', speaker: 'A', archive_policy: 'public', video_id: null, privacy: null, file: '01_Aの話.mp4' }],
+      },
+    });
+    await vi.advanceTimersByTimeAsync(2 * 60_000);
+
+    expect(channel.send).toHaveBeenCalledWith(expect.stringContaining('01_Aの話.mp4'));
   });
 });
