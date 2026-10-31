@@ -28,7 +28,7 @@ export const config = {
   storagePath: process.env.STORAGE_PATH || './state/storage.json',
   /**
    * Discord ユーザー → VRChat ユーザーID の対応表。
-   * cookie やインスタンス情報と同じ VRChat 側の状態なので、既定では VRC_STATE_DIR に置く。
+   * インスタンス情報と同じ VRChat 側の状態なので、既定では VRC_STATE_DIR に置く。
    * 個人に紐づくデータなので Git には載せない。
    */
   vrcLinkStorePath: process.env.VRC_LINK_STORE_PATH
@@ -88,7 +88,7 @@ export const config = {
   canvaSlideDesignId: process.env.CANVA_SLIDE_DESIGN_ID || '',
   /** 初回認可のコールバック先。Developer Portal に登録した値と一致していないと弾かれる。 */
   canvaRedirectUri: process.env.CANVA_REDIRECT_URI || 'http://127.0.0.1:8976/callback',
-  /** リフレッシュトークンの置き場所。VRChat の cookies.json と同じ state ディレクトリ。 */
+  /** リフレッシュトークンの置き場所。VRChat のインスタンス情報と同じ state ディレクトリ。 */
   canvaStateDir: process.env.CANVA_STATE_DIR || './state',
   /**
    * 添付できる PDF の上限（MB）。超えたら投稿せずサイズを知らせる。

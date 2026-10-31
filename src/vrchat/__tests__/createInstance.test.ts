@@ -16,7 +16,7 @@ vi.mock('../internal/state', () => ({ saveLatest: mocks.saveLatest }));
 vi.mock('../actions/invite', () => ({ inviteWithFriendCheck: mocks.inviteWithFriendCheck }));
 vi.mock('../session', () => ({
   AuthError: class AuthError extends Error {},
-  withSession: async (_dir: string, fn: (session: unknown) => Promise<unknown>) =>
+  withSession: async (fn: (session: unknown) => Promise<unknown>) =>
     fn({ client: {}, user: { userId: 'usr_main', displayName: 'メイン' } }),
 }));
 
@@ -26,7 +26,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.order.length = 0;
 
-  process.env.USER_AGENT = 'Test/1.0 test@example.org';
   process.env.WORLD_ID = 'wrld_1';
   process.env.GROUP_ID = 'grp_1';
   process.env.VRC_SUB_USER_ID = 'usr_sub';

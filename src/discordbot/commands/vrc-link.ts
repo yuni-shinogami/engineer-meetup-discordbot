@@ -104,7 +104,7 @@ async function handleSet(interaction: ChatInputCommandInteraction, target: User)
 
   const who = targetLabel(target, interaction.user);
 
-  const message = await withSession(config.vrcStateDir, async ({ client, user }) => {
+  const message = await withSession(async ({ client, user }) => {
     const vrcUser = await getUser(client, parsed.userId);
     if (!vrcUser) {
       return `❌ その VRChat ユーザーは見つかりませんでした: \`${parsed.userId}\`\nプロフィールのURLを貼り直してください（例: ${PROFILE_EXAMPLE}）`;
@@ -192,7 +192,7 @@ async function handleShow(interaction: ChatInputCommandInteraction, target: User
 
   // フレンド状態はキャッシュせず毎回引く。取れなくても登録内容は見せる。
   try {
-    const friendLine = await withSession(config.vrcStateDir, async ({ client, user }) => {
+    const friendLine = await withSession(async ({ client, user }) => {
       if (link.vrcUserId === user.userId) return `フレンド: — ${SELF_ACCOUNT_NOTE}`;
 
       const status = await getFriendStatus(client, link.vrcUserId);

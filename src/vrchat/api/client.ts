@@ -1,51 +1,25 @@
 import axios, { AxiosInstance } from 'axios';
-import { wrapper } from 'axios-cookiejar-support';
-import { CookieJar } from 'tough-cookie';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
-
-const VRCHAT_API_BASE = 'https://api.vrchat.cloud/api/1';
+import { env } from '../internal/util';
 
 export interface VRChatClient {
   http: AxiosInstance;
-  jar: CookieJar;
-  cookieFile?: string;
 }
 
-export async function createClient(userAgent: string, cookieFile?: string): Promise<VRChatClient> {
-  let jar: CookieJar;
-
-  if (cookieFile && existsSync(cookieFile)) {
-    try {
-      const raw = JSON.parse(readFileSync(cookieFile, 'utf8'));
-      jar = await CookieJar.deserialize(raw);
-      console.log(`Loaded existing session from ${cookieFile}`);
-    } catch {
-      jar = new CookieJar();
-    }
-  } else {
-    jar = new CookieJar();
-  }
-
-  const http = wrapper(
-    axios.create({
-      baseURL: VRCHAT_API_BASE,
-      jar,
-      headers: { 'User-Agent': userAgent },
-      validateStatus: () => true,
-    }),
-  );
-
-  return cookieFile !== undefined ? { http, jar, cookieFile } : { http, jar };
-}
-
-export async function saveCookies({ jar, cookieFile }: VRChatClient): Promise<void> {
-  if (!cookieFile) return;
-  try {
-    const serialized = await jar.serialize();
-    mkdirSync(dirname(cookieFile), { recursive: true });
-    writeFileSync(cookieFile, JSON.stringify(serialized));
-  } catch (e) {
-    console.error(`Failed to save cookies: ${e}`);
-  }
+/**
+ * VRChat API を vrchat-gateway 経由で呼ぶクライアント。
+ *
+ * ログイン（パスワード・2FA・cookie）はゲートウェイがまとめて持つので、Bot はゲートウェイのトークンだけを送る。
+ * ゲートウェイは Bot に許した API だけを VRChat に中継し、それ以外は 403 を返す。
+ * パスは VRChat API と同じ（`/instances` など）なので、呼び出し側は VRChat を直接呼ぶときと変わらない。
+ */
+export function createClient(
+  gatewayUrl = env('VRC_GATEWAY_URL'),
+  token = env('VRC_GATEWAY_TOKEN'),
+): VRChatClient {
+  const http = axios.create({
+    baseURL: `${gatewayUrl.replace(/\/+$/, '')}/api/1`,
+    headers: { Authorization: `Bearer ${token}` },
+    validateStatus: () => true,
+  });
+  return { http };
 }

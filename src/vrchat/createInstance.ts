@@ -34,7 +34,7 @@ export async function createInstance(
 
   const stateFile = join(stateDir, 'latest.json');
 
-  return withSession(stateDir, async ({ client, user }) => {
+  return withSession(async ({ client, user }) => {
     const instance = await createGroupPlusInstance(client, worldId, groupId, region);
     console.log(`[createInstance] created instance: ${instance.location} (short_name: ${instance.shortName})`);
 
