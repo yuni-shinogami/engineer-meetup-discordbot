@@ -26,13 +26,15 @@ export function instanceNameOf(location: string): string {
   return location.split(':')[1]?.split('~')[0] ?? '';
 }
 
+export function joinSubButton(location: string): ButtonBuilder {
+  return new ButtonBuilder()
+    .setCustomId(buildCustomId(VRC_JOIN_SUB_BUTTON, instanceNameOf(location)))
+    .setLabel('🖥️ サブアカウントで入る')
+    .setStyle(ButtonStyle.Secondary);
+}
+
 export function joinSubButtonRow(location: string): ActionRowBuilder<ButtonBuilder> {
-  return new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setCustomId(buildCustomId(VRC_JOIN_SUB_BUTTON, instanceNameOf(location)))
-      .setLabel('🖥️ サブアカウントで入る')
-      .setStyle(ButtonStyle.Secondary),
-  );
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(joinSubButton(location));
 }
 
 /**
@@ -66,7 +68,8 @@ export function requestSubAccountJoin(location: string): Promise<void> {
   });
 }
 
-function readLatest(): LatestState | null {
+/** /create-instance が最後に作ったインスタンス。ボタンが最新のインスタンスのものかを確かめるのに使う。 */
+export function readLatest(): LatestState | null {
   try {
     return JSON.parse(readFileSync(join(config.vrcStateDir || './state', 'latest.json'), 'utf-8')) as LatestState;
   } catch {

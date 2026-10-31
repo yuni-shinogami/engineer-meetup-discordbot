@@ -1,8 +1,9 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { config } from '../config';
 import { storage } from '../storage';
 import { vrcLinkStore } from '../vrc-links';
-import { isVrcLauncherConfigured, joinSubButtonRow } from '../vrc-launcher';
+import { isVrcLauncherConfigured, joinSubButton } from '../vrc-launcher';
+import { isLtRecorderConfigured, ltRecordStartButton } from '../lt-recorder';
 import { requireOperatorRole, formatError } from './utils';
 import {
   AuthError,
@@ -50,9 +51,13 @@ export async function handleCreateInstanceCommand(interaction: ChatInputCommandI
       );
     }
 
+    const buttons = [
+      ...(isVrcLauncherConfigured() ? [joinSubButton(result.location)] : []),
+      ...(isLtRecorderConfigured() ? [ltRecordStartButton(result.location, isProd)] : []),
+    ];
     await interaction.editReply({
       content: lines.join('\n'),
-      components: isVrcLauncherConfigured() ? [joinSubButtonRow(result.location)] : [],
+      components: buttons.length > 0 ? [new ActionRowBuilder<ButtonBuilder>().addComponents(buttons)] : [],
     });
   } catch (error) {
     console.error('handleCreateInstanceCommand failed:', error);

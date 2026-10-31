@@ -5,12 +5,19 @@ const mocks = vi.hoisted(() => ({
   createInstance: vi.fn(),
   store: { get: vi.fn() },
   storage: { lastInviteUrl: null as string | null },
-  config: { vrcStateDir: '/state', vrcLauncherSshTarget: '', vrcLauncherSshKey: '' },
+  config: {
+    vrcStateDir: '/state',
+    vrcLauncherSshTarget: '',
+    vrcLauncherSshKey: '',
+    ltRecorderSshTarget: '',
+    ltRecorderSshKey: '',
+  },
 }));
 
 vi.mock('../../config', () => ({ config: mocks.config }));
 vi.mock('../../storage', () => ({ storage: mocks.storage }));
 vi.mock('../../vrc-links', () => ({ vrcLinkStore: mocks.store }));
+vi.mock('../../lt/store', () => ({ ltStore: {} }));
 vi.mock('../../../vrchat/createInstance', () => ({
   createInstance: mocks.createInstance,
   AuthError: class AuthError extends Error {},
@@ -57,6 +64,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.config.vrcLauncherSshTarget = '';
   mocks.config.vrcLauncherSshKey = '';
+  mocks.config.ltRecorderSshTarget = '';
+  mocks.config.ltRecorderSshKey = '';
   mocks.store.get.mockReturnValue(undefined);
   mocks.createInstance.mockResolvedValue({
     inviteUrl: 'https://vrchat.com/i/abcd',
@@ -82,6 +91,20 @@ describe('サブアカウントで入るボタン', () => {
     await handleCreateInstanceCommand(i);
 
     expect(buttonIds(i)).toEqual([]);
+  });
+});
+
+describe('LT録画開始ボタン', () => {
+  it('録画用の鍵が設定されていれば、入室ボタンの隣に本番かどうか付きで出す', async () => {
+    mocks.config.vrcLauncherSshTarget = 'user@vrchat-pc';
+    mocks.config.vrcLauncherSshKey = '/path/to/key';
+    mocks.config.ltRecorderSshTarget = 'user@vrchat-pc';
+    mocks.config.ltRecorderSshKey = '/path/to/recorder-key';
+    const i = interaction();
+
+    await handleCreateInstanceCommand(i);
+
+    expect(buttonIds(i)).toEqual(['vrc:join-sub:45350', 'ltrec:start:45350:0']);
   });
 });
 
