@@ -6,7 +6,7 @@
 
 ## 主な機能
 
-1. **開催確認 (毎週木曜 12:00 自動 / `/confirm-meetup` で手動)**
+1. **開催確認 (毎週月曜 12:00 自動 / `/confirm-meetup` で手動)**
    - 運営チャンネルに「今週やる？」の YES/NO ボタンを送信します。
    - YES が押されると、その週の事前告知が予約されます（`storage.json` に保存）。
 
@@ -496,7 +496,7 @@ npm install
 | `INSTANCE_REGION` | インスタンスのリージョン（任意、デフォルト `jp`） |
 | `VRC_LAUNCHER_SSH_TARGET` / `VRC_LAUNCHER_SSH_KEY` | 「サブアカウントで入る」ボタンで VRChat を起動する PC の SSH 接続先（`ユーザー名@ホスト`）と秘密鍵のパス（任意、両方そろったときだけボタンを出す）。接続先ではこの鍵を `authorized_keys` の `command=` で起動スクリプトに固定し、Bot からは location だけを送る |
 | `VRC_LINK_STORE_PATH` | Discord ↔ VRChat アカウント対応表の保存先（任意、デフォルトは `VRC_STATE_DIR/vrc-links.json`） |
-| `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` | 自動実行の cron 式（任意、デフォルトは毎週木曜 12:00 / 19:00） |
+| `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` | 自動実行の cron 式（任意、デフォルトは毎週月曜 12:00 / 木曜 19:00） |
 | `STORAGE_PATH` | 週次状態の保存先（任意、デフォルト `./state/storage.json`） |
 | `LT_FORUM_CHANNEL_ID` / `TEST_LT_FORUM_CHANNEL_ID` | 本番／テスト用の LT 応募フォーラムチャンネル ID |
 | `MEETUP_WEEKDAY` | 集会の開催曜日（0=日 … 5=金、任意、デフォルト `5`） |
@@ -509,7 +509,7 @@ npm install
 | `LT_GROUP_POST_NOTIFY` | VRChat グループ告知でメンバー全員に通知するか（任意、デフォルト `true`） |
 | `LT_AUTO_ANNOUNCE` | 週次フローに LT 告知を同乗させるか（任意、デフォルト `true`） |
 
-`CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` の木曜は**開催前日**の確認・事前告知であり、開催日そのものではありません。LT の日程候補は cron 式ではなく `MEETUP_WEEKDAY` から算出します。
+`PRE_ANNOUNCE_CRON` の木曜は**開催前日**の事前告知であり、開催日そのものではありません。LT の日程候補は cron 式ではなく `MEETUP_WEEKDAY` から算出します。
 
 `CLIENT_ID` は Bot ログイン時に自動取得されるため設定不要です。
 
@@ -610,7 +610,7 @@ src/
   discordbot/
     index.ts        エントリーポイント、イベントハンドラ登録
     config.ts        環境変数の読み込み
-    scheduler.ts      定期実行タスク（木曜 confirm / pre-announce + LT 告知）
+    scheduler.ts      定期実行タスク（月曜 confirm / 木曜 pre-announce + LT 告知）
     meetup.ts         開催確認・事前告知の実行ロジック
     storage.ts        週次状態の永続化（state/storage.json）
     interactions.ts   customId のルーティング（ボタン・モーダル・セレクト）

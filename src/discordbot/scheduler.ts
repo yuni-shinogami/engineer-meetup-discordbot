@@ -9,7 +9,7 @@ import { runWeeklyLtAnnounce } from './lt/weekly-announce';
 export const CRON_SCHEDULES = [
   {
     label: '開催確認',
-    expr: process.env.CONFIRM_CRON ?? '0 12 * * 4',
+    expr: process.env.CONFIRM_CRON ?? '0 12 * * 1',
     description: '運営チャンネルに YES/NO ボタンを送信',
   },
   {
