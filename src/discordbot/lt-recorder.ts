@@ -43,7 +43,8 @@ const WATCH_LIMIT_MS = 8 * 60 * 60_000;
 const MAX_LT_BUTTONS = 15;
 
 type RecorderVerb = 'start' | 'mark' | 'end' | 'stop' | 'status';
-type RecorderState = 'recording' | 'processing' | 'uploading' | 'done' | 'error';
+/** `edited` は YouTube を認可する前の終点（切り出しまで済み、アップロードはしていない）。 */
+type RecorderState = 'recording' | 'processing' | 'edited' | 'uploading' | 'done' | 'error';
 
 export interface RecorderStatus {
   session: string;
@@ -58,6 +59,10 @@ export interface RecorderStatus {
     archive_policy: ArchivePolicy;
     video_id: string | null;
     privacy: string | null;
+    /** 録画 PC に書き出した動画のファイル名。切り出していなければ null */
+    file?: string | null;
+    /** 切り出さなかった理由（短すぎるなど） */
+    skipped?: string | null;
   }[];
 }
 
@@ -173,6 +178,16 @@ export function renderStatus(status: RecorderStatus): string {
     case 'processing':
       lines.push('✂️ 録画を終了しました。LT ごとに切り分けています（数十分かかります）。');
       break;
+    case 'edited': {
+      lines.push(status.clips.length > 0
+        ? `✂️ LT ごとの編集が終わりました。YouTube が未設定のためアップロードはしていません（動画は録画 PC の ${status.session} フォルダにあります）。`
+        : '✅ 録画を終了しました。切り出す LT はありませんでした。');
+      for (const clip of status.clips) {
+        const result = clip.file ?? (clip.skipped ? `切り出していません（${clip.skipped}）` : ARCHIVE_ACTION.none);
+        lines.push(`- **${clip.title}** / ${clip.speaker}`, `  ${ARCHIVE_POLICY_SHORT[clip.archive_policy] ?? clip.archive_policy} → ${result}`);
+      }
+      break;
+    }
     case 'uploading':
       lines.push('⬆️ YouTube に非公開でアップロードしています。');
       break;
@@ -182,9 +197,12 @@ export function renderStatus(status: RecorderStatus): string {
         : '✅ 録画を終了しました。切り出す LT はありませんでした。');
       for (const clip of status.clips) {
         const url = clip.video_id ? ` https://youtu.be/${clip.video_id}` : '';
+        const action = clip.skipped && !clip.video_id
+          ? `切り出していません（${clip.skipped}）`
+          : ARCHIVE_ACTION[clip.archive_policy] ?? '';
         lines.push(
           `- **${clip.title}** / ${clip.speaker}`,
-          `  ${ARCHIVE_POLICY_SHORT[clip.archive_policy] ?? clip.archive_policy} → ${ARCHIVE_ACTION[clip.archive_policy] ?? ''}${url}`,
+          `  ${ARCHIVE_POLICY_SHORT[clip.archive_policy] ?? clip.archive_policy} → ${action}${url}`,
         );
       }
       break;
@@ -197,7 +215,7 @@ export function renderStatus(status: RecorderStatus): string {
 }
 
 function isFinished(status: RecorderStatus): boolean {
-  return status.state === 'done' || status.state === 'error';
+  return status.state === 'done' || status.state === 'edited' || status.state === 'error';
 }
 
 /**
