@@ -10,6 +10,7 @@
    - 運営チャンネルに「今週やる？」の YES/NO ボタンを送信します。
    - YES が押されると、その週の事前告知が予約されます（`storage.json` に保存）。
    - `VRCEVE_SSH_KEY` を設定していれば、YES で **VRChat イベントカレンダー**（vrceve.com）にもその週の集会を登録し、編集用 URL を運営チャンネルに流します（22:00〜23:30。LT がある週はイベント名に「【LTあり】タイトル」、内容に LT の一覧を入れます）。登録は Google ログインが要るフォームなので、ログイン済みの Chrome を置いたデスクトップ VM が送ります（[`browser-desktop/`](browser-desktop/README.md)）。あとから NO に変えると削除します。テストチャンネルの YES では送らずに、入力した画面だけを添付します。
+   - 開催確認とは別に、`/event-calendar` で手で登録・削除したり、VM の Chrome のログインを確かめたりできます。
 
 2. **事前告知 (毎週木曜 19:00 自動 / `/pre-announce` で手動)**
    - 開催予約済みの場合、X（Twitter）に事前告知ツイート（画像付き）を投稿します。
@@ -602,6 +603,7 @@ systemctl enable --now engineer-meetup-bot engineer-meetup-deploy.timer
 | コマンド | 説明 |
 | :--- | :--- |
 | `/confirm-meetup` | 今週の開催確認 YES/NO ボタンを運営チャンネルに送信 |
+| `/event-calendar` | 次の集会を VRChat イベントカレンダーに登録（`action` で削除・ログインの確認も）。`production:False`（既定）では送信せずに入力した画面だけを返す。開催確認の YES でも自動で登録される |
 | `/pre-announce` | X に事前告知（画像付き）を投稿し、翌日の LT 告知（X）も投稿（`lt-only:True` で LT だけ / `skip-lt:True` で LT を省略） |
 | `/create-instance` | VRChat インスタンスを作成し招待 URL を取得。実行者が `/vrc-link` 登録済みなら本人にも招待を送る |
 | `/vrc-link` | VRChat アカウントを登録し、招待を受け取れるようにする（`set` / `show` / `clear`） |

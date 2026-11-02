@@ -16,6 +16,7 @@ import {
   handleLtApplyCommand,
   handleLtMaterialCommand,
   handleSlidesCommand,
+  handleEventCalendarCommand,
   registerCommands,
 } from './commands';
 
@@ -51,6 +52,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         case 'lt-apply':            await handleLtApplyCommand(interaction); break;
         case 'lt-material':         await handleLtMaterialCommand(interaction); break;
         case 'slides':              await handleSlidesCommand(interaction); break;
+        case 'event-calendar':      await handleEventCalendarCommand(interaction); break;
       }
     } else if (interaction.isButton()) {
       if (!await dispatchButton(interaction)) {
