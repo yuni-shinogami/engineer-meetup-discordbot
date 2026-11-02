@@ -1,6 +1,7 @@
 import { registerButtonHandler, registerModalHandler, registerSelectHandler } from './interactions';
 import { CONFIRM_MEETUP_NO, CONFIRM_MEETUP_YES, LATE_PRE_ANNOUNCE_BUTTON } from './meetup';
 import { handleJoinSubButton, VRC_JOIN_SUB_BUTTON } from './vrc-launcher';
+import { handleInviteMeButton, VRC_INVITE_ME_BUTTON } from './vrc-invite';
 import {
   handleLtRecordEndButton,
   handleLtRecordMarkButton,
@@ -54,6 +55,7 @@ export function registerInteractionHandlers(): void {
   registerButtonHandler(CONFIRM_MEETUP_NO, handleConfirmMeetupButton);
   registerButtonHandler(LATE_PRE_ANNOUNCE_BUTTON, handleLatePreAnnounceButton);
   registerButtonHandler(VRC_JOIN_SUB_BUTTON, handleJoinSubButton);
+  registerButtonHandler(VRC_INVITE_ME_BUTTON, handleInviteMeButton);
   registerButtonHandler(LT_REC_START_BUTTON, handleLtRecordStartButton);
   registerButtonHandler(LT_REC_RADIO_BUTTON, handleRadioPrepButton);
   registerButtonHandler(LT_REC_MARK_BUTTON, handleLtRecordMarkButton);

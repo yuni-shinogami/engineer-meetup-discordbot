@@ -20,7 +20,7 @@ vi.mock('../session', () => ({
     fn({ client: {}, user: { userId: 'usr_main', displayName: 'メイン' } }),
 }));
 
-import { createInstance } from '../createInstance';
+import { createInstance, inviteToInstance } from '../createInstance';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -121,5 +121,31 @@ describe('createInstance', () => {
     const result = await createInstance(true, '/state');
 
     expect(result.invites.map(i => i.userId)).toEqual(['usr_sub']);
+  });
+});
+
+describe('inviteToInstance', () => {
+  it('ほかの人にはフレンドを確かめてから招待する', async () => {
+    const result = await inviteToInstance('wrld_1', '12345', { userId: 'usr_operator', label: 'あなた' });
+
+    expect(mocks.inviteWithFriendCheck).toHaveBeenCalledWith({}, { userId: 'usr_operator', label: 'あなた' }, 'wrld_1', '12345');
+    expect(result.status).toBe('sent');
+  });
+
+  // 自分自身とはフレンドになれないので、メインアカウント本人には self-invite する
+  it('メインアカウント本人には self-invite する', async () => {
+    const result = await inviteToInstance('wrld_1', '12345', { userId: 'usr_main', label: 'あなた' });
+
+    expect(mocks.inviteSelf).toHaveBeenCalledWith({}, 'usr_main', 'wrld_1', '12345');
+    expect(mocks.inviteWithFriendCheck).not.toHaveBeenCalled();
+    expect(result.status).toBe('sent');
+  });
+
+  it('self-invite に失敗したら理由を返す', async () => {
+    mocks.inviteSelf.mockRejectedValueOnce(new Error('rate limited'));
+
+    const result = await inviteToInstance('wrld_1', '12345', { userId: 'usr_main', label: 'あなた' });
+
+    expect(result).toEqual({ userId: 'usr_main', label: 'あなた', status: 'failed', error: 'rate limited' });
   });
 });
