@@ -1,0 +1,14 @@
+# 録画 PC で作られるもの・置くもの（リポジトリには入れない）
+lt-recorder/client_secret.json
+lt-recorder/token.json
+lt-recorder/.venv/
+lt-recorder/models/
+lt-recorder/assets/ending.wav
+lt-recorder/assets/*.ttf
+lt-recorder/click.txt
+lt-recorder/click.log
+vrc-launcher/request.txt
+vrc-launcher/join.log
+__pycache__/
+*.bak
+*.mp4
