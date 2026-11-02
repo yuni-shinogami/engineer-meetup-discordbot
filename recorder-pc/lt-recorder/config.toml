@@ -90,5 +90,7 @@ steps = [
   { note = "入室時のダイアログへの自動回答を待つ", wait_pose = 30 },
   # ワールドのギミック: ひな壇の前 (-38.7, 1.06, -6.1) に 270° 向きでワープし、Streamer Mode もオンになる
   { note = "ひな壇の前にワープ", keys = "rshift+1", then_wait = 2 },
+  { note = "発表を見る人の邪魔にならないようにしゃがむ", keys = "z", then_wait = 1 },
   { note = "配信用画面を 4 アングルに", canvas = "quad", toggle = "shift+q", mode = "f" },
+  { note = "画面に発表を少し引いた視点のアングルを出す", keys = "2", then_wait = 1 },
 ]

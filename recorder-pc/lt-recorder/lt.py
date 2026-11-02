@@ -664,7 +664,11 @@ def youtube():
     creds = Credentials.from_authorized_user_file(str(token), SCOPES)
     if not creds.valid:
         creds.refresh(Request())
-        token.write_text(creds.to_json(), encoding="utf-8")
+        try:
+            token.write_text(creds.to_json(), encoding="utf-8")
+        except OSError as ex:
+            # 保存できなくても更新トークンは変わらないので、アップロードは続けられる（次回も更新し直すだけ）
+            log(f"token.json を更新できません（録画 PC のユーザーに書き込み権限が必要）: {ex}")
     return build("youtube", "v3", credentials=creds)
 
 

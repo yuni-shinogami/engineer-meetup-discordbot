@@ -39,6 +39,7 @@ Bot から SSH で操作する録画 PC（Windows のゲーミングノート）
 6. Bot の公開鍵を `C:\ProgramData\ssh\administrators_authorized_keys` に足す（[`authorized_keys.example`](authorized_keys.example)）
 7. YouTube の認可（初回のみ）: Google Cloud で作った OAuth クライアント（デスクトップアプリ）の `client_secret.json` を `lt-recorder/` に置き、`lt.py auth` で集会のチャンネルのアカウントで許可する。`token.json` ができる
    - `client_secret.json` と `token.json` はリポジトリに入れない（`.gitignore` 済み）
+   - `token.json` は、録画 PC のユーザーが書き込めるようにする（タスクが通常の権限で動き、認可を更新したときに書き直すため）。管理者の SSH で置いた場合は `icacls token.json /grant <ユーザー>:(M)`
 
 ## 書き換えるときの注意
 
