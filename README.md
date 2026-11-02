@@ -11,7 +11,8 @@
    - YES が押されると、その週の事前告知が予約されます（`storage.json` に保存）。
    - `VRCEVE_SSH_KEY` を設定していれば、YES で **VRChat イベントカレンダー**（vrceve.com）にもその週の集会を登録し、編集用 URL を運営チャンネルに流します（22:00〜23:30。LT がある週はイベント名に「【LTあり】タイトル」、内容に LT の一覧を入れます）。登録は Google ログインが要るフォームなので、ログイン済みの Chrome を置いたデスクトップ VM が送ります（[`browser-desktop/`](browser-desktop/README.md)）。あとから NO に変えると削除します。テストチャンネルの YES では送らずに、入力した画面だけを添付します。
    - 開催確認とは別に、`/event-calendar` で手で登録・削除したり、VM の Chrome のログインを確かめたりできます。
-   - YES で **VRChat のグループのイベント**（VRChat の「イベント」に載るカレンダー）にもその週の集会を作ります（公開・Hangout・作成時の通知なし。タイトル・内容・時刻は VRChat イベントカレンダーと同じ）。あとから NO に変えると削除します。テストチャンネルの YES では、テスト用のグループにグループ内だけで作ります。開催確認とは別に `/vrc-event` で手で登録・削除できます。vrchat-gateway で `POST /calendar/<グループ>/event` と `DELETE /calendar/<グループ>/*` を許可しておく必要があります。
+   - YES で **VRChat のグループのイベント**（VRChat の「イベント」に載るカレンダー）にもその週の集会を作ります（公開・Hangout・作成時の通知なし。タイトル・内容・時刻は VRChat イベントカレンダーと同じ）。あとから NO に変えると削除します。テストチャンネルの YES では、テスト用のグループにグループ内だけで作ります。開催確認とは別に `/vrc-event` で手で登録・削除できます。
+   - YES で **Discord のイベント**もその週の分だけ作ります（以前は毎週の繰り返しのイベントを 1 つ置いていたが、開催しない週にも載ってしまうため）。中身は以前の毎週のイベントと同じ（外部の場所「VRChat」、22:00〜翌 3:00、説明・画像 `assets/discord-event.png`）で、LT がある週は名前と説明に LT を足します。NO に変えると削除します。テストチャンネルの YES では作らずに内容だけを返します。`/discord-event` で手で作成・削除もできます。Bot のロールに「イベントの作成」か「イベントの管理」の権限が必要です。vrchat-gateway で `POST /calendar/<グループ>/event` と `DELETE /calendar/<グループ>/*` を許可しておく必要があります。
 
 2. **事前告知 (毎週木曜 19:00 自動 / `/pre-announce` で手動)**
    - 開催予約済みの場合、X（Twitter）に事前告知ツイート（画像付き）を投稿します。
@@ -608,6 +609,7 @@ systemctl enable --now engineer-meetup-bot engineer-meetup-deploy.timer
 | `/confirm-meetup` | 今週の開催確認 YES/NO ボタンを運営チャンネルに送信 |
 | `/event-calendar` | 次の集会を VRChat イベントカレンダーに登録（`action` で削除・ログインの確認も）。`production:False`（既定）では送信せずに入力した画面だけを返す。開催確認の YES でも自動で登録される |
 | `/vrc-event` | 次の集会を VRChat のグループのイベントに登録（`action:削除` で本番で作った今週のイベントを削除）。`production:False`（既定）ではテスト用のグループにグループ内だけで作る。開催確認の YES でも自動で登録される |
+| `/discord-event` | 次の集会の Discord のイベントを作成（`action:削除` で本番で作った今週のイベントを削除）。`production:False`（既定）では作らずに内容だけを返す。開催確認の YES でも自動で作られる |
 | `/pre-announce` | X に事前告知（画像付き）を投稿し、翌日の LT 告知（X）も投稿（`lt-only:True` で LT だけ / `skip-lt:True` で LT を省略） |
 | `/create-instance` | VRChat インスタンスを作成し招待 URL を取得。実行者が `/vrc-link` 登録済みなら本人にも招待を送る |
 | `/vrc-link` | VRChat アカウントを登録し、招待を受け取れるようにする（`set` / `show` / `clear`） |

@@ -7,6 +7,7 @@ import { requireOperatorRole, formatError } from './utils';
 import { postSlidesToChannel } from '../slides';
 import { deleteFromVrceve, registerOnVrceve } from '../vrceve';
 import { deleteVrcEvent, registerVrcEvent } from '../vrc-event';
+import { deleteDiscordEvent, registerDiscordEvent } from '../discord-event';
 
 export const confirmMeetupCommand = new SlashCommandBuilder()
   .setName('confirm-meetup')
@@ -74,6 +75,16 @@ export async function handleConfirmMeetupButton(interaction: ButtonInteraction) 
   if (eventReport) {
     await interaction.followUp({ content: eventReport }).catch(error =>
       console.error('Failed to report VRChat event result:', error));
+  }
+
+  // Discord のイベントも、毎週の繰り返しではなく、開催が決まった週の分だけ作る
+  const discordReport = isYes
+    ? await registerDiscordEvent(interaction.client, isProd)
+    : isProd ? await deleteDiscordEvent(interaction.client) : null;
+  if (discordReport) {
+    const report = typeof discordReport === 'string' ? { content: discordReport } : discordReport;
+    await interaction.followUp({ content: report.content, files: report.files ?? [] }).catch(error =>
+      console.error('Failed to report Discord event result:', error));
   }
 }
 

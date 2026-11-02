@@ -18,6 +18,7 @@ import {
   handleSlidesCommand,
   handleEventCalendarCommand,
   handleVrcEventCommand,
+  handleDiscordEventCommand,
   registerCommands,
 } from './commands';
 
@@ -55,6 +56,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         case 'slides':              await handleSlidesCommand(interaction); break;
         case 'event-calendar':      await handleEventCalendarCommand(interaction); break;
         case 'vrc-event':           await handleVrcEventCommand(interaction); break;
+        case 'discord-event':       await handleDiscordEventCommand(interaction); break;
       }
     } else if (interaction.isButton()) {
       if (!await dispatchButton(interaction)) {
