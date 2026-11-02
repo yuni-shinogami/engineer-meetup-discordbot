@@ -396,7 +396,8 @@ BOT_COMMANDS = {"start": cmd_start, "mark": cmd_mark, "end": cmd_end, "stop": cm
 # 過去の LT 動画（YouTube の @engineer-meetup）と同じ作りにする。
 #   オープニング: ロゴ → 日付カード（音は LT 直前の会場の音）
 #   本編: スライドを大きく。右の帯にロゴ・QR（X と Discord を交互）・登壇者カメラ、下の帯に LT タイトルと登壇者名
-#   エンディング: 会場の引きの画を全面に、エンディング曲を重ねる
+#   エンディング: 会場の引きの画をぼかした背景に「ご視聴ありがとうございました」と YouTube の終了画面の枠、エンディング曲
+# スライドの色補正・音のリミッター・終了画面の枠は、エンジニア集会のメンバーが作った engineer-meetup-archive を参考にした
 # 録画は配信用画面の 4 アングル。どの枠を何に使うかは config.toml の [edit] panes で決める。
 
 ASSETS = ROOT / "assets"
@@ -418,6 +419,14 @@ def pane(name):
     """4 アングルの録画から 1 枠を切り出す ffmpeg のフィルタ"""
     px, py = PANE_OFFSET[CFG["edit"]["panes"][name]]
     return f"crop=iw/2:ih/2:{px}*iw/2:{py}*ih/2"
+
+
+def slide_pane():
+    """スライドの枠を切り出して色を直すフィルタ。直接撮ったスライドは sRGB のガンマが二重に掛かって白っぽく色あせるので、
+    ワールド内のスクリーンの色に合わせる 1D LUT（engineer-meetup-archive の slide_color.cube）を掛ける。
+    ffmpeg は ASSETS をカレントにして動かすので、ファイル名だけで指定できる"""
+    lut = CFG["edit"].get("slide_lut")
+    return pane("slide") + (f",format=gbrp,lut1d=file={lut}" if lut else "")
 
 
 def font(size, weight="Black"):
@@ -469,6 +478,32 @@ def make_cards(work, event, date):
     card.save(work / "card_date.png")
 
 
+# YouTube の終了画面の要素を置く枠（engineer-meetup-archive と同じ配置）。Studio では要素を (52,137)-(1888,915) の内側にしか
+# 置けず、チャンネル登録は直径 300 で大きさを変えられないので、動画 2 つと登録ボタンを横一列に並べる
+END_SCREEN_VIDEOS = [(100, 330, 740, 690), (1180, 330, 1820, 690)]
+END_SCREEN_SUBSCRIBE = (960, 510, 150)   # 中心と半径
+
+
+def make_ending_overlay(work):
+    """エンディングに重ねる絵（透過）。「ご視聴ありがとうございました」と、終了画面の要素を置く枠、左下にロゴ"""
+    from PIL import Image, ImageDraw
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 90))
+    d = ImageDraw.Draw(im)
+    outlined(d, (W / 2, 175), ["ご視聴ありがとうございました"], 84, 8, 1800)
+    frame = dict(fill=(255, 255, 255, 40), outline=(255, 255, 255, 230), width=5)
+    for box in END_SCREEN_VIDEOS:
+        d.rounded_rectangle(box, 18, **frame)
+    cx, cy, r = END_SCREEN_SUBSCRIBE
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), **frame)
+    logo = Image.open(ASSETS / "logo_tate.png").convert("RGBA")
+    logo = logo.resize((round(logo.width * 200 / logo.height), 200), Image.LANCZOS)
+    plate = Image.new("RGBA", (logo.width + 40, logo.height + 30), (0, 0, 0, 0))
+    ImageDraw.Draw(plate).rounded_rectangle((0, 0, plate.width - 1, plate.height - 1), 20, fill=(255, 255, 255, 235))
+    plate.alpha_composite(logo, (20, 15))
+    im.alpha_composite(plate, (60, H - plate.height - 50))
+    im.save(work / "ending.png")
+
+
 def make_bar(work, title, speaker):
     """本編に重ねる下の帯（LT タイトルと登壇者名）。帯以外は透明"""
     from PIL import Image, ImageDraw
@@ -516,7 +551,7 @@ def render(args, out, duration):
     for name in order:
         enc = [a.format(q=e["cq"]) for a in ENCODERS[name]]
         r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args, *enc, *tail, str(out)],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=ASSETS)
         if r.returncode == 0:
             return
         if name == "nvenc":
@@ -532,6 +567,9 @@ def edit_clip(src, rec_end, lt_start, lt_end, title, speaker, event, date, out):
     work.mkdir(exist_ok=True)
     make_cards(work, event, date)
     make_bar(work, title, speaker)
+    make_ending_overlay(work)
+    # 音量をそろえたあと、ピークを -2dB で抑える（AAC にすると少し上に出るので余裕をみる）
+    limiter = "alimiter=limit=0.79:level=false"
     gain = gain_to(e["loudness"], loudness(src, lt_start, lt_end - lt_start))
     music = ASSETS / e["ending_music"]
     music_gain = gain_to(e["ending_music_loudness"], loudness(music))
@@ -547,34 +585,38 @@ def edit_clip(src, rec_end, lt_start, lt_end, title, speaker, event, date, out):
             "-filter_complex",
             f"[0:v]fade=in:0:d=0.5:color=white,fade=out:st={card1 - 0.4}:d=0.4:color=white,setsar=1[a];"
             f"[1:v]fade=in:0:d=0.4:color=white,setsar=1[b];[a][b]concat=n=2:v=1[v];"
-            f"[2:a]volume={gain:.2f}dB,adelay={int((intro - pre) * 1000)}:all=1,afade=in:0:d=1,apad[au]",
+            f"[2:a]volume={gain:.2f}dB,{limiter},adelay={int((intro - pre) * 1000)}:all=1,afade=in:0:d=1,apad[au]",
             "-map", "[v]", "-map", "[au]"], work / "1_intro.mp4", intro)
 
     # 本編
     q = e["qr_switch_sec"]
-    render(["-ss", f"{lt_start:.2f}", "-t", f"{lt_end - lt_start:.2f}", "-i", str(src),
+    main_sec = lt_end - lt_start
+    render(["-ss", f"{lt_start:.2f}", "-t", f"{main_sec:.2f}", "-i", str(src),
             "-loop", "1", "-i", str(work / "bar.png"),
             "-loop", "1", "-i", str(ASSETS / "side_x.png"),
             "-loop", "1", "-i", str(ASSETS / "side_discord.png"),
             "-filter_complex",
             f"[0:v]split=2[s][p];"
-            f"[s]{pane('slide')},scale={MAIN_W}:{MAIN_H}:flags=lanczos[slide];"
+            f"[s]{slide_pane()},scale={MAIN_W}:{MAIN_H}:flags=lanczos,format=yuv420p[slide];"
             f"[p]{pane('speaker')},crop=ih*{W - MAIN_W}/{H - SPEAKER_Y}:ih,"
             f"scale={W - MAIN_W}:{H - SPEAKER_Y}:flags=lanczos[spk];"
             f"color=black:s={W}x{H}:r={e['fps']}[bg];"
             f"[bg][slide]overlay=0:0:shortest=1[v1];[v1][spk]overlay={MAIN_W}:{SPEAKER_Y}[v2];[v2][1:v]overlay=0:0[v3];"
             f"[v3][2:v]overlay={MAIN_W}:0:enable='lt(mod(t,{2 * q}),{q})'[v4];"
             f"[v4][3:v]overlay={MAIN_W}:0:enable='gte(mod(t,{2 * q}),{q})',fade=in:0:d=0.5[v];"
-            f"[0:a]volume={gain:.2f}dB,alimiter=limit=0.95[au]",
-            "-map", "[v]", "-map", "[au]"], work / "2_main.mp4", lt_end - lt_start)
+            f"[0:a]volume={gain:.2f}dB,{limiter},afade=in:0:d=0.3,afade=out:st={max(0, main_sec - 0.5):.2f}:d=0.5[au]",
+            "-map", "[v]", "-map", "[au]"], work / "2_main.mp4", main_sec)
 
-    # エンディング: 区切りのあとの会場（拍手・記念撮影）にエンディング曲を重ねる。録画が足りなければ最後の画で止める
+    # エンディング: 区切りのあとの会場（拍手・記念撮影）をぼかした背景に、YouTube の終了画面の枠を重ね、エンディング曲を流す。
+    # 録画が足りなければ最後の画で止める
     end_sec = e["ending_sec"]
     avail = max(0.5, min(end_sec, rec_end - lt_end))
     render(["-ss", f"{min(lt_end, rec_end - avail):.2f}", "-t", f"{avail:.2f}", "-i", str(src), "-i", str(music),
+            "-loop", "1", "-i", str(work / "ending.png"),
             "-filter_complex",
-            f"[0:v]{pane('wide')},scale={W}:{H}:flags=lanczos,tpad=stop_mode=clone:stop_duration={end_sec},"
-            f"fade=in:0:d=0.7,fade=out:st={end_sec - 1.5}:d=1.5[v];"
+            f"[0:v]{pane('wide')},scale=480:270,gblur=sigma=7,scale={W}:{H}:flags=bicubic,"
+            f"tpad=stop_mode=clone:stop_duration={end_sec}[bg];"
+            f"[bg][2:v]overlay=0:0:shortest=1,fade=in:0:d=0.7,fade=out:st={end_sec - 1.5}:d=1.5[v];"
             f"[0:a]volume={gain - e['ending_venue_duck']:.2f}dB,apad[venue];"
             f"[1:a]volume={music_gain:.2f}dB,afade=in:0:d=2[m];"
             f"[venue][m]amix=inputs=2:duration=longest:normalize=0,afade=out:st={end_sec - 3}:d=3[au]",
@@ -598,7 +640,8 @@ def edit_clip(src, rec_end, lt_start, lt_end, title, speaker, event, date, out):
 def grab(src, at, vf):
     from PIL import Image
     r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-ss", f"{at:.2f}", "-i", str(src),
-                        "-frames:v", "1", "-vf", vf, "-f", "image2pipe", "-vcodec", "png", "-"], capture_output=True)
+                        "-frames:v", "1", "-vf", vf, "-f", "image2pipe", "-vcodec", "png", "-"],
+                       capture_output=True, cwd=ASSETS)
     return Image.open(io.BytesIO(r.stdout)) if r.returncode == 0 and r.stdout else None
 
 
@@ -619,7 +662,7 @@ def make_thumbs(src, start, end, title, out):
         avatar = thumbgen.best_cutout(frames, [remove(f.convert("RGB"), session=session) for f in frames])
     except Exception as ex:
         log(f"アバターの切り抜きに失敗（アバターなしで作ります）: {ex}")
-    slide = grab(src, start + e["thumb_at"], pane("slide"))
+    slide = grab(src, start + e["thumb_at"], slide_pane())
     logo = Image.open(ASSETS / "logo_tate.png").convert("RGBA")
     fp = str(ASSETS / "NotoSansJP-VF.ttf")
     thumbgen.compose("A", title, avatar, slide, logo, fp).save(out, quality=92)
