@@ -1,0 +1,23 @@
+# 自動操作用の Chrome。デスクトップの autostart と vrceve.py の両方がこの設定で起動する
+[chrome]
+profile = "~/.config/vrceve-chrome"   # 普段使いと分けた専用のプロファイル。最初の 1 回だけ手で Google にログインする
+port = 9222                          # DevTools のポート（127.0.0.1 のみ）
+
+# VRChat イベントカレンダーの登録フォーム（https://vrceve.com/）
+[form]
+url = "https://docs.google.com/forms/d/e/1FAIpQLSeGBfcWfPPD-BWnHFMH3BweU7oSngiitP50gNFis5bdgy3HBQ/viewform"
+account = "engineer.meetup0928@gmail.com"   # このアカウントでログインしていなければ送らない
+
+# 項目ごとの entry 番号（フォームが変わったら取り直す）
+[form.entries]
+name = "1319903296"          # イベント名（必須）
+android = "412548841"        # Android対応可否（必須）: PC / PC/android / android only
+start = "1310854397"         # 開始日時（必須）: YYYY-MM-DD HH:MM
+end = "2042374434"           # 終了日時（必須）
+action = "1704463647"        # イベントを登録しますか（必須）: イベントを登録する / イベントを削除する
+organizer = "1354615990"     # イベント主催者（必須）
+description = "402615171"    # イベント内容
+genres = "1923252134"        # イベントジャンル（複数選択）
+conditions = "1470688692"    # 参加条件
+how_to_join = "43975396"     # 参加方法
+notes = "131997623"          # 備考
