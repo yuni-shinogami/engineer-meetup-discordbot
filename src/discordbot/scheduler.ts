@@ -37,6 +37,7 @@ export async function triggerConfirmMeetup(client: Client, isProd = true) {
     storage.preAnnounceMissed = false;
     storage.vrceveEditUrl = null;
     storage.vrcEvent = null;
+    storage.discordEventId = null;
   }
   await sendConfirmMeetupToChannel(client, channelId);
 }

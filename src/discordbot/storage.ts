@@ -16,6 +16,8 @@ interface StorageData {
   vrceveEditUrl: string | null;
   /** 今週の集会を VRChat のグループのイベントに作ったときの控え。取りやめたら削除するのに使う。 */
   vrcEvent: MeetupEventRef | null;
+  /** 今週の集会の Discord のイベントの ID。取りやめたら削除するのに使う。 */
+  discordEventId: string | null;
 }
 
 const defaultData: StorageData = {
@@ -27,6 +29,7 @@ const defaultData: StorageData = {
   preAnnounceMissed: false,
   vrceveEditUrl: null,
   vrcEvent: null,
+  discordEventId: null,
 };
 
 export class Storage {
@@ -126,6 +129,15 @@ export class Storage {
 
   set vrcEvent(value: MeetupEventRef | null) {
     this.data.vrcEvent = value;
+    this.save();
+  }
+
+  get discordEventId(): string | null {
+    return this.data.discordEventId;
+  }
+
+  set discordEventId(value: string | null) {
+    this.data.discordEventId = value;
     this.save();
   }
 }

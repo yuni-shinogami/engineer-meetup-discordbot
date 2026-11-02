@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   deleteFromVrceve: vi.fn(),
   registerVrcEvent: vi.fn(),
   deleteVrcEvent: vi.fn(),
+  registerDiscordEvent: vi.fn(),
+  deleteDiscordEvent: vi.fn(),
 }));
 
 vi.mock('../../config', () => ({
@@ -27,6 +29,10 @@ vi.mock('../../../x/postAnnouncement', () => ({ postAnnouncement: vi.fn() }));
 vi.mock('../../storage', () => ({ storage: mocks.storage }));
 vi.mock('../../scheduler', () => ({ triggerPreAnnounce: mocks.triggerPreAnnounce }));
 vi.mock('../../slides', () => ({ postSlidesToChannel: mocks.postSlidesToChannel }));
+vi.mock('../../discord-event', () => ({
+  registerDiscordEvent: mocks.registerDiscordEvent,
+  deleteDiscordEvent: mocks.deleteDiscordEvent,
+}));
 vi.mock('../../vrc-event', () => ({
   registerVrcEvent: mocks.registerVrcEvent,
   deleteVrcEvent: mocks.deleteVrcEvent,
@@ -73,6 +79,8 @@ beforeEach(() => {
   mocks.deleteFromVrceve.mockResolvedValue(null);
   mocks.registerVrcEvent.mockResolvedValue(null);
   mocks.deleteVrcEvent.mockResolvedValue(null);
+  mocks.registerDiscordEvent.mockResolvedValue(null);
+  mocks.deleteDiscordEvent.mockResolvedValue(null);
   mocks.triggerPreAnnounce.mockReset();
   Object.assign(mocks.storage, {
     isScheduled: false,
@@ -257,5 +265,27 @@ describe('VRChat のグループのイベント', () => {
     await handleConfirmMeetupButton(buttonInteraction(CONFIRM_MEETUP_NO, 'test-channel-id'));
 
     expect(mocks.deleteVrcEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe('Discord のイベント', () => {
+  it('YES でその週のイベントを作り、結果を同じチャンネルに流す', async () => {
+    mocks.registerDiscordEvent.mockResolvedValue({ content: '📅 Discord のイベントを作りました' });
+    const interaction = buttonInteraction(CONFIRM_MEETUP_YES);
+
+    await handleConfirmMeetupButton(interaction);
+
+    expect(mocks.registerDiscordEvent).toHaveBeenCalledWith(interaction.client, true);
+    expect(interaction.followUp).toHaveBeenCalledWith({ content: '📅 Discord のイベントを作りました', files: [] });
+  });
+
+  it('本番の NO では、作ったイベントを消す', async () => {
+    mocks.deleteDiscordEvent.mockResolvedValue('🗑️ 削除しました');
+    const interaction = buttonInteraction(CONFIRM_MEETUP_NO);
+
+    await handleConfirmMeetupButton(interaction);
+
+    expect(mocks.deleteDiscordEvent).toHaveBeenCalledWith(interaction.client);
+    expect(interaction.followUp).toHaveBeenCalledWith({ content: '🗑️ 削除しました', files: [] });
   });
 });
