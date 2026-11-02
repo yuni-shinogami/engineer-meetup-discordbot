@@ -65,10 +65,25 @@ def recording_session():
 def obs():
     import obsws_python as obsws
     conf = load(Path(os.environ["APPDATA"]) / "obs-studio/plugin_config/obs-websocket/config.json")
-    try:
+
+    def connect():
         return obsws.ReqClient(host="localhost", port=conf["server_port"], password=conf["server_password"], timeout=10)
-    except Exception as ex:
-        raise UserError(f"OBS に接続できません（起動していて WebSocket が有効か確認してください）: {ex}")
+
+    try:
+        return connect()
+    except Exception:
+        pass
+    # OBS が起動していなければ、タスク LT-Recorder-OBS でログイン中のデスクトップに起動して、WebSocket が開くのを待つ
+    log("OBS に接続できないので起動します")
+    subprocess.run(["schtasks", "/run", "/tn", "LT-Recorder-OBS"], capture_output=True)
+    deadline = time.time() + 60
+    while True:
+        time.sleep(2)
+        try:
+            return connect()
+        except Exception as ex:
+            if time.time() > deadline:
+                raise UserError(f"OBS に接続できません（起動していて WebSocket が有効か確認してください）: {ex}")
 
 
 def ensure_scene(c):

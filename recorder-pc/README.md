@@ -16,6 +16,7 @@ Bot から SSH で操作する録画 PC（Windows のゲーミングノート）
   - `VRChat-Join` → `vrc-launcher/Join-VRChat.ps1`
   - `LT-Recorder-Click` → `lt-recorder/Click-VRChat.ps1`（VRChat の視線を動かしてクリック・キー入力）
   - `LT-Recorder-Pipeline` → `lt.py pipeline`（録画停止のあとの編集とアップロード）
+  - `LT-Recorder-OBS` → `lt-recorder/Start-OBS.ps1`（録画開始のときに OBS が動いていなければ起動する）
 - 編集の作りは、過去に手作業で編集した LT 動画（YouTube @engineer-meetup）に合わせています。設定は [`lt-recorder/config.toml`](lt-recorder/config.toml) にまとめています（集会名、編集の秒数、YouTube のタイトル・説明欄、ワールドごとの移動手順など）。
 
 ## 録画 PC の準備
