@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   postSlidesToChannel: vi.fn(async () => {}),
   registerOnVrceve: vi.fn(),
   deleteFromVrceve: vi.fn(),
+  registerVrcEvent: vi.fn(),
+  deleteVrcEvent: vi.fn(),
 }));
 
 vi.mock('../../config', () => ({
@@ -25,6 +27,10 @@ vi.mock('../../../x/postAnnouncement', () => ({ postAnnouncement: vi.fn() }));
 vi.mock('../../storage', () => ({ storage: mocks.storage }));
 vi.mock('../../scheduler', () => ({ triggerPreAnnounce: mocks.triggerPreAnnounce }));
 vi.mock('../../slides', () => ({ postSlidesToChannel: mocks.postSlidesToChannel }));
+vi.mock('../../vrc-event', () => ({
+  registerVrcEvent: mocks.registerVrcEvent,
+  deleteVrcEvent: mocks.deleteVrcEvent,
+}));
 vi.mock('../../vrceve', () => ({
   registerOnVrceve: mocks.registerOnVrceve,
   deleteFromVrceve: mocks.deleteFromVrceve,
@@ -65,6 +71,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.registerOnVrceve.mockResolvedValue(null);
   mocks.deleteFromVrceve.mockResolvedValue(null);
+  mocks.registerVrcEvent.mockResolvedValue(null);
+  mocks.deleteVrcEvent.mockResolvedValue(null);
   mocks.triggerPreAnnounce.mockReset();
   Object.assign(mocks.storage, {
     isScheduled: false,
@@ -221,5 +229,33 @@ describe('VRChat イベントカレンダー', () => {
     await handleConfirmMeetupButton(interaction);
 
     expect(interaction.followUp).not.toHaveBeenCalled();
+  });
+});
+
+describe('VRChat のグループのイベント', () => {
+  it('YES で作り、結果を同じチャンネルに流す', async () => {
+    mocks.registerVrcEvent.mockResolvedValue('🗓️ VRChat のグループのイベントに登録しました');
+    const interaction = buttonInteraction(CONFIRM_MEETUP_YES);
+
+    await handleConfirmMeetupButton(interaction);
+
+    expect(mocks.registerVrcEvent).toHaveBeenCalledWith(true);
+    expect(interaction.followUp).toHaveBeenCalledWith({ content: '🗓️ VRChat のグループのイベントに登録しました' });
+  });
+
+  it('本番の NO では、作ったイベントを消す', async () => {
+    mocks.deleteVrcEvent.mockResolvedValue('🗑️ 削除しました');
+    const interaction = buttonInteraction(CONFIRM_MEETUP_NO);
+
+    await handleConfirmMeetupButton(interaction);
+
+    expect(mocks.deleteVrcEvent).toHaveBeenCalled();
+    expect(interaction.followUp).toHaveBeenCalledWith({ content: '🗑️ 削除しました' });
+  });
+
+  it('テストチャンネルの NO では消さない', async () => {
+    await handleConfirmMeetupButton(buttonInteraction(CONFIRM_MEETUP_NO, 'test-channel-id'));
+
+    expect(mocks.deleteVrcEvent).not.toHaveBeenCalled();
   });
 });

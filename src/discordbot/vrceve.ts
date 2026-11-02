@@ -17,8 +17,11 @@ import { needsTitle, type LtEntry } from './lt/types';
 
 /** フォームの内容。LT がある週はイベント名と内容に LT を足す（vrceveFields）。 */
 const EVENT_NAME = 'エンジニア集会';
-const START_TIME = '22:00';
-const END_TIME = '23:30';
+/** 集会の時刻（日本時間）。VRChat のグループのイベント（vrc-event.ts）でも使う。 */
+export const MEETUP_START_TIME = '22:00';
+export const MEETUP_END_TIME = '23:30';
+const START_TIME = MEETUP_START_TIME;
+const END_TIME = MEETUP_END_TIME;
 const DESCRIPTION = [
   'VRChat のお友達と技術の雑談を楽しんだり、お酒を飲みながら雑談＆作業をしよう！という集会です。',
   'ハードウェア、ソフトウェアなど技術分野は問いません。どのような形でも、技術と関わりのある方でしたら参加OKです！',

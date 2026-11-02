@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { config } from './config';
+import type { MeetupEventRef } from '../vrchat/groupEvent';
 
 interface StorageData {
   isScheduled: boolean;
@@ -13,6 +14,8 @@ interface StorageData {
   preAnnounceMissed: boolean;
   /** 今週の集会を VRChat イベントカレンダーに登録したときの編集用 URL。取りやめたら削除するのに使う。 */
   vrceveEditUrl: string | null;
+  /** 今週の集会を VRChat のグループのイベントに作ったときの控え。取りやめたら削除するのに使う。 */
+  vrcEvent: MeetupEventRef | null;
 }
 
 const defaultData: StorageData = {
@@ -23,6 +26,7 @@ const defaultData: StorageData = {
   confirmAnswered: false,
   preAnnounceMissed: false,
   vrceveEditUrl: null,
+  vrcEvent: null,
 };
 
 export class Storage {
@@ -113,6 +117,15 @@ export class Storage {
 
   set vrceveEditUrl(value: string | null) {
     this.data.vrceveEditUrl = value;
+    this.save();
+  }
+
+  get vrcEvent(): MeetupEventRef | null {
+    return this.data.vrcEvent;
+  }
+
+  set vrcEvent(value: MeetupEventRef | null) {
+    this.data.vrcEvent = value;
     this.save();
   }
 }
