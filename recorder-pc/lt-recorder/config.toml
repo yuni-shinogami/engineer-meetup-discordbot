@@ -13,7 +13,7 @@ dir = '%USERPROFILE%\Videos\lt-recorder'   # 環境変数を使える（タス�
 #   logo_tate.png（縦ロゴ）/ side_x.png・side_discord.png（右の帯の上半分）/ ending.wav（騒音のない世界「電脳都市にて」）
 #   NotoSansJP-VF.ttf（タイトル・日付カードの文字）
 [edit]
-event_name = "エンジニア作業飲み集会"   # 日付カードと動画タイトルに入れる集会名
+event_name = "エンジニア集会"   # 日付カードと動画タイトルに入れる集会名
 pad_before = 3           # mark の何秒前から切り出すか
 pad_after = 3
 min_sec = 30             # これより短い区間は捨てる
