@@ -86,6 +86,28 @@ export async function createInstance(
   });
 }
 
+/**
+ * 作成済みのインスタンスへ、あとから 1 人招待する（「📨 自分に招待」ボタン）。
+ * 相手がメインアカウント本人なら、フレンドの確認はせずに self-invite する（自分自身とはフレンドになれない）。
+ */
+export async function inviteToInstance(
+  worldId: string,
+  instanceId: string,
+  target: InviteTarget,
+): Promise<InviteOutcome> {
+  return withSession(async ({ client, user }) => {
+    if (target.userId !== user.userId) {
+      return inviteWithFriendCheck(client, target, worldId, instanceId);
+    }
+    try {
+      await inviteSelf(client, user.userId, worldId, instanceId);
+      return { ...target, status: 'sent' };
+    } catch (e) {
+      return { ...target, status: 'failed', error: e instanceof Error ? e.message : String(e) };
+    }
+  });
+}
+
 /** 同じ相手へ二重に送らないようにする（担当者がサブアカウント本人のケースがある）。 */
 function dedupeTargets(targets: InviteTarget[]): InviteTarget[] {
   const seen = new Set<string>();

@@ -4,6 +4,7 @@ import { storage } from '../storage';
 import { vrcLinkStore } from '../vrc-links';
 import { isVrcLauncherConfigured, joinSubButton } from '../vrc-launcher';
 import { isLtRecorderConfigured, ltRecordStartButton, radioPrepButton } from '../lt-recorder';
+import { inviteMeButton } from '../vrc-invite';
 import { requireOperatorRole, formatError } from './utils';
 import {
   AuthError,
@@ -52,6 +53,7 @@ export async function handleCreateInstanceCommand(interaction: ChatInputCommandI
     }
 
     const buttons = [
+      inviteMeButton(result.location),
       ...(isVrcLauncherConfigured() ? [joinSubButton(result.location)] : []),
       ...(isLtRecorderConfigured() ? [ltRecordStartButton(result.location, isProd), radioPrepButton(result.location)] : []),
     ];

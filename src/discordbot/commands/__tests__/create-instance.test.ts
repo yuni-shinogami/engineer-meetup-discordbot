@@ -82,7 +82,7 @@ describe('サブアカウントで入るボタン', () => {
 
     await handleCreateInstanceCommand(i);
 
-    expect(buttonIds(i)).toEqual(['vrc:join-sub:45350']);
+    expect(buttonIds(i)).toEqual(['vrc:invite-me:45350', 'vrc:join-sub:45350']);
   });
 
   it('設定されていなければボタンを出さない', async () => {
@@ -90,7 +90,7 @@ describe('サブアカウントで入るボタン', () => {
 
     await handleCreateInstanceCommand(i);
 
-    expect(buttonIds(i)).toEqual([]);
+    expect(buttonIds(i)).toEqual(['vrc:invite-me:45350']);
   });
 });
 
@@ -104,7 +104,7 @@ describe('LT録画開始ボタン', () => {
 
     await handleCreateInstanceCommand(i);
 
-    expect(buttonIds(i)).toEqual(['vrc:join-sub:45350', 'ltrec:start:45350:0', 'ltrec:radio:45350']);
+    expect(buttonIds(i)).toEqual(['vrc:invite-me:45350', 'vrc:join-sub:45350', 'ltrec:start:45350:0', 'ltrec:radio:45350']);
   });
 });
 
@@ -136,6 +136,7 @@ describe('handleCreateInstanceCommand', () => {
     mocks.store.get.mockReturnValue({ vrcUserId: USER_ID, displayName: 'ゆに' });
     mocks.createInstance.mockResolvedValue({
       inviteUrl: 'https://vrchat.com/i/abcd',
+      location: LOCATION,
       invites: [
         { userId: 'usr_sub', label: 'サブアカウント', status: 'sent' },
         { userId: USER_ID, label: 'あなた', status: 'sent' },
@@ -153,6 +154,7 @@ describe('handleCreateInstanceCommand', () => {
     mocks.store.get.mockReturnValue({ vrcUserId: USER_ID, displayName: 'ゆに' });
     mocks.createInstance.mockResolvedValue({
       inviteUrl: 'https://vrchat.com/i/abcd',
+      location: LOCATION,
       invites: [{ userId: USER_ID, label: 'あなた', status: 'friend-request-sent' }],
     });
     const i = interaction();
@@ -167,6 +169,7 @@ describe('handleCreateInstanceCommand', () => {
     mocks.store.get.mockReturnValue({ vrcUserId: USER_ID, displayName: 'ゆに' });
     mocks.createInstance.mockResolvedValue({
       inviteUrl: 'https://vrchat.com/i/abcd',
+      location: LOCATION,
       invites: [{ userId: USER_ID, label: 'あなた', status: 'pending-approval' }],
     });
     const i = interaction();
@@ -179,6 +182,7 @@ describe('handleCreateInstanceCommand', () => {
   it('招待に失敗しても招待URLは返し、理由を添える', async () => {
     mocks.createInstance.mockResolvedValue({
       inviteUrl: 'https://vrchat.com/i/abcd',
+      location: LOCATION,
       invites: [{ userId: 'usr_sub', label: 'サブアカウント', status: 'failed', error: '403 Forbidden' }],
     });
     const i = interaction();
