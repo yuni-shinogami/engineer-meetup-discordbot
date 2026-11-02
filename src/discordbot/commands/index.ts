@@ -34,6 +34,7 @@ export { statusCommand, handleStatusCommand } from './status';
 export { generateLtImageCommand, handleGenerateLtImageCommand } from './generate-lt-image';
 export { slidesCommand, handleSlidesCommand } from './slides';
 export { eventCalendarCommand, handleEventCalendarCommand } from './event-calendar';
+export { vrcEventCommand, handleVrcEventCommand } from './vrc-event';
 
 import { confirmMeetupCommand } from './confirm-meetup';
 import { preAnnounceCommand } from './pre-announce';
@@ -47,6 +48,7 @@ import { slidesCommand } from './slides';
 import { ltApplyCommand } from './lt-apply';
 import { ltMaterialCommand } from './lt-material';
 import { eventCalendarCommand } from './event-calendar';
+import { vrcEventCommand } from './vrc-event';
 
 export async function registerCommands() {
   const commands = [
@@ -62,6 +64,7 @@ export async function registerCommands() {
     generateLtImageCommand.toJSON(),
     slidesCommand.toJSON(),
     eventCalendarCommand.toJSON(),
+    vrcEventCommand.toJSON(),
   ];
   const rest = new REST({ version: '10' }).setToken(config.discordToken);
 

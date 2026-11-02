@@ -17,6 +17,7 @@ import {
   handleLtMaterialCommand,
   handleSlidesCommand,
   handleEventCalendarCommand,
+  handleVrcEventCommand,
   registerCommands,
 } from './commands';
 
@@ -53,6 +54,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         case 'lt-material':         await handleLtMaterialCommand(interaction); break;
         case 'slides':              await handleSlidesCommand(interaction); break;
         case 'event-calendar':      await handleEventCalendarCommand(interaction); break;
+        case 'vrc-event':           await handleVrcEventCommand(interaction); break;
       }
     } else if (interaction.isButton()) {
       if (!await dispatchButton(interaction)) {
