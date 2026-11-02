@@ -19,6 +19,18 @@ Bot から SSH で操作する録画 PC（Windows のゲーミングノート）
   - `LT-Recorder-OBS` → `lt-recorder/Start-OBS.ps1`（録画開始のときに OBS が動いていなければ起動する）
 - 編集の作りは、過去に手作業で編集した LT 動画（YouTube @engineer-meetup）に合わせています。設定は [`lt-recorder/config.toml`](lt-recorder/config.toml) にまとめています（集会名、編集の秒数、YouTube のタイトル・説明欄、ワールドごとの移動手順など）。
 
+## クレジット
+
+スライドの色補正（`lt-recorder/assets/slide_color.cube`）、音量のリミッター、エンディングの YouTube 終了画面の枠の配置は、エンジニア集会のメンバーが作ったアーカイブ作成スキル engineer-meetup-archive を参考にしています。色補正の値はそこから借りて、白が白のまま残るように最大値を 1.0 にそろえています。
+
+## YouTube の終了画面
+
+エンディング（最後の 20 秒）には、終了画面の要素を置く枠を描いています。アップロードしたあと Studio の「終了画面」で、要素をこの位置に合わせてください（1920×1080 の座標）。
+
+- 動画 1: (100,330)-(740,690)
+- チャンネル登録: 中心 (960,510)、直径 300
+- 動画 2: (1180,330)-(1820,690)
+
 ## 録画 PC の準備
 
 1. 必要なもの: VRChat（Steam）、OBS Studio（obs-websocket を有効にする。パスワードは OBS の設定ファイルから読む）、Python 3.12、ffmpeg（`winget install ffmpeg`）、OpenSSH サーバー
