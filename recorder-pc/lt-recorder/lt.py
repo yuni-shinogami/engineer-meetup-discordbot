@@ -220,10 +220,11 @@ def join_key():
     return f"{logs[-1].name if logs else ''}|{current_location()}"
 
 
-def osc_move(world_id):
-    """route の steps を順に実行する。歩くときは毎回ログで現在地と向きを見て、向き直してから歩く"""
+def osc_move(world_id, routes="routes"):
+    """route の steps を順に実行する。歩くときは毎回ログで現在地と向きを見て、向き直してから歩く。
+    routes は config.toml の表の名前（LT 録画は routes、ラジオ準備は radio_routes）"""
     from pythonosc.udp_client import SimpleUDPClient
-    route = CFG.get("routes", {}).get(world_id)
+    route = CFG.get(routes, {}).get(world_id)
     if not route:
         return None
     v = CFG["vrchat"]
@@ -260,13 +261,17 @@ def osc_move(world_id):
             else:
                 raise UserError(f"経由地点 ({tx}, {tz}) に着けませんでした（引っかかっている可能性があります）")
 
-    def face(target):
+    def face(target, tolerance=5):
         for _ in range(10):
             err = angle_diff(target, settled_pose()[4])
             log(f"  向き合わせ {target}° err={err:.0f}")
-            if abs(err) < 5:
+            if abs(err) < tolerance:
                 return
-            turn(err)
+            if abs(err) < 20:
+                # OSC の回転は短く押すと効かない（3° ほどは回せない）ので、小さいずれはマウスで視線を動かして合わせる
+                desktop_input(dx=round(err / v["mouse_deg_per_unit"]))
+            else:
+                turn(err)
 
     def set_canvas(step):
         """配信用画面を 4 アングルにする。キーは押すたびに切り替わるので、毎回画面で 4 アングルになったかを確かめてから押す。
@@ -284,13 +289,33 @@ def osc_move(world_id):
             time.sleep(2.5)  # 切り替わって描画されるまで待たないと、まだ前の状態に見えて押しすぎる
         raise UserError("配信用画面を 4 アングルにできませんでした（Streamer Mode がオンか確認してください）")
 
+    def open_stream_camera(step):
+        """ストリームカメラを開いて Spout に流す。OSC ではカメラを開けない（モードの値が変わるだけ）し、
+        位置も指定できない（Pose は読み取り専用）ので、クイックメニューのカメラのタブから開く。カメラは開いたときの
+        視線の先に出るので、立ち位置と向きをそろえてから呼ぶ。メニューを開くとカーソルは画面の中央に出る。
+        マウスの移動量は Windows のポインター速度の分だけ縮むので、mouse_scale で割って送る"""
+        osc.send_message("/usercamera/Mode", 0)  # 開いていれば閉じる（毎回同じ位置に開き直す）
+        time.sleep(1)
+        desktop_input(keys="esc")
+        time.sleep(2)
+        x, y = v["screen_center"]
+        for tx, ty in (v["menu_camera_tab"], v["menu_stream_camera"]):
+            desktop_input(dx=round((tx - x) / v["mouse_scale"]), dy=round((ty - y) / v["mouse_scale"]), click=True)
+            x, y = tx, ty
+            time.sleep(2)
+        osc.send_message("/usercamera/Zoom", float(step.get("zoom", 45)))
+        osc.send_message("/usercamera/Streaming", True)
+        time.sleep(2)
+
     done_path = ROOT / "route_done.json"
     done = load(done_path) if done_path.exists() else {}
     here = join_key()
 
     c = obs()
-    ensure_scene(c)
-    time.sleep(4)  # シーンを切り替えた直後はキャプチャが真っ白
+    if any("canvas" in step for step in route["steps"]):
+        # 配信用画面の状態は録画シーンの画で見分ける
+        ensure_scene(c)
+        time.sleep(4)  # シーンを切り替えた直後はキャプチャが真っ白
 
     for step in route["steps"]:
         log(f"ステップ: {step.get('note', step)}")
@@ -299,10 +324,12 @@ def osc_move(world_id):
             fresh_pose(dt.datetime.now().replace(microsecond=0), timeout=step["wait_pose"])
         elif "canvas" in step:
             set_canvas(step)
+        elif "stream_camera" in step:
+            open_stream_camera(step)
         elif "walk" in step:
             walk(step["walk"])
         elif "face" in step:
-            face(step["face"])
+            face(step["face"], step.get("tolerance", 5))
         elif "aim_from_floor" in step:
             # 視線の上下はログに出ないので、一度真下（そこで止まる）に向けてから決まった量だけ上げる
             desktop_input(dy=3000)
@@ -361,6 +388,50 @@ def cmd_start(p):
     return {"session": sdir.name, "moved": moved}
 
 
+def spout_senders(c, source):
+    """OBS の Spout の取り込みから見える送り手（VRChat のストリームカメラが Spout に流していれば出る）"""
+    items = c.send("GetInputPropertiesListPropertyItems", {"inputName": source, "propertyName": "spoutsenders"}, raw=True)
+    return [i["itemValue"] for i in items.get("propertyItems", []) if i.get("itemValue") != "usefirstavailablesender"]
+
+
+def cmd_radio(p):
+    """エンジニア集会アフターラジオの準備。サブアカウントをラジオブースへワープさせ（ワールドがすりガラス・配信中の表示・
+    マイクゾーンをオンにする）、ストリームカメラを開いて Spout に流し、OBS をラジオのシーンにする。配信は始めない"""
+    location = p.get("location")
+    if location and not LOCATION_PATTERN.match(location):
+        raise UserError("インスタンスの形式が不正です")
+    if LATEST.exists() and load(Path(load(LATEST)["dir"]) / "session.json")["state"] == "recording":
+        raise UserError("LT を録画中です（録画を終えてから押してください）")
+    if not vrchat_running():
+        raise UserError("VRChat が起動していません（先に「サブアカウントで入る」を押してください）")
+    if hang := vrchat_hang():
+        raise UserError(f"{hang}。「🖥️ サブアカウントで入る」で起動し直してから、もう一度押してください")
+    here = current_location()
+    if not here:
+        raise UserError("VRChat がまだインスタンスに入っていません")
+    if location and here != location:
+        raise UserError("サブアカウントが別のインスタンスにいます（最新の「サブアカウントで入る」を押してください）")
+
+    r = CFG["radio"]
+    c = obs()
+    if c.get_record_status().output_active:
+        raise UserError("OBS が録画中です")
+    moved = osc_move(here.split(":")[0], "radio_routes")
+    if not moved:
+        raise UserError("このワールドのラジオ準備の手順が登録されていません")
+
+    # VRChat を起動し直すと、OBS の Spout の取り込みがつながったままにならないので、つなぎ直す
+    c.set_current_program_scene(r["scene"])
+    sender = c.get_input_settings(r["spout_source"]).input_settings.get("spoutsenders", "")
+    c.set_input_settings(r["spout_source"], {"spoutsenders": ""}, True)
+    time.sleep(1)
+    c.set_input_settings(r["spout_source"], {"spoutsenders": sender}, True)
+    if not spout_senders(c, r["spout_source"]):
+        raise UserError("ストリームカメラの映像が OBS に届いていません（VRChat でカメラが開いたか確認してください）")
+    log(f"ラジオ準備 {moved} {here}")
+    return {"moved": moved, "scene": r["scene"]}
+
+
 def cmd_mark(p):
     for key in ("lt_id", "title"):
         if not isinstance(p.get(key), str) or not p[key].strip():
@@ -413,7 +484,7 @@ def cmd_status(p):
                       for c in s.get("clips", [])]}
 
 
-BOT_COMMANDS = {"start": cmd_start, "mark": cmd_mark, "end": cmd_end, "stop": cmd_stop, "status": cmd_status}
+BOT_COMMANDS = {"start": cmd_start, "radio": cmd_radio, "mark": cmd_mark, "end": cmd_end, "stop": cmd_stop, "status": cmd_status}
 
 
 # ---------- 編集 ----------

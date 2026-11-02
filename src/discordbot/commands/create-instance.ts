@@ -3,7 +3,7 @@ import { config } from '../config';
 import { storage } from '../storage';
 import { vrcLinkStore } from '../vrc-links';
 import { isVrcLauncherConfigured, joinSubButton } from '../vrc-launcher';
-import { isLtRecorderConfigured, ltRecordStartButton } from '../lt-recorder';
+import { isLtRecorderConfigured, ltRecordStartButton, radioPrepButton } from '../lt-recorder';
 import { requireOperatorRole, formatError } from './utils';
 import {
   AuthError,
@@ -53,7 +53,7 @@ export async function handleCreateInstanceCommand(interaction: ChatInputCommandI
 
     const buttons = [
       ...(isVrcLauncherConfigured() ? [joinSubButton(result.location)] : []),
-      ...(isLtRecorderConfigured() ? [ltRecordStartButton(result.location, isProd)] : []),
+      ...(isLtRecorderConfigured() ? [ltRecordStartButton(result.location, isProd), radioPrepButton(result.location)] : []),
     ];
     await interaction.editReply({
       content: lines.join('\n'),

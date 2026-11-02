@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 $env:PYTHONIOENCODING = 'utf-8'
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-if ("$Request".Trim() -notmatch '^(start|mark|end|stop|status)( [A-Za-z0-9_-]{1,4000})?$') {
+if ("$Request".Trim() -notmatch '^(start|radio|mark|end|stop|status)( [A-Za-z0-9_-]{1,4000})?$') {
   '{"ok":false,"error":"リクエストの形式が不正です"}'
   exit 2
 }

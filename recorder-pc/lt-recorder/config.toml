@@ -3,6 +3,12 @@ osc_port = 9000          # サブアカの VRChat は vrc-launcher が既定の�
 turn_deg_per_sec = 200   # LookHorizontal=1.0 での回転速度（実測: 0.5 秒で約 100°）。1.0 未満では回らない
 walk_m_per_sec = 2.0     # Vertical=1.0 での移動速度（実測。しゃがみ・伏せだと 0.2 まで落ちる）
 hang_sec = 60            # VRChat のログがこれだけ止まっていたら固まっているとみなす（在室中は毎秒ログが出る）
+# クイックメニューのクリック位置（VRChat の画面 1920x1080 の座標）。ストリームカメラを開くのに使う
+screen_center = [960, 540]          # メニューを開いたときのカーソルの位置
+menu_camera_tab = [959, 930]        # 下に並んだタブのカメラ
+menu_stream_camera = [895, 515]     # カメラのタブの「ストリームカメラ」
+mouse_scale = 0.744                 # 送った移動量に対して実際にカーソルが動く割合（Windows のポインター速度。実測）
+mouse_deg_per_unit = 0.125          # 視線モードでマウスを 1 動かしたときに回る角度（実測。右が +）
 
 [obs]
 scene = "LT録画"
@@ -97,4 +103,21 @@ steps = [
   { note = "発表を見る人の邪魔にならないように伏せる", keys = "z", then_wait = 1, once = true },
   { note = "配信用画面を 4 アングルに", canvas = "quad", toggle = "shift+q", mode = "f" },
   { note = "画面に発表を少し引いた視点のアングルを出す", keys = "2", then_wait = 1 },
+]
+
+# エンジニア集会アフターラジオの準備（「📻 ラジオ準備」ボタン）。配信は OBS で手で始める
+[radio]
+scene = "エンジニア集会アフターラジオ"   # OBS のラジオ用のシーン
+spout_source = "Spout2 Capture"          # そのシーンの、ストリームカメラの Spout の取り込み
+
+# ワールドごとの手順（書き方は routes と同じ。stream_camera = true でストリームカメラを開く、zoom はその画角）
+[radio_routes.wrld_585f45ea-c6a6-4ba5-ad6a-188dd822f574]
+name = "エンジニアの集会場_v3 ラジオブース"
+steps = [
+  { note = "入室時のダイアログへの自動回答を待つ", wait_pose = 30 },
+  # ワールドのギミック: ゆにSub が右Shift+2 でラジオブースへワープすると、すりガラス・配信中の表示・マイクゾーンがオンになる
+  { note = "ラジオブースにワープ", keys = "rshift+2", then_wait = 3 },
+  # カメラは開いたときの視線の先に出るので、向きをそろえてから開く
+  { note = "カメラの向きをそろえる", face = 0, tolerance = 1.5 },   # 数度ずれると構図が横にずれるので細かく合わせる
+  { note = "ストリームカメラを開いて Spout に流す", stream_camera = true, zoom = 40 },
 ]
