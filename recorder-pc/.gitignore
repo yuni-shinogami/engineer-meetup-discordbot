@@ -7,6 +7,8 @@ lt-recorder/assets/ending.wav
 lt-recorder/assets/*.ttf
 lt-recorder/click.txt
 lt-recorder/click.log
+lt-recorder/obs.log
+lt-recorder/route_done.json
 vrc-launcher/request.txt
 vrc-launcher/join.log
 __pycache__/

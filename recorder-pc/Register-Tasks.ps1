@@ -1,4 +1,4 @@
-﻿# 録画 PC にタスクスケジューラのタスクを 3 つ登録する。録画 PC にログインするユーザーで、管理者の PowerShell から実行する。
+﻿# 録画 PC にタスクスケジューラのタスクを 4 つ登録する。録画 PC にログインするユーザーで、管理者の PowerShell から実行する。
 #   powershell -ExecutionPolicy Bypass -File Register-Tasks.ps1
 # SSH のセッションから起動したプログラムはデスクトップに出ないので、画面が要る処理はタスク経由で
 # ログイン中のデスクトップ（InteractiveToken）で動かす。どのタスクもトリガーはなく、スクリプトから Start-ScheduledTask で起動する。
@@ -27,6 +27,11 @@ Register 'VRChat-Join' 'request.txt のインスタンスへ VRChat（デスク�
 Register 'LT-Recorder-Click' 'VRChat の視線を動かして左クリックする（入室時のダイアログを閉じる）' `
   (New-ScheduledTaskAction -Execute 'powershell.exe' -WorkingDirectory $RecorderDir `
     -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$RecorderDir\Click-VRChat.ps1`"") `
+  (New-TimeSpan -Minutes 5)
+
+Register 'LT-Recorder-OBS' 'OBS を起動する（lt.py が OBS に接続できなかったときに起動）' `
+  (New-ScheduledTaskAction -Execute 'powershell.exe' -WorkingDirectory $RecorderDir `
+    -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$RecorderDir\Start-OBS.ps1`"") `
   (New-TimeSpan -Minutes 5)
 
 Register 'LT-Recorder-Pipeline' 'LT 録画の編集と YouTube アップロード（Request-Recorder.ps1 の stop から起動）' `

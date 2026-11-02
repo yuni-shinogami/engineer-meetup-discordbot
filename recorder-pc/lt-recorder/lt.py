@@ -65,10 +65,25 @@ def recording_session():
 def obs():
     import obsws_python as obsws
     conf = load(Path(os.environ["APPDATA"]) / "obs-studio/plugin_config/obs-websocket/config.json")
-    try:
+
+    def connect():
         return obsws.ReqClient(host="localhost", port=conf["server_port"], password=conf["server_password"], timeout=10)
-    except Exception as ex:
-        raise UserError(f"OBS に接続できません（起動していて WebSocket が有効か確認してください）: {ex}")
+
+    try:
+        return connect()
+    except Exception:
+        pass
+    # OBS が起動していなければ、タスク LT-Recorder-OBS でログイン中のデスクトップに起動して、WebSocket が開くのを待つ
+    log("OBS に接続できないので起動します")
+    subprocess.run(["schtasks", "/run", "/tn", "LT-Recorder-OBS"], capture_output=True)
+    deadline = time.time() + 60
+    while True:
+        time.sleep(2)
+        try:
+            return connect()
+        except Exception as ex:
+            if time.time() > deadline:
+                raise UserError(f"OBS に接続できません（起動していて WebSocket が有効か確認してください）: {ex}")
 
 
 def ensure_scene(c):
@@ -166,19 +181,22 @@ def screenshot(c):
     return Image.open(io.BytesIO(base64.b64decode(r.image_data.split(",", 1)[1]))).convert("RGB")
 
 
-def canvas_state(img):
-    """Streamer Mode の配信用画面の状態。"off" / "simple"（簡易版）/ "quad"（4 アングル）
-    配信用画面は映すものがない枠が地のグレー (204,204,204) になる。簡易版は左上も左下もグレー、
-    4 アングルは左上にカメラ映像が入り左下がグレー。LT 中に全部の枠が埋まると見分けられないので、録画前に使う"""
-    small = img.resize((96, 54))
+def canvas_is_quad(img):
+    """Streamer Mode の配信用画面が 4 アングルか。
+    4 アングルでは、右下の小窓に左上の枠（登壇者の寄り）と同じ映像が縮小して映る。簡易版（スライド全面 + 小窓）や
+    オフでは左上が別の映像になるので、両者の差で見分ける。スライドが映っていてもいなくても使える
+    （11/2 の実測: 4 アングルで差 2〜8、それ以外で 74〜143）"""
+    import numpy as np
+    w, h = img.size
+    pip = img.crop((round(w * 1090 / 1280), round(h * 604 / 720), round(w * 1260 / 1280), round(h * 700 / 720)))
+    tl = np.asarray(img.crop((0, 0, w // 2, h // 2)).resize(pip.size), float)
+    return np.abs(np.asarray(pip, float) - tl).mean() < 30
 
-    def gray_ratio(box):
-        d = small.crop(box).tobytes()
-        return sum(1 for i in range(0, len(d), 3) if all(abs(d[i + k] - 204) <= 8 for k in range(3))) / (len(d) // 3)
 
-    if gray_ratio((0, 33, 38, 54)) > 0.8:
-        return "simple" if gray_ratio((0, 0, 38, 21)) > 0.8 else "quad"
-    return "off"
+def join_key():
+    """いまの入室を表す値（VRChat を起動し直すとログのファイルが、入り直すとインスタンスが変わる）"""
+    logs = sorted(VRC_LOGS.glob("output_log_*.txt"), key=lambda p: p.stat().st_mtime)
+    return f"{logs[-1].name if logs else ''}|{current_location()}"
 
 
 def osc_move(world_id):
@@ -230,17 +248,24 @@ def osc_move(world_id):
             turn(err)
 
     def set_canvas(step):
-        """配信用画面を目的のモードにする。キーは押すたびに切り替わるので、毎回画面で今の状態を確かめてから押す"""
-        target = step["canvas"]
-        for _ in range(4):
-            state = canvas_state(screenshot(c))
-            log(f"  配信用画面: {state}")
-            if state == target:
+        """配信用画面を 4 アングルにする。キーは押すたびに切り替わるので、毎回画面で 4 アングルになったかを確かめてから押す。
+        簡易版ならモード切替キーで 4 アングルになる。モード切替キーで変わらなければオフなので、表示キーを押してからもう一度試す"""
+        if step["canvas"] != "quad":
+            raise UserError(f"配信用画面のモード {step['canvas']} には対応していません（quad のみ）")
+        last = None
+        for _ in range(5):
+            quad = canvas_is_quad(screenshot(c))
+            log(f"  配信用画面: {'4 アングル' if quad else '4 アングルではない'}")
+            if quad:
                 return
-            # オフなら表示キー、表示中でモード違いならモード切替キー
-            desktop_input(keys=step["toggle"] if state == "off" else step["mode"])
+            last = step["toggle"] if last == step["mode"] else step["mode"]
+            desktop_input(keys=last)
             time.sleep(2.5)  # 切り替わって描画されるまで待たないと、まだ前の状態に見えて押しすぎる
-        raise UserError(f"配信用画面を {target} にできませんでした（Streamer Mode がオンか確認してください）")
+        raise UserError("配信用画面を 4 アングルにできませんでした（Streamer Mode がオンか確認してください）")
+
+    done_path = ROOT / "route_done.json"
+    done = load(done_path) if done_path.exists() else {}
+    here = join_key()
 
     c = obs()
     ensure_scene(c)
@@ -265,8 +290,15 @@ def osc_move(world_id):
             desktop_input(click=True)
             time.sleep(1)
         elif "keys" in step:
+            # once: 押すたびに切り替わるキー（伏せるなど）は、同じ入室のあいだ 1 回だけ押す（録画をやり直しても戻らないように）
+            if step.get("once") and done.get(step["keys"]) == here:
+                log("  この入室ではもう押したので飛ばす")
+                continue
             desktop_input(keys=step["keys"])
             time.sleep(step.get("then_wait", 1))
+            if step.get("once"):
+                done[step["keys"]] = here
+                save(done_path, done)
     return route.get("name", world_id)
 
 
@@ -649,7 +681,11 @@ def youtube():
     creds = Credentials.from_authorized_user_file(str(token), SCOPES)
     if not creds.valid:
         creds.refresh(Request())
-        token.write_text(creds.to_json(), encoding="utf-8")
+        try:
+            token.write_text(creds.to_json(), encoding="utf-8")
+        except OSError as ex:
+            # 保存できなくても更新トークンは変わらないので、アップロードは続けられる（次回も更新し直すだけ）
+            log(f"token.json を更新できません（録画 PC のユーザーに書き込み権限が必要）: {ex}")
     return build("youtube", "v3", credentials=creds)
 
 

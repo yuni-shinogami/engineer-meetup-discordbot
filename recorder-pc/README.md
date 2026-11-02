@@ -16,6 +16,7 @@ Bot から SSH で操作する録画 PC（Windows のゲーミングノート）
   - `VRChat-Join` → `vrc-launcher/Join-VRChat.ps1`
   - `LT-Recorder-Click` → `lt-recorder/Click-VRChat.ps1`（VRChat の視線を動かしてクリック・キー入力）
   - `LT-Recorder-Pipeline` → `lt.py pipeline`（録画停止のあとの編集とアップロード）
+  - `LT-Recorder-OBS` → `lt-recorder/Start-OBS.ps1`（録画開始のときに OBS が動いていなければ起動する）
 - 編集の作りは、過去に手作業で編集した LT 動画（YouTube @engineer-meetup）に合わせています。設定は [`lt-recorder/config.toml`](lt-recorder/config.toml) にまとめています（集会名、編集の秒数、YouTube のタイトル・説明欄、ワールドごとの移動手順など）。
 
 ## 録画 PC の準備
@@ -38,6 +39,7 @@ Bot から SSH で操作する録画 PC（Windows のゲーミングノート）
 6. Bot の公開鍵を `C:\ProgramData\ssh\administrators_authorized_keys` に足す（[`authorized_keys.example`](authorized_keys.example)）
 7. YouTube の認可（初回のみ）: Google Cloud で作った OAuth クライアント（デスクトップアプリ）の `client_secret.json` を `lt-recorder/` に置き、`lt.py auth` で集会のチャンネルのアカウントで許可する。`token.json` ができる
    - `client_secret.json` と `token.json` はリポジトリに入れない（`.gitignore` 済み）
+   - `token.json` は、録画 PC のユーザーが書き込めるようにする（タスクが通常の権限で動き、認可を更新したときに書き直すため）。管理者の SSH で置いた場合は `icacls token.json /grant <ユーザー>:(M)`
 
 ## 書き換えるときの注意
 
