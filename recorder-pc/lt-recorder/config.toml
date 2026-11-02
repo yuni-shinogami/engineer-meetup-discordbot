@@ -11,7 +11,7 @@ dir = '%USERPROFILE%\Videos\lt-recorder'   # 環境変数を使える（タス�
 
 # 編集は過去の LT 動画（YouTube @engineer-meetup）の作りに合わせている。素材は assets/ にある
 #   logo_tate.png（縦ロゴ）/ side_x.png・side_discord.png（右の帯の上半分）/ ending.wav（騒音のない世界「電脳都市にて」）
-#   NotoSansJP-VF.ttf（タイトル・日付カードの文字）
+#   NotoSansJP-VF.ttf（タイトル・日付カードの文字）/ slide_color.cube（スライドの色補正。engineer-meetup-archive から）
 [edit]
 event_name = "エンジニア集会"   # 日付カードと動画タイトルに入れる集会名
 pad_before = 3           # mark の何秒前から切り出すか
@@ -31,6 +31,7 @@ cq = 21                  # 画質（小さいほど高画質）
 thumb_at = 20            # 各 LT の開始何秒後のスライドをサムネ（B 案の背景）に使うか
 thumb_candidates = 8     # アバターを切り抜く候補のフレーム数（正面を向いている 1 枚を選ぶ。1 枚 10 秒ほどかかる）
 thumb_model = "birefnet-general-lite"   # 背景除去のモデル（models/ に置いてある）
+slide_lut = "slide_color.cube"   # スライドの色あせを直す 1D LUT（assets/）。空にすると補正しない
 
 # 配信用画面（4 アングル）のどの枠を何に使うか: tl 左上 / tr 右上 / bl 左下 / br 右下
 [edit.panes]
