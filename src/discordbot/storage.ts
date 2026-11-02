@@ -11,6 +11,8 @@ interface StorageData {
   confirmAnswered: boolean;
   /** 事前告知の時刻を開催未定のまま過ぎたか。後から YES が押されたら投稿を促すのに使う。 */
   preAnnounceMissed: boolean;
+  /** 今週の集会を VRChat イベントカレンダーに登録したときの編集用 URL。取りやめたら削除するのに使う。 */
+  vrceveEditUrl: string | null;
 }
 
 const defaultData: StorageData = {
@@ -20,6 +22,7 @@ const defaultData: StorageData = {
   lastInviteUrl: null,
   confirmAnswered: false,
   preAnnounceMissed: false,
+  vrceveEditUrl: null,
 };
 
 export class Storage {
@@ -101,6 +104,15 @@ export class Storage {
 
   set preAnnounceMissed(value: boolean) {
     this.data.preAnnounceMissed = value;
+    this.save();
+  }
+
+  get vrceveEditUrl(): string | null {
+    return this.data.vrceveEditUrl;
+  }
+
+  set vrceveEditUrl(value: string | null) {
+    this.data.vrceveEditUrl = value;
     this.save();
   }
 }

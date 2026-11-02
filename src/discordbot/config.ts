@@ -93,6 +93,15 @@ export const config = {
    */
   ltRecorderSshKey: process.env.LT_RECORDER_SSH_KEY || '',
 
+  // --- VRChat イベントカレンダー（開催が決まったら、デスクトップ VM の Chrome で登録フォームを送る） ---
+  /** 集会用アカウントでログインした Chrome を置いたデスクトップ VM の SSH 接続先（user@host）。 */
+  vrceveSshTarget: process.env.VRCEVE_SSH_TARGET || '',
+  /**
+   * 上の接続に使う秘密鍵のパス。接続先の authorized_keys の command= で登録スクリプト（request.sh）に固定しておく。
+   * 接続先と鍵がそろっているときだけ、開催確認の YES で登録する。
+   */
+  vrceveSshKey: process.env.VRCEVE_SSH_KEY || '',
+
   // --- Canva（司会進行スライドの PDF 配布） ---
   canvaClientId: process.env.CANVA_CLIENT_ID || '',
   canvaClientSecret: process.env.CANVA_CLIENT_SECRET || '',

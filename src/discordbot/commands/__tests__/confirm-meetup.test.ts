@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   },
   triggerPreAnnounce: vi.fn(async () => {}),
   postSlidesToChannel: vi.fn(async () => {}),
+  registerOnVrceve: vi.fn(),
+  deleteFromVrceve: vi.fn(),
 }));
 
 vi.mock('../../config', () => ({
@@ -23,6 +25,10 @@ vi.mock('../../../x/postAnnouncement', () => ({ postAnnouncement: vi.fn() }));
 vi.mock('../../storage', () => ({ storage: mocks.storage }));
 vi.mock('../../scheduler', () => ({ triggerPreAnnounce: mocks.triggerPreAnnounce }));
 vi.mock('../../slides', () => ({ postSlidesToChannel: mocks.postSlidesToChannel }));
+vi.mock('../../vrceve', () => ({
+  registerOnVrceve: mocks.registerOnVrceve,
+  deleteFromVrceve: mocks.deleteFromVrceve,
+}));
 vi.mock('../utils', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => String(e),
@@ -42,9 +48,11 @@ function buttonInteraction(customId: string, channelId = 'ops-channel-id') {
     message: { content: '【確認】今週エンジニア集会やる？' },
     update: vi.fn().mockResolvedValue(undefined),
     editReply: vi.fn().mockResolvedValue(undefined),
+    followUp: vi.fn().mockResolvedValue(undefined),
   } as unknown as ButtonInteraction & {
     update: ReturnType<typeof vi.fn>;
     editReply: ReturnType<typeof vi.fn>;
+    followUp: ReturnType<typeof vi.fn>;
   };
 }
 
@@ -55,6 +63,8 @@ function customIds(payload: Payload): string[] {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.registerOnVrceve.mockResolvedValue(null);
+  mocks.deleteFromVrceve.mockResolvedValue(null);
   mocks.triggerPreAnnounce.mockReset();
   Object.assign(mocks.storage, {
     isScheduled: false,
@@ -174,5 +184,42 @@ describe('handleLatePreAnnounceButton', () => {
 
     expect(mocks.triggerPreAnnounce).not.toHaveBeenCalled();
     expect((interaction.update.mock.calls[0]![0] as Payload).content).toContain('投稿済み');
+  });
+});
+
+describe('VRChat イベントカレンダー', () => {
+  it('YES で登録し、結果を同じチャンネルに流す', async () => {
+    mocks.registerOnVrceve.mockResolvedValue({ content: '📅 VRChat イベントカレンダーに登録しました' });
+    const interaction = buttonInteraction(CONFIRM_MEETUP_YES);
+
+    await handleConfirmMeetupButton(interaction);
+
+    expect(mocks.registerOnVrceve).toHaveBeenCalledWith(true);
+    expect(interaction.followUp).toHaveBeenCalledWith(expect.objectContaining({ content: expect.stringContaining('登録しました') }));
+    expect(mocks.deleteFromVrceve).not.toHaveBeenCalled();
+  });
+
+  it('テストチャンネルの YES は、送らない登録（テスト）にする', async () => {
+    await handleConfirmMeetupButton(buttonInteraction(CONFIRM_MEETUP_YES, 'test-channel-id'));
+
+    expect(mocks.registerOnVrceve).toHaveBeenCalledWith(false);
+  });
+
+  it('本番の NO では、登録済みのイベントを削除する', async () => {
+    mocks.deleteFromVrceve.mockResolvedValue({ content: '🗑️ 削除しました' });
+    const interaction = buttonInteraction(CONFIRM_MEETUP_NO);
+
+    await handleConfirmMeetupButton(interaction);
+
+    expect(mocks.deleteFromVrceve).toHaveBeenCalled();
+    expect(interaction.followUp).toHaveBeenCalledWith(expect.objectContaining({ content: '🗑️ 削除しました' }));
+  });
+
+  it('何もしなかったときは知らせない', async () => {
+    const interaction = buttonInteraction(CONFIRM_MEETUP_NO);
+
+    await handleConfirmMeetupButton(interaction);
+
+    expect(interaction.followUp).not.toHaveBeenCalled();
   });
 });

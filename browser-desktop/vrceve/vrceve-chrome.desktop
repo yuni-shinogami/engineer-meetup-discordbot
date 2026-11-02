@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=vrceve Chrome
+Comment=VRChat イベントカレンダーの自動登録に使う Chrome（専用プロファイル、DevTools は 127.0.0.1 のみ）
+Exec=sh -c '"$HOME/vrceve/.venv/bin/python" "$HOME/vrceve/vrceve.py" launch-chrome'
+X-GNOME-Autostart-enabled=true

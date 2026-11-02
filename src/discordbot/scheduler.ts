@@ -35,6 +35,7 @@ export async function triggerConfirmMeetup(client: Client, isProd = true) {
   if (isProd) {
     storage.confirmAnswered = false;
     storage.preAnnounceMissed = false;
+    storage.vrceveEditUrl = null;
   }
   await sendConfirmMeetupToChannel(client, channelId);
 }

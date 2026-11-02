@@ -9,6 +9,7 @@
 1. **開催確認 (毎週月曜 12:00 自動 / `/confirm-meetup` で手動)**
    - 運営チャンネルに「今週やる？」の YES/NO ボタンを送信します。
    - YES が押されると、その週の事前告知が予約されます（`storage.json` に保存）。
+   - `VRCEVE_SSH_KEY` を設定していれば、YES で **VRChat イベントカレンダー**（vrceve.com）にもその週の集会を登録し、編集用 URL を運営チャンネルに流します（22:00〜23:30。LT がある週はイベント名に「【LTあり】タイトル」、内容に LT の一覧を入れます）。登録は Google ログインが要るフォームなので、ログイン済みの Chrome を置いたデスクトップ VM が送ります（[`browser-desktop/`](browser-desktop/README.md)）。あとから NO に変えると削除します。テストチャンネルの YES では送らずに、入力した画面だけを添付します。
 
 2. **事前告知 (毎週木曜 19:00 自動 / `/pre-announce` で手動)**
    - 開催予約済みの場合、X（Twitter）に事前告知ツイート（画像付き）を投稿します。
@@ -513,6 +514,7 @@ npm install
 | `INSTANCE_REGION` | インスタンスのリージョン（任意、デフォルト `jp`） |
 | `VRC_LAUNCHER_SSH_TARGET` / `VRC_LAUNCHER_SSH_KEY` | 「サブアカウントで入る」ボタンで VRChat を起動する PC の SSH 接続先（`ユーザー名@ホスト`）と秘密鍵のパス（任意、両方そろったときだけボタンを出す）。接続先ではこの鍵を `authorized_keys` の `command=` で起動スクリプトに固定し、Bot からは location だけを送る |
 | `LT_RECORDER_SSH_KEY` / `LT_RECORDER_SSH_TARGET` | 「LT録画開始」ボタンで録画する PC の秘密鍵のパスと SSH 接続先（任意。接続先の既定は `VRC_LAUNCHER_SSH_TARGET`、鍵があるときだけボタンを出す）。入室用とは別の鍵にし、接続先ではこの鍵を `authorized_keys` の `command=` で録画スクリプトに固定する |
+| `VRCEVE_SSH_KEY` / `VRCEVE_SSH_TARGET` | VRChat イベントカレンダーに登録するデスクトップ VM の秘密鍵のパスと SSH 接続先（任意。両方そろっているときだけ、開催確認の YES で登録し、NO で削除する）。接続先ではこの鍵を `authorized_keys` の `command=` で `browser-desktop/vrceve/request.sh` に固定する |
 | `VRC_LINK_STORE_PATH` | Discord ↔ VRChat アカウント対応表の保存先（任意、デフォルトは `VRC_STATE_DIR/vrc-links.json`） |
 | `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` | 自動実行の cron 式（任意、デフォルトは毎週月曜 12:00 / 木曜 19:00） |
 | `STORAGE_PATH` | 週次状態の保存先（任意、デフォルト `./state/storage.json`） |

@@ -5,6 +5,7 @@ import { CONFIRM_MEETUP_YES, buildLatePreAnnounceRow, sendConfirmMeetupToChannel
 import { triggerPreAnnounce } from '../scheduler';
 import { requireOperatorRole, formatError } from './utils';
 import { postSlidesToChannel } from '../slides';
+import { deleteFromVrceve, registerOnVrceve } from '../vrceve';
 
 export const confirmMeetupCommand = new SlashCommandBuilder()
   .setName('confirm-meetup')
@@ -56,6 +57,15 @@ export async function handleConfirmMeetupButton(interaction: ButtonInteraction) 
   // 事前告知（木19時）ではなくここに置いている。失敗は postSlidesToChannel 側で握るので、開催確認の応答は妨げない。
   if (isYes && config.canvaAutoPostSlides && interaction.channelId) {
     await postSlidesToChannel(interaction.client, interaction.channelId);
+  }
+
+  // 開催が決まったら VRChat イベントカレンダーに登録し、取りやめたら削除する。
+  // フォームの入力に 30 秒ほどかかるので、結果は後から同じチャンネルに流す（失敗しても開催確認の応答は妨げない）
+  const isProd = interaction.channelId !== config.testChannelId;
+  const report = isYes ? await registerOnVrceve(isProd) : isProd ? await deleteFromVrceve() : null;
+  if (report) {
+    await interaction.followUp({ content: report.content, files: report.files ?? [] }).catch(error =>
+      console.error('Failed to report vrceve result:', error));
   }
 }
 
