@@ -1,0 +1,94 @@
+[vrchat]
+osc_port = 9000          # サブアカの VRChat は vrc-launcher が既定の引数で起動するので標準ポート
+turn_deg_per_sec = 200   # LookHorizontal=1.0 での回転速度（実測: 0.5 秒で約 100°）。1.0 未満では回らない
+walk_m_per_sec = 2.0     # Vertical=1.0 での移動速度（実測。しゃがみ・伏せだと 0.2 まで落ちる）
+
+[obs]
+scene = "LT録画"
+
+[output]
+dir = '%USERPROFILE%\Videos\lt-recorder'   # 環境変数を使える（タスクと SSH はどちらも録画 PC のユーザーで動く）
+
+# 編集は過去の LT 動画（YouTube @engineer-meetup）の作りに合わせている。素材は assets/ にある
+#   logo_tate.png（縦ロゴ）/ side_x.png・side_discord.png（右の帯の上半分）/ ending.wav（騒音のない世界「電脳都市にて」）
+#   NotoSansJP-VF.ttf（タイトル・日付カードの文字）
+[edit]
+event_name = "エンジニア集会"   # 日付カードと動画タイトルに入れる集会名
+pad_before = 3           # mark の何秒前から切り出すか
+pad_after = 3
+min_sec = 30             # これより短い区間は捨てる
+intro_sec = 10           # オープニング（ロゴ → 日付カード）の長さ。チャプターの LT 開始もここ
+intro_logo_sec = 3       # そのうちロゴを出す秒数
+ending_sec = 20          # エンディング（会場の引き + エンディング曲）の長さ
+ending_music = "ending.wav"
+ending_music_loudness = -22   # エンディング曲の音量（LUFS）
+ending_venue_duck = 8         # エンディング中に会場の音を下げる量（dB）
+qr_switch_sec = 12       # 右の帯の QR を X と Discord で切り替える間隔
+loudness = -16           # 本編の音量（LUFS）
+fps = 30
+encoder = "auto"         # auto: NVENC を試して駄目なら libx264 / x264: 常に CPU
+cq = 21                  # 画質（小さいほど高画質）
+thumb_at = 20            # 各 LT の開始何秒後のスライドをサムネ（B 案の背景）に使うか
+thumb_candidates = 8     # アバターを切り抜く候補のフレーム数（正面を向いている 1 枚を選ぶ。1 枚 10 秒ほどかかる）
+thumb_model = "birefnet-general-lite"   # 背景除去のモデル（models/ に置いてある）
+
+# 配信用画面（4 アングル）のどの枠を何に使うか: tl 左上 / tr 右上 / bl 左下 / br 右下
+[edit.panes]
+slide = "bl"             # スライド（本編の主画面）
+speaker = "tl"           # 登壇者の寄り（右下の小窓）
+wide = "tr"              # 会場の引き（エンディング）
+
+[youtube]
+# API での自動アップロード。false にすると編集までで止まり、編集済みの mp4・サムネイル（jpg）・
+# タイトルと説明欄（txt）を手で Studio からアップする
+# （未審査のプロジェクトからのアップは非公開にロックされるという情報があったが、2026-11-02 に試したところ
+#   Studio で限定公開・公開に切り替えられた。ロックされるようになったら false にして YouTube API の監査を申請する）
+auto_upload = true
+privacy = "private"      # 公開範囲は運営が archivePolicy を見て Studio で切り替える
+category = "28"          # 科学と技術
+tags = ["エンジニア", "プログラム開発", "ソフトウェア", "ハードウェア", "慕狼ゆに", "技術", "作業飲み集会", "VRChat",
+        "サーバー", "プログラミング", "ネットワーク", "インターネット", "VR", "勉強会", "LT", "ライントニングトーク"]
+title_template = "{title} [{event}@{date}]"
+description_template = """{date_ja}の{event}でのLTです。
+
+0:00 start
+{chapter} {title} / {speaker}
+
+エンジニア集会とは、
+VRChatのお友達と技術の雑談を楽しんだり、お酒を飲みながら雑談＆作業をしよう！という集会です。
+ハードウェア、ソフトウェア、などの技術分野不問。どのような形でも、技術と関わりのある方でしたら参加OKです！
+
+
+■エンジニア集会のSNS
+Twitterアカウントはこちら
+https://twitter.com/VRENGAssoc
+
+Discordサーバーはこちら
+https://discord.gg/zaTjFtDRP7
+
+■VRChat技術・学術系イベントHub
+https://vrc-ta-hub.com/
+
+クレジット
+Hosted by 慕狼ゆに
+Produced by 慕狼ゆに
+Special Thanks LinaTsukusu
+Ending Music 騒音のない世界｢電脳都市にて｣
+"""
+
+# ルート: world ID ごとに、入室してから録画の準備が整うまでの手順（steps を上から順に実行）
+#   wait_pose = 秒   ワールドが入室時のダイアログに自動で答え、位置がログに出始めるのを待つ
+#   keys = "..."     キー入力（例 "rshift+1"）。then_wait で押したあとの待ち秒数
+#   canvas = "simple" | "quad"   配信用画面をそのモードにする。toggle が表示のオン・オフ、mode が簡易版⇔4 アングル。
+#                    どちらも押すたびに切り替わるので、画面で今の状態を確かめながら押す
+#   walk = [[x, y, z], ...] / face = 向き / aim_from_floor = カウント / click = true
+#     座標はワールドがログに出す [Player Position]（y は高さ）。向きは +z が 0°、右回り
+#     aim_from_floor は一度真下を向いてから何カウント視線を上げるか
+[routes.wrld_585f45ea-c6a6-4ba5-ad6a-188dd822f574]
+name = "エンジニアの集会場_v3 ひな壇前"
+steps = [
+  { note = "入室時のダイアログへの自動回答を待つ", wait_pose = 30 },
+  # ワールドのギミック: ひな壇の前 (-38.7, 1.06, -6.1) に 270° 向きでワープし、Streamer Mode もオンになる
+  { note = "ひな壇の前にワープ", keys = "rshift+1", then_wait = 2 },
+  { note = "配信用画面を 4 アングルに", canvas = "quad", toggle = "shift+q", mode = "f" },
+]

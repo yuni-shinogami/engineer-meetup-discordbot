@@ -1,0 +1,10 @@
+# 録画 PC の C:\ProgramData\ssh\administrators_authorized_keys に足す行の例（録画 PC のユーザーが管理者の場合）。
+# Bot の鍵ごとに、実行できるスクリプトを command= で 1 つに固定する。Bot が送った文字列は SSH_ORIGINAL_COMMAND に入る。
+# from= には Bot のホストの IP アドレス（Tailscale など）を入れる。<…> は環境に合わせて置き換える。
+# 1 行に 1 つの鍵。ここでは読みやすさのため説明の行を挟んでいる。
+
+# サブアカウントで入る（Bot の環境変数 VRC_LAUNCHER_SSH_KEY の鍵）
+command="powershell -NoProfile -ExecutionPolicy Bypass -File C:\ProgramData\vrc-launcher\Request-Join.ps1",from="<BOT_HOST_IP>",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ssh-ed25519 <PUBLIC_KEY> engineer-meetup-bot-vrchat
+
+# LT 録画（Bot の環境変数 LT_RECORDER_SSH_KEY の鍵）
+command="powershell -NoProfile -ExecutionPolicy Bypass -File C:\ProgramData\lt-recorder\Request-Recorder.ps1",from="<BOT_HOST_IP>",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ssh-ed25519 <PUBLIC_KEY> engineer-meetup-bot-lt-recorder

@@ -1,0 +1,12 @@
+# 録画 PC の lt-recorder の依存（Python 3.12）。2026-11 時点で動いている版に固定している
+obsws-python==1.8.0
+python-osc==1.10.2
+google-api-python-client==2.201.0
+google-auth-oauthlib==1.5.0
+pillow==13.0.0
+numpy==2.5.4
+rembg==2.0.86
+onnxruntime==1.31.1
+opencv-python-headless==5.0.0.93
+# 0.10 系は改行位置の判定が変わり「方/法」のように切れたので 0.9.3 に固定
+budoux==0.9.3
