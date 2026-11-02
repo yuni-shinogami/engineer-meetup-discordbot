@@ -95,7 +95,7 @@ describe('サブアカウントで入るボタン', () => {
 });
 
 describe('LT録画開始ボタン', () => {
-  it('録画用の鍵が設定されていれば、入室ボタンの隣に本番かどうか付きで出す', async () => {
+  it('録画用の鍵が設定されていれば、入室ボタンの隣に本番かどうか付きの録画開始とラジオ準備を出す', async () => {
     mocks.config.vrcLauncherSshTarget = 'user@vrchat-pc';
     mocks.config.vrcLauncherSshKey = '/path/to/key';
     mocks.config.ltRecorderSshTarget = 'user@vrchat-pc';
@@ -104,7 +104,7 @@ describe('LT録画開始ボタン', () => {
 
     await handleCreateInstanceCommand(i);
 
-    expect(buttonIds(i)).toEqual(['vrc:join-sub:45350', 'ltrec:start:45350:0']);
+    expect(buttonIds(i)).toEqual(['vrc:join-sub:45350', 'ltrec:start:45350:0', 'ltrec:radio:45350']);
   });
 });
 

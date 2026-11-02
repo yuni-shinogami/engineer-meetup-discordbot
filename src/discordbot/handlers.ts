@@ -5,12 +5,14 @@ import {
   handleLtRecordEndButton,
   handleLtRecordMarkButton,
   handleLtRecordStartButton,
+  handleRadioPrepButton,
   handleLtRecordStatusButton,
   handleLtRecordStopButton,
   handleLtRecordStopConfirm,
   LT_REC_END_BUTTON,
   LT_REC_MARK_BUTTON,
   LT_REC_START_BUTTON,
+  LT_REC_RADIO_BUTTON,
   LT_REC_STATUS_BUTTON,
   LT_REC_STOP_BUTTON,
   LT_REC_STOP_CONFIRM,
@@ -53,6 +55,7 @@ export function registerInteractionHandlers(): void {
   registerButtonHandler(LATE_PRE_ANNOUNCE_BUTTON, handleLatePreAnnounceButton);
   registerButtonHandler(VRC_JOIN_SUB_BUTTON, handleJoinSubButton);
   registerButtonHandler(LT_REC_START_BUTTON, handleLtRecordStartButton);
+  registerButtonHandler(LT_REC_RADIO_BUTTON, handleRadioPrepButton);
   registerButtonHandler(LT_REC_MARK_BUTTON, handleLtRecordMarkButton);
   registerButtonHandler(LT_REC_END_BUTTON, handleLtRecordEndButton);
   registerButtonHandler(LT_REC_STATUS_BUTTON, handleLtRecordStatusButton);

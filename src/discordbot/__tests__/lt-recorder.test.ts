@@ -28,7 +28,9 @@ import {
   handleLtRecordMarkButton,
   handleLtRecordStartButton,
   handleLtRecordStopConfirm,
+  handleRadioPrepButton,
   ltRecordStartButton,
+  radioPrepButton,
   recordingPanelRows,
   renderStatus,
   type RecorderStatus,
@@ -383,5 +385,46 @@ describe('handleLtRecordStopConfirm', () => {
     await vi.advanceTimersByTimeAsync(2 * 60_000);
 
     expect(channel.send).toHaveBeenCalledWith(expect.stringContaining('01_Aの話.mp4'));
+  });
+});
+
+describe('ラジオ準備', () => {
+  it('ボタンは最新のインスタンスに結びつく', () => {
+    const json = radioPrepButton(LOCATION).toJSON() as { custom_id: string; label: string };
+    expect(json.custom_id).toBe('ltrec:radio:45350');
+    expect(json.label).toContain('ラジオ準備');
+  });
+
+  it('最新のインスタンスで準備し、OBS のシーンと配信の始め方を返す', async () => {
+    recorderReplies({ radio: { ok: true, moved: 'ラジオブース', scene: 'エンジニア集会アフターラジオ' } });
+    const i = interaction();
+
+    await handleRadioPrepButton(i, ['45350']);
+
+    const request = sentRequests()[0]!;
+    expect(request.startsWith('radio ')).toBe(true);
+    expect(decodePayload(request)).toEqual({ location: LOCATION });
+    // ワープ・カメラの準備まで待つので、録画開始と同じ長いタイムアウトにする
+    expect((mocks.execFile.mock.calls[0]![2] as { timeout: number }).timeout).toBe(150_000);
+    expect(i.editReply).toHaveBeenLastCalledWith(expect.stringContaining('エンジニア集会アフターラジオ'));
+    expect(i.editReply).toHaveBeenLastCalledWith(expect.stringContaining('配信を開始'));
+  });
+
+  it('後から別のインスタンスが作られていれば準備しない', async () => {
+    const i = interaction();
+
+    await handleRadioPrepButton(i, ['11111']);
+
+    expect(mocks.execFile).not.toHaveBeenCalled();
+    expect(i.reply).toHaveBeenCalledWith(expect.objectContaining({ ephemeral: true }));
+  });
+
+  it('準備できなければ理由を返す', async () => {
+    recorderReplies({ radio: { ok: false, error: 'ストリームカメラの映像が OBS に届いていません' } });
+    const i = interaction();
+
+    await handleRadioPrepButton(i, ['45350']);
+
+    expect(i.editReply).toHaveBeenLastCalledWith(expect.stringContaining('ストリームカメラの映像'));
   });
 });

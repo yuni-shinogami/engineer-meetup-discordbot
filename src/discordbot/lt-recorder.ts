@@ -22,6 +22,8 @@ import { instanceNameOf, readLatest } from './vrc-launcher';
  * パネルの登壇者ボタンで LT の始まりを、「区切り」で終わりを記録し、その時刻で動画を切り分ける。
  */
 export const LT_REC_START_BUTTON = 'ltrec:start';
+/** エンジニア集会アフターラジオの準備。録画 PC の OBS で配信するので、録画と同じ接続を使う。 */
+export const LT_REC_RADIO_BUTTON = 'ltrec:radio';
 export const LT_REC_MARK_BUTTON = 'ltrec:mark';
 export const LT_REC_END_BUTTON = 'ltrec:end';
 export const LT_REC_STOP_BUTTON = 'ltrec:stop';
@@ -31,7 +33,7 @@ export const LT_REC_STATUS_BUTTON = 'ltrec:status';
 /** アップロードした動画のタイトルに入れる集会名。 */
 const EVENT_NAME = 'エンジニア集会';
 
-/** start は入室直後のダイアログ待ち・ワープ・画面の切り替えまでやるので長めに待つ。 */
+/** start・radio は入室直後のダイアログ待ち・ワープ・画面やカメラの準備までやるので長めに待つ。 */
 const START_TIMEOUT_MS = 150_000;
 const SSH_TIMEOUT_MS = 30_000;
 
@@ -48,7 +50,7 @@ const HANG_ADVICE = '「⏹ 録画終了」で録画を止め、「🖥️ サ�
 /** ボタンは 1 行 5 個まで。登壇者ボタンは 3 行まで使い、残りの 1 行を操作ボタンに充てる。 */
 const MAX_LT_BUTTONS = 15;
 
-type RecorderVerb = 'start' | 'mark' | 'end' | 'stop' | 'status';
+type RecorderVerb = 'start' | 'radio' | 'mark' | 'end' | 'stop' | 'status';
 /** `edited` は YouTube を認可する前の終点（切り出しまで済み、アップロードはしていない）。 */
 type RecorderState = 'recording' | 'processing' | 'edited' | 'uploading' | 'done' | 'error';
 
@@ -100,7 +102,7 @@ export function callRecorder<T = Record<string, unknown>>(
     config.ltRecorderSshTarget,
     request,
   ];
-  const timeout = verb === 'start' ? START_TIMEOUT_MS : SSH_TIMEOUT_MS;
+  const timeout = verb === 'start' || verb === 'radio' ? START_TIMEOUT_MS : SSH_TIMEOUT_MS;
   return new Promise((resolve, reject) => {
     execFile('ssh', args, { timeout, encoding: 'buffer' }, (error, stdout, stderr) => {
       const line = stdout.toString('utf-8').trim().split('\n').pop() ?? '';
@@ -130,6 +132,13 @@ export function ltRecordStartButton(location: string, isProd: boolean): ButtonBu
   return new ButtonBuilder()
     .setCustomId(buildCustomId(LT_REC_START_BUTTON, instanceNameOf(location), isProd ? '1' : '0'))
     .setLabel('🎥 LT録画開始')
+    .setStyle(ButtonStyle.Secondary);
+}
+
+export function radioPrepButton(location: string): ButtonBuilder {
+  return new ButtonBuilder()
+    .setCustomId(buildCustomId(LT_REC_RADIO_BUTTON, instanceNameOf(location)))
+    .setLabel('📻 ラジオ準備')
     .setStyle(ButtonStyle.Secondary);
 }
 
@@ -273,6 +282,38 @@ export function watchRecording(channel: SendableChannels, session: string): void
   };
   const schedule = () => setTimeout(() => void tick(), RECORDING_WATCH_INTERVAL_MS).unref();
   schedule();
+}
+
+/**
+ * エンジニア集会アフターラジオの準備。サブアカウントをラジオブースへワープさせ（ワールドがすりガラス・配信中の表示・
+ * マイクゾーンをオンにする）、ストリームカメラを開いて Spout に流し、録画 PC の OBS をラジオのシーンにする。
+ * 配信を始めるのは人（OBS の「配信開始」）。
+ */
+export async function handleRadioPrepButton(interaction: ButtonInteraction, args: string[]) {
+  if (!await requireOperatorRole(interaction, '❌ このボタンを押す権限がありません。')) return;
+
+  // 「サブアカウントで入る」と同じく、最新のインスタンスのボタンだけを受け付ける
+  const latest = readLatest();
+  if (!latest || instanceNameOf(latest.location) !== args[0]) {
+    await interaction.reply({
+      content: 'ℹ️ このボタンのインスタンスは、その後に作成したインスタンスに置き換わっています。最新の /create-instance の結果から押してください。',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  await interaction.deferReply();
+  try {
+    await interaction.editReply('📻 サブアカウントをラジオブースに移動し、ストリームカメラを準備しています（40 秒ほどかかります）…');
+    const result = await callRecorder<{ moved: string; scene: string }>('radio', { location: latest.location });
+    await interaction.editReply([
+      `📻 ラジオの準備ができました（${result.moved}）。`,
+      `録画 PC の OBS をシーン「${result.scene}」にしています。構図をプレビューで確かめてから、OBS で配信を開始してください。`,
+    ].join('\n'));
+  } catch (error) {
+    console.error('handleRadioPrepButton failed:', error);
+    await interaction.editReply(formatError(error));
+  }
 }
 
 export async function handleLtRecordStartButton(interaction: ButtonInteraction, args: string[]) {
