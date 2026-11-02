@@ -2,6 +2,7 @@
 osc_port = 9000          # サブアカの VRChat は vrc-launcher が既定の引数で起動するので標準ポート
 turn_deg_per_sec = 200   # LookHorizontal=1.0 での回転速度（実測: 0.5 秒で約 100°）。1.0 未満では回らない
 walk_m_per_sec = 2.0     # Vertical=1.0 での移動速度（実測。しゃがみ・伏せだと 0.2 まで落ちる）
+hang_sec = 60            # VRChat のログがこれだけ止まっていたら固まっているとみなす（在室中は毎秒ログが出る）
 
 [obs]
 scene = "LT録画"
