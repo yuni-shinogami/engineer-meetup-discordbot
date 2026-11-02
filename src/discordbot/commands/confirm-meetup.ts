@@ -6,6 +6,7 @@ import { triggerPreAnnounce } from '../scheduler';
 import { requireOperatorRole, formatError } from './utils';
 import { postSlidesToChannel } from '../slides';
 import { deleteFromVrceve, registerOnVrceve } from '../vrceve';
+import { deleteVrcEvent, registerVrcEvent } from '../vrc-event';
 
 export const confirmMeetupCommand = new SlashCommandBuilder()
   .setName('confirm-meetup')
@@ -66,6 +67,13 @@ export async function handleConfirmMeetupButton(interaction: ButtonInteraction) 
   if (report) {
     await interaction.followUp({ content: report.content, files: report.files ?? [] }).catch(error =>
       console.error('Failed to report vrceve result:', error));
+  }
+
+  // VRChat のグループのイベント（VRChat の「イベント」に載る）も同じく、開催が決まったら作り、取りやめたら消す
+  const eventReport = isYes ? await registerVrcEvent(isProd) : isProd ? await deleteVrcEvent() : null;
+  if (eventReport) {
+    await interaction.followUp({ content: eventReport }).catch(error =>
+      console.error('Failed to report VRChat event result:', error));
   }
 }
 
