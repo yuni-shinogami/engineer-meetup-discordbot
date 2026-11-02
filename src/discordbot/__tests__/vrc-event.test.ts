@@ -18,7 +18,7 @@ vi.mock('../../vrchat/groupEvent', () => ({
 }));
 vi.mock('../config', () => ({ config: { vrceveSshTarget: '', vrceveSshKey: '' } }));
 
-import { deleteVrcEvent, registerVrcEvent } from '../vrc-event';
+import { deleteVrcEvent, jstToIso, registerVrcEvent } from '../vrc-event';
 import type { LtEntry } from '../lt/types';
 
 beforeEach(() => {
@@ -40,8 +40,9 @@ describe('registerVrcEvent', () => {
     expect(isProd).toBe(true);
     expect(input).toMatchObject({
       title: 'エンジニア集会【LTあり】自作OSの話',
-      startsAt: '2026-11-06T22:00:00+09:00',
-      endsAt: '2026-11-06T23:30:00+09:00',
+      // 日本時間の 22:00〜23:30 を UTC で送る（オフセット付きの形は VRChat に弾かれる）
+      startsAt: '2026-11-06T13:00:00.000Z',
+      endsAt: '2026-11-06T14:30:00.000Z',
     });
     expect(input.description).toContain('「自作OSの話」 / A');
     expect(mocks.storage.vrcEvent).toEqual({ groupId: 'grp_prod', eventId: 'cal_1' });
@@ -100,5 +101,11 @@ describe('deleteVrcEvent', () => {
   it('作っていなければ何もしない', async () => {
     expect(await deleteVrcEvent()).toBeNull();
     expect(mocks.deleteMeetupEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe('jstToIso', () => {
+  it('日付をまたぐ時刻も UTC に直す', () => {
+    expect(jstToIso('2026-11-06', '08:30')).toBe('2026-11-05T23:30:00.000Z');
   });
 });

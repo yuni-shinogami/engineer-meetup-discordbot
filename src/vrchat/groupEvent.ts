@@ -5,7 +5,7 @@ import { withSession } from './session';
 export interface MeetupEventInput {
   title: string;
   description: string;
-  /** ISO 8601（タイムゾーン付き） */
+  /** UTC の ISO 8601（`2026-11-06T13:00:00.000Z`） */
   startsAt: string;
   endsAt: string;
 }

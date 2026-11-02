@@ -8,6 +8,14 @@ import { createMeetupEvent, deleteMeetupEvent } from '../vrchat/groupEvent';
  * 開催確認で YES になったら作り、取りやめたら消す。タイトル・内容・時刻は VRChat イベントカレンダー（vrceve）と共通。
  */
 
+/**
+ * 日本時間の日付と時刻を、VRChat が受け付ける UTC の ISO 形式（`2026-11-06T13:00:00.000Z`）にする。
+ * `+09:00` のようにオフセットを付けた形は 400（startsAt must be a valid ISO Date string）で弾かれる。
+ */
+export function jstToIso(date: string, time: string): string {
+  return new Date(`${date}T${time}:00+09:00`).toISOString();
+}
+
 /** 次の開催日のイベントを作る。本番で作成済みなら作らない（YES を押し直したときなど）。結果の報告文を返す。 */
 export async function registerVrcEvent(isProd: boolean, now: Date = new Date()): Promise<string> {
   if (isProd && storage.vrcEvent) {
@@ -20,9 +28,8 @@ export async function registerVrcEvent(isProd: boolean, now: Date = new Date()):
     const ref = await createMeetupEvent(isProd, {
       title: fields.name,
       description: fields.description,
-      // 集会は日本時間
-      startsAt: `${eventDate}T${MEETUP_START_TIME}:00+09:00`,
-      endsAt: `${eventDate}T${MEETUP_END_TIME}:00+09:00`,
+      startsAt: jstToIso(eventDate, MEETUP_START_TIME),
+      endsAt: jstToIso(eventDate, MEETUP_END_TIME),
     });
     if (!isProd) return `🧪 テスト用のグループにイベントを作りました（グループ内だけに公開）: **${fields.name}**（${when}）`;
     storage.vrcEvent = ref;

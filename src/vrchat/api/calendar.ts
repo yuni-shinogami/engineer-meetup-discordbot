@@ -4,7 +4,7 @@ import { VRChatClient } from './client';
 export interface CalendarEventRequest {
   title: string;
   description: string;
-  /** ISO 8601（タイムゾーン付き） */
+  /** UTC の ISO 8601（`2026-11-06T13:00:00.000Z`）。オフセット付き（`+09:00`）は 400 で弾かれる */
   startsAt: string;
   endsAt: string;
   category: 'hangout' | 'education' | 'other';
