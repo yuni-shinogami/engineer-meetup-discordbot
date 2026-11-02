@@ -123,6 +123,27 @@ def vrchat_running():
     return "VRChat.exe" in out
 
 
+def vrchat_hang():
+    """VRChat が固まっていれば理由を返す（動いていない・動いているなら None）。
+    在室中はワールドが毎秒自分の位置をログに書くので、ログの最後の行の時刻が古ければ固まっている。
+    Windows の「応答なし」は SSH（別のセッション）からは正しく見えないので使わない"""
+    if not vrchat_running():
+        return None
+    logs = sorted(VRC_LOGS.glob("output_log_*.txt"), key=lambda p: p.stat().st_mtime)
+    if not logs:
+        return None
+    with open(logs[-1], "rb") as f:
+        f.seek(max(0, f.seek(0, 2) - 8192))
+        tail = f.read().decode("utf-8", errors="replace")
+    stamps = re.findall(r"^(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2})", tail, re.M)
+    if not stamps:
+        return None
+    age = (dt.datetime.now() - dt.datetime.strptime(stamps[-1], "%Y.%m.%d %H:%M:%S")).total_seconds()
+    if age < CFG["vrchat"].get("hang_sec", 60):
+        return None
+    return f"VRChat が固まっているようです（ログが {fmt(age)} 止まっています）"
+
+
 # ワールドが人流解析のために 1 秒ごとに出す自分の位置。「協力する」を選んだときだけ出る
 POSE_PATTERN = re.compile(r"^(\S+ \S+) .*\[Player Position\]\d+,\"[^\"]*\",([-\d.]+),([-\d.]+),([-\d.]+),[-\d.]+,([-\d.]+)")
 
@@ -312,6 +333,8 @@ def cmd_start(p):
         raise UserError("すでに録画中です")
     if not vrchat_running():
         raise UserError("VRChat が起動していません（先に「サブアカウントで入る」を押してください）")
+    if hang := vrchat_hang():
+        raise UserError(f"{hang}。「🖥️ サブアカウントで入る」で起動し直してから、もう一度押してください")
     here = current_location()
     if not here:
         raise UserError("VRChat がまだインスタンスに入っていません")
@@ -382,6 +405,7 @@ def cmd_stop(p):
 def cmd_status(p):
     sdir, s = latest_session()
     return {"session": sdir.name, "state": s["state"], "event": s["event"], "error": s.get("error"),
+            "vrchat_hang": vrchat_hang(),
             "marks": [{"t": fmt(m["t"]), "lt_id": m.get("lt_id"), "title": m.get("title")} for m in s["marks"]],
             "clips": [{**{k: c.get(k) for k in ("lt_id", "title", "speaker", "archive_policy", "video_id", "privacy",
                                                  "skipped")},

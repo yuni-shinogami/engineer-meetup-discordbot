@@ -175,6 +175,14 @@ describe('renderStatus', () => {
 
     expect(text).toContain('▶ 0:01:02 自作OSの話');
     expect(text).toContain('⏸ 0:06:30 区切り');
+    expect(text).not.toContain('⚠️');
+  });
+
+  it('録画中に VRChat が固まっていれば、立て直し方と一緒に知らせる', () => {
+    const text = renderStatus({ ...RECORDING, vrchat_hang: 'VRChat が固まっているようです（ログが 0:02:10 止まっています）' });
+
+    expect(text).toContain('⚠️ VRChat が固まっているようです（ログが 0:02:10 止まっています）');
+    expect(text).toContain('「🖥️ サブアカウントで入る」で VRChat を起動し直して');
   });
 
   it('完了したら動画の URL と、公開範囲の切り替え方を archivePolicy ごとに出す', () => {
@@ -236,6 +244,34 @@ describe('handleLtRecordStartButton', () => {
     const panel = i.editReply.mock.calls.slice(-1)[0]![0];
     expect(panel.content).toContain('録画中');
     expect(customIds(panel.components)[0]).toEqual(['ltrec:mark:thread-1']);
+  });
+
+  it('録画中は VRChat が固まっていないか見張り、固まったらチャンネルに 1 回だけ知らせる', async () => {
+    vi.useFakeTimers();
+    const channel = { isSendable: () => true, send: vi.fn().mockResolvedValue(undefined) };
+    recorderReplies({
+      start: { ok: true, session: RECORDING.session, moved: 'ひな壇前' },
+      status: { ok: true, ...RECORDING },
+    });
+
+    await handleLtRecordStartButton(interaction({ channel }), ['45350', '1']);
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(channel.send).not.toHaveBeenCalled();
+
+    const hang = 'VRChat が固まっているようです（ログが 0:01:30 止まっています）';
+    recorderReplies({ status: { ok: true, ...RECORDING, vrchat_hang: hang } });
+    await vi.advanceTimersByTimeAsync(60_000);
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(channel.send).toHaveBeenCalledTimes(1);
+    expect(channel.send).toHaveBeenCalledWith(expect.stringContaining(hang));
+
+    // 録画が終わったら見張りもやめる
+    recorderReplies({ status: { ok: true, ...RECORDING, state: 'processing', vrchat_hang: hang } });
+    await vi.advanceTimersByTimeAsync(60_000);
+    const calls = mocks.execFile.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
+    expect(mocks.execFile.mock.calls.length).toBe(calls);
+    expect(channel.send).toHaveBeenCalledTimes(1);
   });
 
   // 古いメッセージのボタンで、別のインスタンスにいるサブアカウントを録画し始めないようにする

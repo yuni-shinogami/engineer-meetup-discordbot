@@ -39,6 +39,12 @@ const SSH_TIMEOUT_MS = 30_000;
 const WATCH_INTERVAL_MS = 2 * 60_000;
 const WATCH_LIMIT_MS = 8 * 60 * 60_000;
 
+/** 録画中に VRChat が固まっていないかを見に行く間隔。 */
+const RECORDING_WATCH_INTERVAL_MS = 60_000;
+
+/** VRChat が固まったときの立て直し方。固まったまま録画を続けても止まった画しか撮れない。 */
+const HANG_ADVICE = '「⏹ 録画終了」で録画を止め、「🖥️ サブアカウントで入る」で VRChat を起動し直してから、もう一度「🎥 LT録画開始」を押してください。';
+
 /** ボタンは 1 行 5 個まで。登壇者ボタンは 3 行まで使い、残りの 1 行を操作ボタンに充てる。 */
 const MAX_LT_BUTTONS = 15;
 
@@ -51,6 +57,8 @@ export interface RecorderStatus {
   state: RecorderState;
   event: string;
   error: string | null;
+  /** VRChat が固まっていればその説明（録画 PC が VRChat のログの止まり具合で判定する）。動いていれば null */
+  vrchat_hang?: string | null;
   marks: { t: string; lt_id: string | null; title: string | null }[];
   clips: {
     lt_id: string;
@@ -173,6 +181,7 @@ export function renderStatus(status: RecorderStatus): string {
       for (const mark of status.marks) {
         lines.push(mark.lt_id ? `- ▶ ${mark.t} ${mark.title ?? ''}` : `- ⏸ ${mark.t} 区切り`);
       }
+      if (status.vrchat_hang) lines.push(`⚠️ ${status.vrchat_hang}。${HANG_ADVICE}`);
       break;
     }
     case 'processing':
@@ -241,6 +250,31 @@ export function watchPipeline(channel: SendableChannels, session: string): void 
   schedule();
 }
 
+/**
+ * 録画中、VRChat が固まっていないかを定期的に見に行き、固まったらチャンネルに知らせる（固まっている間は 1 回だけ）。
+ * 固まると録画は止まった画のまま続くので、気づくのが遅れるとその間の LT が撮れない。
+ * Bot を再起動すると見張りは消えるが、パネルの「🔄 状況」でも確認できる。
+ */
+export function watchRecording(channel: SendableChannels, session: string): void {
+  const deadline = Date.now() + WATCH_LIMIT_MS;
+  let alerted = false;
+  const tick = async () => {
+    try {
+      const status = await callRecorder<RecorderStatus>('status');
+      if (status.session !== session || status.state !== 'recording') return; // 録画が終わった
+      if (status.vrchat_hang && !alerted) {
+        await channel.send(`⚠️ **LT 録画**（${session}）: ${status.vrchat_hang}。${HANG_ADVICE}`);
+      }
+      alerted = Boolean(status.vrchat_hang);
+    } catch (error) {
+      console.error('watchRecording failed:', error);
+    }
+    if (Date.now() < deadline) schedule();
+  };
+  const schedule = () => setTimeout(() => void tick(), RECORDING_WATCH_INTERVAL_MS).unref();
+  schedule();
+}
+
 export async function handleLtRecordStartButton(interaction: ButtonInteraction, args: string[]) {
   if (!await requireOperatorRole(interaction, '❌ このボタンを押す権限がありません。')) return;
 
@@ -270,6 +304,7 @@ export async function handleLtRecordStartButton(interaction: ButtonInteraction, 
       content: [renderStatus(status), ...note].join('\n'),
       components: recordingPanelRows(entries),
     });
+    if (interaction.channel?.isSendable()) watchRecording(interaction.channel, status.session);
   } catch (error) {
     console.error('handleLtRecordStartButton failed:', error);
     await interaction.editReply(formatError(error));
