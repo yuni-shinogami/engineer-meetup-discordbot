@@ -69,6 +69,7 @@
    - **本文は保存しません**（Message Content Intent も使いません）。個人に紐づくデータなので `state/` の外（Git や公開の場所）には出さないでください。
    - VC の滞在時間は 1 分ごとの見回りで数えます（Bot と AFK チャンネルは除く）。
    - **過去のメッセージの取り込み**: `npm run activity:backfill -- [--since YYYY-MM-DD] [--until YYYY-MM-DD]` で、チャンネルとスレッド（アーカイブ済みを含む）の履歴からメッセージの集計を作り直します。`--since` を省くと最初から、`--until`（その日の前日まで）を省くと昨日までです。今日の分は Bot が集計中なので指定できません。期間内の日はメッセージ由来の集計を空にしてから数え直すので、何度実行しても同じ結果になります。履歴から取れない投稿時点のロール・リアクション・VC・参加/退出は作らず、既存の値を残します。ゲートウェイには繋がないので Bot を止めずに実行でき、本番では `runuser -u engineer-meetup -- npm run activity:backfill` のようにアプリのユーザーで実行します（`npm run build` 済みであること）。
+   - **analytics への受け渡し**: engineer-meetup-analytics は、取得用の鍵で ssh して `activity` を送ると、`state/activity/` の日別ファイルと `users.json` を tar.gz で受け取ります（`deploy/analytics-export.sh`。コマンドなしなら前からの LT の記録）。このスクリプトは鍵を置いたユーザーの権限で動くので、`install -m 755 -o root -g root deploy/analytics-export.sh /usr/local/bin/analytics-export` でコピーし、authorized_keys の `command=` をそこに向けます。変えたときはもう一度コピーしてください。
    - 参加・退出は特権 Intent（Server Members）が要るので、Developer Portal の Bot 設定で **Server Members Intent** を有効にしてから `ACTIVITY_MEMBER_EVENTS=true` にしたときだけ数えます。有効にしないまま `true` にすると Bot がログインできません。
 
 9. **権限制御**
@@ -705,6 +706,7 @@ deploy/
   engineer-meetup-bot.service     本番の systemd ユニット
   engineer-meetup-deploy.service  auto-deploy.sh を実行するユニット
   engineer-meetup-deploy.timer    上を 1 分ごとに起動するタイマー
+  analytics-export.sh             analytics が取得用の鍵で入ったときに動く（LT の記録とアクティビティの集計を返す）
 ```
 
 ## テスト
