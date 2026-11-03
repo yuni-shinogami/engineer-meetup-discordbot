@@ -64,8 +64,9 @@
    - `/check-permissions`: Bot が各チャンネルで必要な権限（閲覧・送信・リンク埋め込み・ロールping）を持っているか確認します。
 
 8. **サーバーのアクティビティ集計（自動）**
-   - サーバーのメッセージ・リアクション・メンション・VC・参加/退出を、日本時間の 1 日ごとに `state/activity/YYYY-MM-DD.json` へ集計します。チャンネル別・時間帯別・ロール別の件数、発言した人数、VC の人・分と同時接続の最大などを持ちます。
-   - **本文は保存しません**（Message Content Intent も使いません）。人数を数えるためのユーザーは鍵付きハッシュで仮名化し、元の ID や名前は残しません。
+   - サーバーのメッセージ・リアクション・メンション・VC・参加/退出を、日本時間の 1 日ごとに `state/activity/YYYY-MM-DD.json` へ集計します。チャンネル別・時間帯別・ロール別の件数、VC の人・分と同時接続の最大に加え、**ユーザーごと**の発言数（チャンネル別）・付けたリアクション・メンション/リプライした相手・VC の滞在時間を Discord のユーザー ID で持ちます。
+   - ユーザー名と表示名は日別ファイルには入れず、`state/activity/users.json` に最後に見たときのものを持ちます（改名しても過去の集計は ID で追えます）。
+   - **本文は保存しません**（Message Content Intent も使いません）。個人に紐づくデータなので `state/` の外（Git や公開の場所）には出さないでください。
    - VC の滞在時間は 1 分ごとの見回りで数えます（Bot と AFK チャンネルは除く）。
    - 参加・退出は特権 Intent（Server Members）が要るので、Developer Portal の Bot 設定で **Server Members Intent** を有効にしてから `ACTIVITY_MEMBER_EVENTS=true` にしたときだけ数えます。有効にしないまま `true` にすると Bot がログインできません。
 
@@ -489,7 +490,7 @@ Bot はパスワードも 2FA の秘密鍵も持ちません。
 | `state/lt-materials/` | LT 告知の素材画像 | `LT_MATERIALS_DIR` |
 | `state/latest.json` | 直近に作成したインスタンス情報 | `VRC_STATE_DIR` |
 | `state/vrc-links.json` | Discord ↔ VRChat アカウント対応表 | `VRC_LINK_STORE_PATH` |
-| `state/activity/` | サーバーのアクティビティの日別集計と仮名化の鍵（`.secret`。消すと過去の集計と人がつながらなくなる） | `ACTIVITY_DIR` |
+| `state/activity/` | サーバーのアクティビティの日別・ユーザー別集計と、ユーザー名の対応表（`users.json`） | `ACTIVITY_DIR` |
 
 `VRC_STATE_DIR` 以外は**プロセスの cwd 相対**です。本番の systemd サービスはリポジトリを cwd にして起動するので
 通常は意識不要ですが、別のディレクトリから `npm start` すると別の場所を見にいきます。
@@ -541,7 +542,6 @@ npm install
 | `LT_GROUP_POST_NOTIFY` | VRChat グループ告知でメンバー全員に通知するか（任意、デフォルト `true`） |
 | `LT_AUTO_ANNOUNCE` | 週次フローに LT 告知を同乗させるか（任意、デフォルト `true`） |
 | `ACTIVITY_DIR` | アクティビティ集計の保存先ディレクトリ（任意、デフォルト `./state/activity`） |
-| `ACTIVITY_HASH_SECRET` | ユーザー ID を仮名化する鍵（任意、未設定なら `ACTIVITY_DIR/.secret` を自動生成） |
 | `ACTIVITY_MEMBER_EVENTS` | 参加・退出も数えるか（任意、デフォルト `false`。Server Members Intent を有効にしてから `true` にする） |
 
 `PRE_ANNOUNCE_CRON` の木曜は**開催前日**の事前告知であり、開催日そのものではありません。LT の日程候補は cron 式ではなく `MEETUP_WEEKDAY` から算出します。
@@ -658,8 +658,7 @@ src/
     lt-recorder.ts    「LT録画開始」ボタンと録画パネル（別の PC の OBS で録画し、YouTube へ非公開でアップ）
     activity/
       collector.ts    Discord のイベントと VC の見回りから集計を記録する
-      store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json）
-      pseudonym.ts    ユーザー ID の仮名化（HMAC）と鍵の管理
+      store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
     lt/
       types.ts        LtEntry / LtStatus の定義、未入力項目の判定
       status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決

@@ -131,13 +131,8 @@ export const config = {
   slidesVideoHeight: intEnv('SLIDES_VIDEO_HEIGHT', 1080),
 
   // --- サーバーのアクティビティ集計 ---
-  /** 日別の集計（YYYY-MM-DD.json）と仮名化の鍵（.secret）の置き場所 */
+  /** 日別の集計（YYYY-MM-DD.json）とユーザー名の対応表（users.json）の置き場所 */
   activityDir: process.env.ACTIVITY_DIR || './state/activity',
-  /**
-   * ユーザー ID を仮名化する鍵。未設定なら ACTIVITY_DIR/.secret を生成して使う。
-   * 鍵が変わると同じ人が別人として数えられるので、一度決めたら変えない。
-   */
-  activityHashSecret: process.env.ACTIVITY_HASH_SECRET || '',
   /**
    * メンバーの参加・退出を数えるか。特権 Intent（Server Members）を使うので、
    * Developer Portal で有効にしてから true にする。有効にしないまま true にすると Bot がログインできない。

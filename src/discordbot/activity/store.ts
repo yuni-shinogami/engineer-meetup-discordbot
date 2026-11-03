@@ -2,9 +2,21 @@ import fs from 'fs';
 import path from 'path';
 import { config } from '../config';
 
+/** 1 日のうちの 1 人ぶん。キーは Discord のユーザー ID */
+export interface UserDay {
+  messages: number;
+  messagesByChannel: Record<string, number>;
+  /** 付けたリアクションの数 */
+  reactions: number;
+  /** メンション・リプライした相手（ユーザー ID → 回数） */
+  mentionsTo: Record<string, number>;
+  voiceMinutes: number;
+  voiceSessions: number;
+}
+
 /**
- * 1 日（日本時間）ぶんのサーバー全体の集計。
- * 本文やユーザー名は持たない。人数を数えるためのユーザーは pseudonym.ts で仮名化した ID で持つ。
+ * 1 日（日本時間）ぶんの集計。本文は持たない。
+ * 名前は改名で変わるので日別には持たず、users.json の UserProfile で引く。
  */
 export interface DayActivity {
   date: string;
@@ -17,14 +29,11 @@ export interface DayActivity {
   messagesByHour: number[];
   /** 投稿時点で投稿者が持っていたロールごとの件数（@everyone は除く） */
   messagesByRole: Record<string, number>;
-  /** その日に発言した人（仮名化済み） */
-  authors: string[];
   threadParents: Record<string, string>;
   /** 集計した時点の名前。後から改名されても当時の名前で表示できるように残す */
   channelNames: Record<string, string>;
   roleNames: Record<string, string>;
   reactions: number;
-  reactors: string[];
   mentions: { users: number; roles: number; everyone: number };
   voice: {
     /** 1 分ごとの見回りで VC に居た人数の合計（= 人・分） */
@@ -34,9 +43,23 @@ export interface DayActivity {
     peak: number;
     /** VC に入った回数（移動は数えない） */
     sessions: number;
-    participants: string[];
   };
-  members: { joins: number; leaves: number; joined: string[] };
+  members: { joined: string[]; left: string[] };
+  users: Record<string, UserDay>;
+}
+
+/** users.json の 1 人ぶん。最後に見たときの名前を持つ */
+export interface UserProfile {
+  username: string;
+  displayName: string;
+  firstSeen: string;
+  lastSeen: string;
+}
+
+export interface UserRef {
+  id: string;
+  username: string;
+  displayName: string;
 }
 
 export function emptyDay(date: string): DayActivity {
@@ -47,16 +70,19 @@ export function emptyDay(date: string): DayActivity {
     messagesByChannel: {},
     messagesByHour: Array.from({ length: 24 }, () => 0),
     messagesByRole: {},
-    authors: [],
     threadParents: {},
     channelNames: {},
     roleNames: {},
     reactions: 0,
-    reactors: [],
     mentions: { users: 0, roles: 0, everyone: 0 },
-    voice: { minutes: 0, minutesByChannel: {}, peak: 0, sessions: 0, participants: [] },
-    members: { joins: 0, leaves: 0, joined: [] },
+    voice: { minutes: 0, minutesByChannel: {}, peak: 0, sessions: 0 },
+    members: { joined: [], left: [] },
+    users: {},
   };
+}
+
+function emptyUserDay(): UserDay {
+  return { messages: 0, messagesByChannel: {}, reactions: 0, mentionsTo: {}, voiceMinutes: 0, voiceSessions: 0 };
 }
 
 const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
@@ -81,26 +107,31 @@ export interface MessageRecord {
   channelName: string;
   /** スレッド内の投稿のときだけ */
   parent?: { id: string; name: string };
-  author: string;
+  author: UserRef;
   isBot: boolean;
   roles: ReadonlyArray<{ id: string; name: string }>;
-  mentions: { users: number; roles: number; everyone: boolean };
+  /** メンションした人とリプライ先（ユーザー ID。重複は除いておく） */
+  mentionedUsers: readonly string[];
+  mentionedRoles: number;
+  mentionsEveryone: boolean;
 }
 
 export interface VoiceSample {
   at: Date;
   /** VC に居る人（Bot と AFK チャンネルは除いたもの） */
-  members: ReadonlyArray<{ user: string; channelId: string; channelName: string }>;
+  members: ReadonlyArray<{ user: UserRef; channelId: string; channelName: string }>;
 }
 
 /**
- * 日別ファイル（<dir>/YYYY-MM-DD.json）への集計の書き込み。
+ * 日別ファイル（<dir>/YYYY-MM-DD.json）と名前の対応表（<dir>/users.json）への書き込み。
  * イベントのたびに書くと重いので、メモリ上で足し込んで flush() でまとめて書き出す。
  * 書き出しは tmp → rename で、途中で落ちても前回のファイルが残るようにしている。
  */
 export class ActivityStore {
   private days = new Map<string, DayActivity>();
   private dirty = new Set<string>();
+  private profiles: Record<string, UserProfile> | null = null;
+  private profilesDirty = false;
 
   constructor(private readonly dir: string = config.activityDir) {}
 
@@ -108,26 +139,65 @@ export class ActivityStore {
     return path.join(this.dir, `${date}.json`);
   }
 
+  private get profilesPath(): string {
+    return path.join(this.dir, 'users.json');
+  }
+
+  private readJson<T>(file: string): T | null {
+    if (!fs.existsSync(file)) return null;
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf-8')) as T;
+    } catch (e) {
+      console.error(`Failed to load activity ${file}:`, e);
+      return null;
+    }
+  }
+
+  private writeJson(file: string, data: unknown): void {
+    const tmp = `${file}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+    fs.renameSync(tmp, file);
+  }
+
   /** その日の集計。再起動をまたいで足し込めるよう、メモリに無ければファイルから読む。 */
   get(date: string): DayActivity {
     const cached = this.days.get(date);
     if (cached) return cached;
-    let day = emptyDay(date);
-    const file = this.filePath(date);
-    if (fs.existsSync(file)) {
-      try {
-        day = { ...day, ...JSON.parse(fs.readFileSync(file, 'utf-8')) };
-      } catch (e) {
-        console.error(`Failed to load activity ${file}:`, e);
-      }
-    }
+    const day = { ...emptyDay(date), ...this.readJson<Partial<DayActivity>>(this.filePath(date)) };
     this.days.set(date, day);
     return day;
+  }
+
+  /** ユーザー ID → 最後に見たときの名前 */
+  getProfiles(): Record<string, UserProfile> {
+    this.profiles ??= this.readJson<Record<string, UserProfile>>(this.profilesPath) ?? {};
+    return this.profiles;
   }
 
   private update(date: string, apply: (day: DayActivity) => void): void {
     apply(this.get(date));
     this.dirty.add(date);
+  }
+
+  private user(day: DayActivity, user: UserRef, at: Date): UserDay {
+    this.seen(user, at);
+    day.users[user.id] ??= emptyUserDay();
+    return day.users[user.id]!;
+  }
+
+  private seen(user: UserRef, at: Date): void {
+    const profiles = this.getProfiles();
+    const iso = at.toISOString();
+    const current = profiles[user.id];
+    if (current && current.username === user.username && current.displayName === user.displayName
+      && current.lastSeen.slice(0, 10) === iso.slice(0, 10)) return;
+    profiles[user.id] = {
+      username: user.username,
+      displayName: user.displayName,
+      firstSeen: current?.firstSeen ?? iso,
+      lastSeen: iso,
+    };
+    this.profilesDirty = true;
   }
 
   recordMessage(record: MessageRecord): void {
@@ -149,23 +219,30 @@ export class ActivityStore {
         increment(day.messagesByRole, role.id);
         day.roleNames[role.id] = role.name;
       }
-      addUnique(day.authors, record.author);
-      day.mentions.users += record.mentions.users;
-      day.mentions.roles += record.mentions.roles;
-      if (record.mentions.everyone) day.mentions.everyone += 1;
+      day.mentions.users += record.mentionedUsers.length;
+      day.mentions.roles += record.mentionedRoles;
+      if (record.mentionsEveryone) day.mentions.everyone += 1;
+
+      const user = this.user(day, record.author, record.at);
+      user.messages += 1;
+      increment(user.messagesByChannel, record.channelId);
+      for (const target of record.mentionedUsers) {
+        if (target !== record.author.id) increment(user.mentionsTo, target);
+      }
     });
   }
 
-  recordReaction(at: Date, user: string): void {
+  recordReaction(at: Date, user: UserRef): void {
     this.update(jstDateHour(at).date, day => {
       day.reactions += 1;
-      addUnique(day.reactors, user);
+      this.user(day, user, at).reactions += 1;
     });
   }
 
-  recordVoiceJoin(at: Date): void {
+  recordVoiceJoin(at: Date, user: UserRef): void {
     this.update(jstDateHour(at).date, day => {
       day.voice.sessions += 1;
+      this.user(day, user, at).voiceSessions += 1;
     });
   }
 
@@ -178,37 +255,33 @@ export class ActivityStore {
       for (const member of sample.members) {
         increment(day.voice.minutesByChannel, member.channelId);
         day.channelNames[member.channelId] = member.channelName;
-        addUnique(day.voice.participants, member.user);
+        this.user(day, member.user, sample.at).voiceMinutes += 1;
       }
     });
   }
 
-  recordMemberJoin(at: Date, user: string): void {
-    this.update(jstDateHour(at).date, day => {
-      day.members.joins += 1;
-      addUnique(day.members.joined, user);
-    });
+  recordMemberJoin(at: Date, user: UserRef): void {
+    this.seen(user, at);
+    this.update(jstDateHour(at).date, day => addUnique(day.members.joined, user.id));
   }
 
-  recordMemberLeave(at: Date): void {
-    this.update(jstDateHour(at).date, day => {
-      day.members.leaves += 1;
-    });
+  recordMemberLeave(at: Date, userId: string): void {
+    this.update(jstDateHour(at).date, day => addUnique(day.members.left, userId));
   }
 
-  /** 変更のあった日を書き出す。書き終えた過去の日はメモリから捨てる。 */
+  /** 変更のあった日と名前の対応表を書き出す。書き終えた過去の日はメモリから捨てる。 */
   flush(now: Date = new Date()): void {
-    if (this.dirty.size === 0) return;
+    if (this.dirty.size === 0 && !this.profilesDirty) return;
     fs.mkdirSync(this.dir, { recursive: true });
     for (const date of this.dirty) {
       const day = this.days.get(date);
-      if (!day) continue;
-      const file = this.filePath(date);
-      const tmp = `${file}.tmp`;
-      fs.writeFileSync(tmp, JSON.stringify(day, null, 2));
-      fs.renameSync(tmp, file);
+      if (day) this.writeJson(this.filePath(date), day);
     }
     this.dirty.clear();
+    if (this.profilesDirty && this.profiles) {
+      this.writeJson(this.profilesPath, this.profiles);
+      this.profilesDirty = false;
+    }
     const today = jstDateHour(now).date;
     for (const date of this.days.keys()) {
       if (date < today) this.days.delete(date);
