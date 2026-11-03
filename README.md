@@ -68,6 +68,7 @@
    - ユーザー名と表示名は日別ファイルには入れず、`state/activity/users.json` に最後に見たときのものを持ちます（改名しても過去の集計は ID で追えます）。
    - **本文は保存しません**（Message Content Intent も使いません）。個人に紐づくデータなので `state/` の外（Git や公開の場所）には出さないでください。
    - VC の滞在時間は 1 分ごとの見回りで数えます（Bot と AFK チャンネルは除く）。
+   - **過去のメッセージの取り込み**: `npm run activity:backfill -- [--since YYYY-MM-DD] [--until YYYY-MM-DD]` で、チャンネルとスレッド（アーカイブ済みを含む）の履歴からメッセージの集計を作り直します。`--since` を省くと最初から、`--until`（その日の前日まで）を省くと昨日までです。今日の分は Bot が集計中なので指定できません。期間内の日はメッセージ由来の集計を空にしてから数え直すので、何度実行しても同じ結果になります。履歴から取れない投稿時点のロール・リアクション・VC・参加/退出は作らず、既存の値を残します。ゲートウェイには繋がないので Bot を止めずに実行でき、本番では `runuser -u engineer-meetup -- npm run activity:backfill` のようにアプリのユーザーで実行します（`npm run build` 済みであること）。
    - 参加・退出は特権 Intent（Server Members）が要るので、Developer Portal の Bot 設定で **Server Members Intent** を有効にしてから `ACTIVITY_MEMBER_EVENTS=true` にしたときだけ数えます。有効にしないまま `true` にすると Bot がログインできません。
 
 9. **権限制御**
@@ -659,6 +660,7 @@ src/
     activity/
       collector.ts    Discord のイベントと VC の見回りから集計を記録する
       store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
+      backfill.ts     過去のメッセージ履歴からメッセージの集計を作り直す（npm run activity:backfill）
     lt/
       types.ts        LtEntry / LtStatus の定義、未入力項目の判定
       status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決

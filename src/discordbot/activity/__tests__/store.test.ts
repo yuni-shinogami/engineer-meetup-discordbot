@@ -175,6 +175,44 @@ describe('ActivityStore', () => {
     expect(Object.keys(saved('users'))).toEqual(['u-a', 'u-b']);
   });
 
+  it('古い日付の記録では名前を上書きせず、最初に見た日時だけをさかのぼる', () => {
+    const store = new ActivityStore(dir);
+    store.recordMessage(message({ at: new Date('2026-11-06T13:30:00Z'), author: { ...userA, displayName: '新しい名前' } }));
+    store.recordMessage(message({ at: new Date('2026-10-01T13:30:00Z'), author: { ...userA, displayName: '古い名前' } }));
+    store.flush();
+
+    expect(saved('users')['u-a']).toEqual({
+      username: 'alice',
+      displayName: '新しい名前',
+      firstSeen: '2026-10-01T13:30:00.000Z',
+      lastSeen: '2026-11-06T13:30:00.000Z',
+    });
+  });
+
+  it('resetMessages はメッセージ由来の集計だけを空にし、VC とリアクションは残す', () => {
+    const at = new Date('2026-11-06T13:00:00Z');
+    const first = new ActivityStore(dir);
+    first.recordMessage(message({ mentionedUsers: ['u-b'] }));
+    first.recordReaction(at, userA);
+    first.recordVoiceSample({ at, members: [{ user: userA, channelId: 'vc-1', channelName: 'もくもく' }] });
+    first.flush();
+
+    const second = new ActivityStore(dir);
+    expect(second.savedDates()).toEqual(['2026-11-06']);
+    second.resetMessages('2026-11-06');
+    second.recordMessage(message({ author: userB }));
+    second.flush();
+
+    const day = saved('2026-11-06');
+    expect(day.messages).toBe(1);
+    expect(day.messagesByChannel).toEqual({ 'ch-1': 1 });
+    expect(day.mentions).toEqual({ users: 0, roles: 0, everyone: 0 });
+    expect(day.users['u-a']).toMatchObject({ messages: 0, messagesByChannel: {}, mentionsTo: {}, reactions: 1, voiceMinutes: 1 });
+    expect(day.users['u-b'].messages).toBe(1);
+    expect(day.voice.minutes).toBe(1);
+    expect(day.reactions).toBe(1);
+  });
+
   it('日本時間の日付ごとにファイルを分け、変更が無ければ書かない', () => {
     const store = new ActivityStore(dir);
     store.recordMessage(message({ at: new Date('2026-11-06T14:59:00Z') }));
