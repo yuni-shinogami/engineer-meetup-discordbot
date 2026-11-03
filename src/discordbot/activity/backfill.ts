@@ -244,7 +244,15 @@ if (require.main === module) {
     console.error('DISCORD_TOKEN と GUILD_ID を .env に設定してください');
     process.exit(1);
   }
-  backfill(parseBackfillArgs(process.argv.slice(2))).catch(e => {
+  let options: BackfillOptions;
+  try {
+    options = parseBackfillArgs(process.argv.slice(2));
+  } catch (e) {
+    // 引数の誤りはスタックトレースではなく理由だけを出す
+    console.error(e instanceof Error ? e.message : e);
+    process.exit(1);
+  }
+  backfill(options).catch(e => {
     console.error(e);
     process.exit(1);
   });
