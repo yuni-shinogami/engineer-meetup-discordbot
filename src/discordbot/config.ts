@@ -129,6 +129,15 @@ export const config = {
   slidesVideoSeconds: intEnv('SLIDES_VIDEO_SECONDS', 1),
   /** 司会進行スライド動画の高さ(px)。横幅は PDF の縦横比から決まる。 */
   slidesVideoHeight: intEnv('SLIDES_VIDEO_HEIGHT', 1080),
+
+  // --- サーバーのアクティビティ集計 ---
+  /** 日別の集計（YYYY-MM-DD.json）とユーザー名の対応表（users.json）の置き場所 */
+  activityDir: process.env.ACTIVITY_DIR || './state/activity',
+  /**
+   * メンバーの参加・退出を数えるか。特権 Intent（Server Members）を使うので、
+   * Developer Portal で有効にしてから true にする。有効にしないまま true にすると Bot がログインできない。
+   */
+  activityMemberEvents: boolEnv('ACTIVITY_MEMBER_EVENTS', false),
 };
 
 export function ltForumChannelId(isProd: boolean): string {

@@ -1,5 +1,6 @@
-import { Client, GatewayIntentBits, Interaction } from 'discord.js';
+import { Client, GatewayIntentBits, Interaction, Partials } from 'discord.js';
 import { config } from './config';
+import { startActivityCollector } from './activity/collector';
 import { setupScheduler } from './scheduler';
 import { dispatchButton, dispatchModal, dispatchSelect } from './interactions';
 import { registerInteractionHandlers } from './handlers';
@@ -26,7 +27,13 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
+    // アクティビティ集計（activity/collector.ts）用
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.GuildVoiceStates,
+    ...(config.activityMemberEvents ? [GatewayIntentBits.GuildMembers] : []),
   ],
+  // キャッシュに無い古いメッセージへのリアクションも受け取るため
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
 client.once('ready', async (c) => {
@@ -36,6 +43,7 @@ client.once('ready', async (c) => {
   registerInteractionHandlers();
   setupScheduler(c);
   console.log('Scheduler is active.');
+  startActivityCollector(c);
   await logLtForumStatus(c);
 });
 
