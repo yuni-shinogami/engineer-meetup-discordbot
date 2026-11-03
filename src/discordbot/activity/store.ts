@@ -189,15 +189,53 @@ export class ActivityStore {
     const profiles = this.getProfiles();
     const iso = at.toISOString();
     const current = profiles[user.id];
-    if (current && current.username === user.username && current.displayName === user.displayName
-      && current.lastSeen.slice(0, 10) === iso.slice(0, 10)) return;
-    profiles[user.id] = {
-      username: user.username,
-      displayName: user.displayName,
-      firstSeen: current?.firstSeen ?? iso,
-      lastSeen: iso,
-    };
-    this.profilesDirty = true;
+    if (!current) {
+      profiles[user.id] = { username: user.username, displayName: user.displayName, firstSeen: iso, lastSeen: iso };
+      this.profilesDirty = true;
+      return;
+    }
+    if (iso < current.firstSeen) {
+      current.firstSeen = iso;
+      this.profilesDirty = true;
+    }
+    // 履歴の取り込みは過去にさかのぼるので、古い名前で新しい名前を上書きしない
+    const renamed = current.username !== user.username || current.displayName !== user.displayName;
+    if (iso.slice(0, 10) > current.lastSeen.slice(0, 10) || (renamed && iso >= current.lastSeen)) {
+      current.username = user.username;
+      current.displayName = user.displayName;
+      current.lastSeen = iso;
+      this.profilesDirty = true;
+    }
+  }
+
+  /** 保存済みの日付（YYYY-MM-DD）。 */
+  savedDates(): string[] {
+    if (!fs.existsSync(this.dir)) return [];
+    return fs.readdirSync(this.dir)
+      .filter(name => /^\d{4}-\d{2}-\d{2}\.json$/.test(name))
+      .map(name => name.slice(0, 10))
+      .sort();
+  }
+
+  /**
+   * その日のメッセージ由来の集計を空にする。履歴から作り直す前に呼ぶ。
+   * VC・リアクション・参加/退出は履歴から取れないので残す。
+   */
+  resetMessages(date: string): void {
+    this.update(date, day => {
+      const empty = emptyDay(date);
+      day.messages = empty.messages;
+      day.botMessages = empty.botMessages;
+      day.messagesByChannel = empty.messagesByChannel;
+      day.messagesByHour = empty.messagesByHour;
+      day.messagesByRole = empty.messagesByRole;
+      day.mentions = empty.mentions;
+      for (const user of Object.values(day.users)) {
+        user.messages = 0;
+        user.messagesByChannel = {};
+        user.mentionsTo = {};
+      }
+    });
   }
 
   recordMessage(record: MessageRecord): void {

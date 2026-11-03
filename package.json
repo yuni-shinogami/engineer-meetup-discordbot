@@ -8,7 +8,8 @@
     "start": "ts-node src/discordbot/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "canva:login": "ts-node src/canva/login.ts"
+    "canva:login": "ts-node src/canva/login.ts",
+    "activity:backfill": "node dist/discordbot/activity/backfill.js"
   },
   "keywords": [],
   "author": "",
