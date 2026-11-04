@@ -16,6 +16,7 @@ import {
   applicantDateCandidates,
   dateOptionLabel,
   LtEventInput,
+  ltEventNotes,
   LtEventStore,
   ltEventOn,
   operatorDateCandidates,
@@ -134,10 +135,13 @@ describe('validateLtEvent', () => {
     expect(validateLtEvent(input(), { now: NOW })).toEqual([]);
   });
 
-  it('過去の日付・毎週の集会の曜日は作れない', () => {
+  it('過去の日付には作れない', () => {
     expect(validateLtEvent(input({ date: '2026-11-01', applyDeadline: '2026-10-30' }), { now: NOW }).join())
       .toContain('過去の日付');
-    expect(validateLtEvent(input({ date: '2026-11-20' }), { now: NOW }).join()).toContain('毎週の集会の曜日');
+  });
+
+  it('毎週の集会の日にも作れる', () => {
+    expect(validateLtEvent(input({ date: '2026-11-20' }), { now: NOW })).toEqual([]);
   });
 
   it('時刻の書き方と前後を確かめる', () => {
@@ -159,5 +163,23 @@ describe('validateLtEvent', () => {
   it('checkDate: false なら開催日の検査をしない', () => {
     expect(validateLtEvent(input({ date: '2026-11-01', applyDeadline: '2026-10-30' }), { now: NOW, checkDate: false }))
       .toEqual([]);
+  });
+});
+
+describe('ltEventNotes', () => {
+  it('毎週の集会の日なら、枠と毎週の流れへの載り方を知らせる', () => {
+    const notes = ltEventNotes({ date: '2026-11-20', slots: 4 }).join('\n');
+    expect(notes).toContain('LT 会の 4 枠');
+    expect(notes).toContain('【LTあり】');
+  });
+
+  it('ほかの日なら何も知らせない', () => {
+    expect(ltEventNotes({ date: '2026-11-21', slots: 4 })).toEqual([]);
+  });
+
+  // 毎週の集会の日に LT 会を開くと、その日の枠数は LT 会の枠数になる
+  it('毎週の集会の日の枠数は LT 会の枠数になる', () => {
+    store.create(input({ date: '2026-11-20' }));
+    expect(slotsOn('2026-11-20', true, store)).toBe(5);
   });
 });

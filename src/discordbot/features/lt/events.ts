@@ -8,6 +8,7 @@ import { formatDateKey, formatMeetupDate, parseDateKey, upcomingMeetupDates } fr
  *
  * 応募（LtEntry）とは開催日で紐づける。LT 会の日に確定した応募がその LT 会の登壇で、
  * 枠数は LT_SLOTS_PER_DAY ではなく LT 会の slots で数える。
+ * 毎週の集会の日に開くこともでき、その日は毎週の 1 枠の代わりに LT 会の枠数になる。
  * 1 つの日付に開けるのは、本番・テストそれぞれ 1 つまで。
  */
 export interface LtEvent {
@@ -177,7 +178,7 @@ export interface ValidateLtEventOptions {
   /** その日に既に確定している応募の数。枠数をそれより減らせない */
   used?: number;
   /**
-   * 開催日が過去でないか・毎週の集会の曜日でないかを確かめるか。
+   * 開催日が過去でないかを確かめるか。
    * 作るときだけ確かめる。日付は変えられないので、作ったあとの変更（当日の調整を含む）では確かめない
    */
   checkDate?: boolean;
@@ -192,12 +193,8 @@ export function validateLtEvent(
   const date = parseDateKey(event.date);
   if (!date) {
     errors.push('開催日は YYYY-MM-DD の形で入力してください（例: 2026-11-21）。');
-  } else if (checkDate) {
-    if (event.date < formatDateKey(now)) errors.push('開催日が過去の日付です。');
-    // 毎週の集会の日に重ねると、その日の LT 枠（毎週の 1 枠）と LT 会の枠の区別がつかなくなる
-    if (date.getDay() === config.meetupWeekday) {
-      errors.push(`${formatMeetupDate(event.date)} は毎週の集会の曜日です。LT 会は集会とは別の日に開きます。`);
-    }
+  } else if (checkDate && event.date < formatDateKey(now)) {
+    errors.push('開催日が過去の日付です。');
   }
   if (!isTimeOfDay(event.startTime) || !isTimeOfDay(event.endTime)) {
     errors.push('開始・終了時刻は HH:MM の形で入力してください（例: 21:00）。');
@@ -216,4 +213,17 @@ export function validateLtEvent(
     errors.push('応募締切は開催日より前にしてください。');
   }
   return errors;
+}
+
+/**
+ * 作ってよいが運営に知らせておくこと。
+ * 毎週の集会の日に開くと、その日の LT はすべて LT 会の登壇として扱われ、毎週の流れにも載る。
+ */
+export function ltEventNotes(event: Pick<LtEvent, 'date' | 'slots'>): string[] {
+  const date = parseDateKey(event.date);
+  if (!date || date.getDay() !== config.meetupWeekday) return [];
+  return [
+    `ℹ️ ${formatMeetupDate(event.date)} は毎週の集会の日です。この日の LT 枠は、毎週の 1 枠の代わりに LT 会の ${event.slots} 枠になります。`,
+    'ℹ️ この日に確定した登壇者は、毎週の事前告知・開催告知の LT 告知と、イベント登録の「【LTあり】」に全員載ります。',
+  ];
 }

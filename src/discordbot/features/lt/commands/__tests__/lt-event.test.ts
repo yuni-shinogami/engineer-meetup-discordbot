@@ -43,7 +43,7 @@ function interaction(subcommand: string, options: Options) {
 
 const replyText = (i: { reply: ReturnType<typeof vi.fn> }) => (i.reply.mock.calls[0]![0] as { content: string }).content;
 
-// 開催日は来年の土曜（作る時点で過去にならず、毎週の集会の曜日でもない）
+// 開催日は来年の土曜（作る時点で過去にならない日。毎週の集会の日に作る場合は別のテストで見る）
 const DATE = '2027-01-16';
 const createOptions: Options = {
   date: DATE, start: '21:00', end: '23:00', slots: 4, theme: 'はじめての LT', deadline: '2027-01-09', production: true,
@@ -88,6 +88,21 @@ describe('/lt-event create', () => {
     const i = interaction('create', createOptions);
     await handleLtEventCommand(i, events);
     expect(replyText(i)).toContain('/lt-event edit');
+  });
+
+  it('毎週の集会の日に作ると、その日の扱いを知らせる', async () => {
+    const i = interaction('create', { ...createOptions, date: '2027-01-15', deadline: '2027-01-08' }); // 金曜
+    await handleLtEventCommand(i, events);
+    expect(events.get('2027-01-15', true)).toBeDefined();
+    expect(replyText(i)).toContain('毎週の集会の日です');
+  });
+
+  it('その日に確定している登壇より少ない枠では作れない', async () => {
+    mocks.entriesOnDate.mockReturnValue([{ id: '1' }, { id: '2' }]);
+    const i = interaction('create', { ...createOptions, date: '2027-01-15', deadline: '2027-01-08', slots: 1 });
+    await handleLtEventCommand(i, events);
+    expect(events.get('2027-01-15', true)).toBeUndefined();
+    expect(replyText(i)).toContain('2 人の登壇が確定');
   });
 
   it('production を付けなければテストの LT 会になる', async () => {

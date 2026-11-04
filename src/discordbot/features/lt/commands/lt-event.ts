@@ -4,6 +4,7 @@ import { formatError, requireOperatorRole } from '../../../shared/interaction';
 import {
   describeLtEvent,
   LtEvent,
+  ltEventNotes,
   ltEventStore,
   LtEventStore,
   MAX_LT_EVENT_SLOTS,
@@ -80,7 +81,9 @@ async function handleCreate(interaction: ChatInputCommandInteraction, isProd: bo
     theme: interaction.options.getString('theme', true).trim(),
     applyDeadline: deadline ?? interaction.options.getString('deadline', true),
   };
-  const errors = validateLtEvent(input);
+  // 毎週の集会の日には、毎週の LT の登壇がすでに確定していることがある。その人数より枠を少なくできない
+  const used = date ? ltStore.entriesOnDate(date, isProd).length : 0;
+  const errors = validateLtEvent(input, { used });
   if (date && events.get(date, isProd)) {
     errors.push(`${formatMeetupDate(date)} の LT 会（${envLabel(isProd)}）は既にあります。変えるときは /lt-event edit を使ってください。`);
   }
@@ -93,6 +96,7 @@ async function handleCreate(interaction: ChatInputCommandInteraction, isProd: bo
     content: [
       `✅ LT 会（${envLabel(isProd)}）を作りました。`,
       describeLtEvent(event),
+      ...ltEventNotes(event),
       `応募の締切まで、${envLabel(isProd)}の応募ポストの希望日の候補に出します。`
       + '（すでにある応募ポストのメニューは、次にポストが更新されたときに反映されます）',
     ].join('\n'),
