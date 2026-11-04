@@ -1,6 +1,10 @@
-/* LT 告知画像（lt-announce.tsx）の見た目。普通の CSS がそのまま使える。 */
+/*
+ * LT 告知画像（lt-announce.tsx）の見た目。普通の CSS がそのまま使える。
+ * 位置と大きさは、Canva で作っていた告知画像（エンジニア作業飲み集会LTTwitter用告知画像）に合わせている。
+ */
 :root {
   --accent: #f27205;
+  --bar-text: #bf0000;
   --ink: #111111;
   --dark: #333333;
 }
@@ -20,23 +24,25 @@
   flex-shrink: 0;
   height: 95px;
   background: var(--accent);
-  color: #ffffff;
-  font-size: 30px;
+  color: var(--bar-text);
+  font-size: 35px;
   font-weight: 700;
-  letter-spacing: 3px;
+  /* 縁取りの半分は文字に隠れるので、外側に 2px 出る */
+  -webkit-text-stroke: 4px #ffffff;
+  paint-order: stroke fill;
 }
 
 .body {
   display: flex;
   flex-direction: column;
-  padding: 60px 35px 0;
+  flex: 1;
+  padding: 35px 31px 0 33px;
 }
 
 .event {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 70px;
+  color: var(--ink);
 }
 
 .logo {
@@ -45,77 +51,93 @@
 }
 
 .event h1 {
-  margin: 0;
-  font-size: 40px;
+  margin: -5px 0 0;
+  font-size: 54px;
   font-weight: 700;
-  color: var(--ink);
+  line-height: 1.25;
 }
 
 .date {
-  margin: 0;
-  font-size: 25px;
+  margin: 13px 0 0;
+  font-size: 33px;
   font-weight: 700;
-  color: var(--dark);
+  line-height: 1.25;
 }
 
+/* タイトルとスピーカーは、右のアイコンの高さの中ほどにそろえる。長くてはみ出してもアイコンは動かさない */
 .talk {
   display: flex;
-  margin-bottom: 120px;
+  align-items: center;
+  min-height: 505px;
+  margin-top: 61px;
 }
 
 .info {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  width: 50%;
-  font-weight: 700;
+  width: 607px;
+  padding: 5px 0 0 3px;
+  color: var(--ink);
 }
 
 .label {
-  font-size: 20px;
+  margin-left: 4px;
+  font-size: 26px;
+  font-weight: 700;
 }
 
 .title {
-  font-size: 40px;
+  margin-top: 27px;
+  font-size: 37px;
+  line-height: 55px;
+  letter-spacing: 1.8px;
   overflow-wrap: anywhere;
 }
 
 .speaker {
   display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  margin: 0;
+  align-items: baseline;
+  margin: 50px 0 0 36px;
 }
 
 .speaker-label {
-  font-size: 26px;
-  font-weight: 400;
+  flex-shrink: 0;
+  font-size: 33px;
+  font-weight: 700;
 }
 
 .speaker-name {
-  font-size: 35px;
+  margin-left: 1px;
+  font-size: 46px;
+  letter-spacing: 1px;
+  overflow-wrap: anywhere;
 }
 
 .icon {
-  display: flex;
-  justify-content: center;
-  width: 50%;
+  align-self: flex-start;
+  margin-left: auto;
 }
 
 .icon img {
-  width: 510px;
-  height: 510px;
+  display: block;
+  width: 505px;
+  height: 505px;
+  border: 1px solid var(--dark);
   border-radius: 50%;
   object-fit: cover;
 }
 
+/* 下のスライドの左右は、色の違うオレンジの帯にする */
 .slide {
   display: flex;
   justify-content: center;
-  height: 600px;
-  background: var(--accent);
+  flex-shrink: 0;
+  height: 596px;
+  background:
+    linear-gradient(#fea500 0 82px, #fe6601 82px 302px, #ff8a00 302px 422px, #fe9d00 422px) left / 50% 100% no-repeat,
+    linear-gradient(#fea500 0 270px, #ff8d00 270px 387px, #f95b01 387px) right / 50% 100% no-repeat;
 }
 
 .slide img {
-  height: 600px;
+  height: 100%;
 }

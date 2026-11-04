@@ -24,13 +24,13 @@ export function LtAnnounceTemplate({
 }: LtAnnounceTemplateProps) {
   return (
     <main className="lt-announce">
-      <header className="bar">エンジニア集会 lt</header>
+      <header className="bar">エンジニア集会lt</header>
 
       <section className="body">
         <div className="event">
           <img className="logo" src="assets/images/em_logo_620px_A.png" alt="" />
           <h1>エンジニア集会LT</h1>
-          <p className="date">{eventDate}（金）22:00 ~</p>
+          <p className="date">{eventDate}（金）22:00~</p>
         </div>
 
         <div className="talk">
