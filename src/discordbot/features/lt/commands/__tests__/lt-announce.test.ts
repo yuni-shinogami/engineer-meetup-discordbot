@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ButtonInteraction } from 'discord.js';
-import type { LtEntry } from '../../lt/types';
+import type { LtEntry } from '../../types';
 
 const mocks = vi.hoisted(() => ({
   announceLt: vi.fn(),
@@ -16,32 +16,32 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../config', () => ({
+vi.mock('../../../../config', () => ({
   config: mocks.config,
   ltForumChannelId: () => '',
   ltAnnounceRoleId: () => mocks.config.ltAnnounceRoleId,
 }));
 
-vi.mock('../../lt/announce', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../lt/announce')>()),
+vi.mock('../../announce', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../announce')>()),
   announceLt: mocks.announceLt,
 }));
 
-vi.mock('../../lt/forum', () => ({
+vi.mock('../../forum', () => ({
   applyLtEntryToPost: vi.fn().mockResolvedValue(undefined),
   fetchLtThread: vi.fn().mockResolvedValue({ id: 't1', parentId: 'prod-forum', send: mocks.threadSend }),
   isProdLtThread: () => true,
 }));
 
-vi.mock('../../lt/materials', () => ({
+vi.mock('../../materials', () => ({
   materialExists: (p: unknown) => typeof p === 'string' && p !== '',
 }));
 
-vi.mock('../../lt/store', () => ({
+vi.mock('../../store', () => ({
   ltStore: { get: vi.fn(), slotUsageByDate: vi.fn(() => new Map<string, number>()) },
 }));
 
-import { ltStore } from '../../lt/store';
+import { ltStore } from '../../store';
 import { handleLtAnnounceButton, handleLtAnnounceConfirm } from '../lt-announce';
 
 const entry = (patch: Partial<LtEntry> = {}): LtEntry => ({

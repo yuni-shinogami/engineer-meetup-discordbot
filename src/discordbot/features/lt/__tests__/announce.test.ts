@@ -18,15 +18,15 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../config', () => ({
+vi.mock('../../../config', () => ({
   config: mocks.config,
   ltAnnounceRoleId: () => mocks.config.ltAnnounceRoleId,
 }));
-vi.mock('../../../x/xBot', () => ({
+vi.mock('../../../../x/xBot', () => ({
   postTweet: mocks.postTweet,
   postTweetWithImage: mocks.postTweetWithImage,
 }));
-vi.mock('../../../vrchat/postLtAnnouncement', () => ({
+vi.mock('../../../../vrchat/postLtAnnouncement', () => ({
   postLtGroupAnnouncement: mocks.postLtGroupAnnouncement,
 }));
 vi.mock('../materials', () => ({

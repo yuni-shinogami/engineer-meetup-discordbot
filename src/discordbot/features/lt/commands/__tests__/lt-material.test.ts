@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ChatInputCommandInteraction } from 'discord.js';
-import type { LtEntry } from '../../lt/types';
+import type { LtEntry } from '../../types';
 
 const mocks = vi.hoisted(() => ({
   threadSend: vi.fn().mockResolvedValue(undefined),
@@ -11,33 +11,33 @@ const mocks = vi.hoisted(() => ({
   postAnnounceImage: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../config', () => ({
+vi.mock('../../../../config', () => ({
   config: { operatorRoleId: 'op-role', ltForumChannelId: 'prod-forum' },
   ltForumChannelId: () => '',
 }));
 
-vi.mock('../../lt/forum', () => ({
+vi.mock('../../forum', () => ({
   applyLtEntryToPost: vi.fn().mockResolvedValue(undefined),
   fetchLtThread: vi.fn().mockResolvedValue({ id: 't1', parentId: 'prod-forum', send: mocks.threadSend }),
   isProdLtThread: () => true,
   isProdLtApplyContext: () => true,
 }));
 
-vi.mock('../../lt/materials', () => ({
+vi.mock('../../materials', () => ({
   MaterialError: class MaterialError extends Error {},
   materialExists: (p: unknown) => typeof p === 'string' && p !== '',
   saveMaterialFromUrl: mocks.saveMaterialFromUrl,
 }));
 
-vi.mock('../../lt/announce-image', () => ({
+vi.mock('../../announce-image', () => ({
   buildAnnounceImage: mocks.buildAnnounceImage,
   missingForAnnounceImage: mocks.missingForAnnounceImage,
   postAnnounceImage: mocks.postAnnounceImage,
 }));
 
-vi.mock('../../../x/profileImage', () => ({ fetchXProfileImageUrl: mocks.fetchXProfileImageUrl }));
+vi.mock('../../../../../x/profileImage', () => ({ fetchXProfileImageUrl: mocks.fetchXProfileImageUrl }));
 
-vi.mock('../../lt/store', () => ({
+vi.mock('../../store', () => ({
   ltStore: {
     get: vi.fn(),
     update: vi.fn(),
@@ -46,7 +46,7 @@ vi.mock('../../lt/store', () => ({
   },
 }));
 
-import { ltStore } from '../../lt/store';
+import { ltStore } from '../../store';
 import { handleLtMaterialCommand } from '../lt-material';
 
 const entry = (patch: Partial<LtEntry> = {}): LtEntry => ({

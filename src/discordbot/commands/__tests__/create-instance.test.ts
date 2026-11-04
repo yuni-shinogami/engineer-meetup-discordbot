@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../config', () => ({ config: mocks.config }));
 vi.mock('../../storage', () => ({ storage: mocks.storage }));
 vi.mock('../../vrc-links', () => ({ vrcLinkStore: mocks.store }));
-vi.mock('../../lt/store', () => ({ ltStore: {} }));
+vi.mock('../../features/lt/store', () => ({ ltStore: {} }));
 vi.mock('../../../vrchat/createInstance', () => ({
   createInstance: mocks.createInstance,
   AuthError: class AuthError extends Error {},

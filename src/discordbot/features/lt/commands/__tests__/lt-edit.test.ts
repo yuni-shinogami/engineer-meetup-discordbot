@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ModalSubmitInteraction } from 'discord.js';
-import type { LtEntry } from '../../lt/types';
+import type { LtEntry } from '../../types';
 
-vi.mock('../../config', () => ({
+vi.mock('../../../../config', () => ({
   config: { operatorRoleId: 'op-role', ltSlotsPerDay: 1, ltDateCandidates: 8, meetupWeekday: 5 },
   ltForumChannelId: () => '',
 }));
 
-vi.mock('../../lt/forum', () => ({
+vi.mock('../../forum', () => ({
   applyLtEntryToPost: vi.fn().mockResolvedValue(undefined),
   fetchLtThread: vi.fn().mockResolvedValue({ id: 't1', send: vi.fn() }),
 }));
 
-vi.mock('../../lt/store', () => ({
+vi.mock('../../store', () => ({
   ltStore: {
     get: vi.fn(),
     update: vi.fn(),
@@ -20,7 +20,7 @@ vi.mock('../../lt/store', () => ({
   },
 }));
 
-import { ltStore } from '../../lt/store';
+import { ltStore } from '../../store';
 import { handleLtEditModal } from '../lt-edit';
 
 const entry = (patch: Partial<LtEntry> = {}): LtEntry => ({

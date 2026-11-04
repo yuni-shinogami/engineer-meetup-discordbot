@@ -16,7 +16,7 @@ vi.mock('../../config', () => ({
 
 const { ltList } = vi.hoisted(() => ({ ltList: vi.fn((): unknown[] => []) }));
 
-vi.mock('../../lt/store', () => ({
+vi.mock('../../features/lt/store', () => ({
   ltStore: { list: ltList },
 }));
 

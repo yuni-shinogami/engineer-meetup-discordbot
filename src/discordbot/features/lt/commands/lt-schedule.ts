@@ -12,16 +12,16 @@ import {
   TextInputStyle,
   ThreadChannel,
 } from 'discord.js';
-import { config } from '../config';
-import { buildCustomId } from '../interactions';
-import { postAnnounceImage, syncAnnounceImage } from '../lt/announce-image';
-import { formatDateKey, formatMeetupDate, parseDateKey, upcomingMeetupDates } from '../shared/meetup-dates';
-import { applyLtEntryToPost, fetchLtThread } from '../lt/forum';
-import { resolveOperatorEntry } from '../lt/guard';
-import { materialExists } from '../lt/materials';
-import { ltStore } from '../lt/store';
-import { LtEntry, LtStatus, outstandingItems } from '../lt/types';
-import { formatError } from '../shared/interaction';
+import { config } from '../../../config';
+import { buildCustomId } from '../../../interactions';
+import { postAnnounceImage, syncAnnounceImage } from '../announce-image';
+import { formatDateKey, formatMeetupDate, parseDateKey, upcomingMeetupDates } from '../../../shared/meetup-dates';
+import { applyLtEntryToPost, fetchLtThread } from '../forum';
+import { resolveOperatorEntry } from '../guard';
+import { materialExists } from '../materials';
+import { ltStore } from '../store';
+import { LtEntry, LtStatus, outstandingItems } from '../types';
+import { formatError } from '../../../shared/interaction';
 
 export const LT_SCHEDULE_SELECT = 'lt:pick';
 export const LT_SCHEDULE_MODAL = 'lt:manual';

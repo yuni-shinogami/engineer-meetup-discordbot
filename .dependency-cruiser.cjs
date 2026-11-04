@@ -39,6 +39,45 @@ module.exports = {
       from: { path: '^src/discordbot/shared/' },
       to: { path: '^src/discordbot/', pathNot: '^src/discordbot/(shared/|config\\.ts$)' },
     },
+    // 機能ごとのフォルダー（src/discordbot/features/<機能>/）の決まり
+    {
+      name: 'features-via-index',
+      comment:
+        '機能の外からは features/<機能>/index.ts だけを import する。外に見せるものを index.ts で一覧できるようにするため。'
+        + '外で使うものが増えたら index.ts に export を足す。',
+      severity: 'error',
+      from: { path: '^src/', pathNot: '^src/discordbot/features/' },
+      to: { path: '^src/discordbot/features/', pathNot: '^src/discordbot/features/[^/]+/index\\.ts$' },
+    },
+    {
+      name: 'features-via-index-between-features',
+      comment: '別の機能も、その機能の index.ts だけを import する。',
+      severity: 'error',
+      from: { path: '^src/discordbot/features/([^/]+)/' },
+      to: {
+        path: '^src/discordbot/features/',
+        pathNot: ['^src/discordbot/features/$1/', '^src/discordbot/features/[^/]+/index\\.ts$'],
+      },
+    },
+    {
+      name: 'features-on-foundation',
+      comment:
+        '機能が頼ってよいのは、ほかの機能・shared/・config.ts・interactions.ts・storage.ts（と部品）だけ。'
+        + '入口（index.ts・handlers.ts・commands/index.ts）や、まだ機能のフォルダーに入っていないファイルには依存しない。',
+      severity: 'error',
+      from: { path: '^src/discordbot/features/' },
+      to: {
+        path: '^src/discordbot/',
+        pathNot: ['^src/discordbot/(features|shared)/', '^src/discordbot/(config|interactions|storage)\\.ts$'],
+      },
+    },
+    {
+      name: 'lt-is-provider',
+      comment: 'LT は開催確認・イベント登録・録画などから使われる側。LT からほかの機能は import しない。',
+      severity: 'error',
+      from: { path: '^src/discordbot/features/lt/' },
+      to: { path: '^src/discordbot/features/', pathNot: '^src/discordbot/features/lt/' },
+    },
     {
       name: 'libs-independent',
       comment: '部品（vrchat/・x/・canva/・image-gen/・video/）どうしは import しない。組み合わせるのは Bot の側でする。',

@@ -8,8 +8,8 @@ import {
 } from 'discord.js';
 import { config } from './config';
 import { storage } from './storage';
-import { ltEntriesForMeetup, nextMeetupDate } from './lt/weekly-announce';
-import { needsTitle, type LtEntry } from './lt/types';
+import { ltEntriesForMeetup, nextMeetupDate } from './features/lt/index';
+import { needsTitle, type LtEntry } from './features/lt/index';
 import { jstToIso } from './vrc-event';
 import { MEETUP_START_TIME, vrceveFields } from './vrceve';
 

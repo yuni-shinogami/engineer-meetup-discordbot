@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { formatDateKey } from '../shared/meetup-dates';
+import { formatDateKey } from '../../shared/meetup-dates';
 import { LtEntry } from './types';
 
 /**
@@ -37,7 +37,7 @@ export function speakerLabel(entry: Pick<LtEntry, 'speakerName' | 'xAccount'>): 
 }
 
 function readXTemplate(): string {
-  return readFileSync(join(__dirname, '../../x/assets/lt_announce_template.txt'), 'utf-8').trim();
+  return readFileSync(join(__dirname, '../../../x/assets/lt_announce_template.txt'), 'utf-8').trim();
 }
 
 /**

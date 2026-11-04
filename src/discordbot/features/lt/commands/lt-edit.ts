@@ -6,14 +6,14 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
-import { buildCustomId } from '../interactions';
-import { postAnnounceImage, syncAnnounceImage } from '../lt/announce-image';
-import { applyLtEntryToPost, fetchLtThread } from '../lt/forum';
-import { resolveSpeakerEntry } from '../lt/guard';
-import { materialExists } from '../lt/materials';
-import { ltStore } from '../lt/store';
-import { LtEntry, needsTitle, normalizeXAccount, outstandingItems } from '../lt/types';
-import { formatError } from '../shared/interaction';
+import { buildCustomId } from '../../../interactions';
+import { postAnnounceImage, syncAnnounceImage } from '../announce-image';
+import { applyLtEntryToPost, fetchLtThread } from '../forum';
+import { resolveSpeakerEntry } from '../guard';
+import { materialExists } from '../materials';
+import { ltStore } from '../store';
+import { LtEntry, needsTitle, normalizeXAccount, outstandingItems } from '../types';
+import { formatError } from '../../../shared/interaction';
 
 export const LT_EDIT_MODAL = 'lt:info';
 

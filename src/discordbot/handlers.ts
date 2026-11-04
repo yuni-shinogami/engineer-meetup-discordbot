@@ -25,7 +25,7 @@ import {
   LT_SCHEDULE_BUTTON,
   LT_UNSCHEDULE_BUTTON,
   LT_VIDEO_SELECT,
-} from './lt/forum';
+} from './features/lt/index';
 import {
   handleConfirmMeetupButton,
   handleLatePreAnnounceButton,

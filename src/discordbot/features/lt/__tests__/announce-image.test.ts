@@ -5,7 +5,7 @@ const { generateImage } = vi.hoisted(() => ({
   generateImage: vi.fn(async () => Buffer.from('png')),
 }));
 
-vi.mock('../../../image-gen/generate', () => ({ generateImage }));
+vi.mock('../../../../image-gen/generate', () => ({ generateImage }));
 
 vi.mock('../materials', () => ({
   materialExists: (p: unknown) => typeof p === 'string' && p !== '',

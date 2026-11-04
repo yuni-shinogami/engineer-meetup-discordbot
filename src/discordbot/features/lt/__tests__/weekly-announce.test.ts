@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../config', () => ({ config: mocks.config }));
+vi.mock('../../../config', () => ({ config: mocks.config }));
 
 vi.mock('../announce', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../announce')>()),

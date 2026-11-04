@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('child_process', () => ({ execFile: mocks.execFile }));
 vi.mock('../config', () => ({ config: mocks.config }));
-vi.mock('../lt/store', () => ({ ltStore: mocks.store }));
+vi.mock('../features/lt/store', () => ({ ltStore: mocks.store }));
 vi.mock('../vrc-launcher', () => ({
   readLatest: mocks.readLatest,
   instanceNameOf: (location: string) => location.split(':')[1]?.split('~')[0] ?? '',
@@ -35,7 +35,7 @@ import {
   renderStatus,
   type RecorderStatus,
 } from '../lt-recorder';
-import type { LtEntry } from '../lt/types';
+import type { LtEntry } from '../features/lt/types';
 
 const LOCATION = 'wrld_585f45ea-c6a6-4ba5-ad6a-188dd822f574:45350~group(grp_5a802e77-a436-491a-9edb-39fca4ff7805)~groupAccessType(plus)~region(jp)';
 

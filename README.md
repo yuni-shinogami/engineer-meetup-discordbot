@@ -664,18 +664,21 @@ src/
       collector.ts    Discord のイベントと VC の見回りから集計を記録する
       store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
       backfill.ts     過去のメッセージ履歴からメッセージの集計を作り直す（npm run activity:backfill）
-    lt/
-      types.ts        LtEntry / LtStatus の定義、未入力項目の判定
-      status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決
-      store.ts        LT レコードの永続化（state/lt-store.json、原子的書き込み）
-      forum.ts        フォーラムポストの作成・タグ同期・ポスト内コンポーネント
-      materials.ts    告知素材のダウンロードとローカル保存
-      announce-image.ts  告知画像の生成と作り直し
-      announce-text.ts   媒体ごとの告知文の組み立て
-      announce.ts        X / Discord / VRChat への投稿（冪等・部分失敗対応）
-      weekly-announce.ts 週次フローに同乗する LT 告知の一括投稿と運営への報告
-      guard.ts        ポスト内コンポーネント操作の共通検証（本人確認・運営確認）
-    commands/          各スラッシュコマンドの定義とハンドラ
+    features/         機能ごとのフォルダー。外からは各機能の index.ts だけを使う（docs/ARCHITECTURE.md）
+      lt/
+        index.ts        LT の機能が外に見せるもの
+        commands/       LT のスラッシュコマンドとフォーラムのポスト内の操作（/lt-apply・/lt-material・/generate-lt-image など）
+        types.ts        LtEntry / LtStatus の定義、未入力項目の判定
+        status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決
+        store.ts        LT レコードの永続化（state/lt-store.json、原子的書き込み）
+        forum.ts        フォーラムポストの作成・タグ同期・ポスト内コンポーネント
+        materials.ts    告知素材のダウンロードとローカル保存
+        announce-image.ts  告知画像の生成と作り直し
+        announce-text.ts   媒体ごとの告知文の組み立て
+        announce.ts        X / Discord / VRChat への投稿（冪等・部分失敗対応）
+        weekly-announce.ts 週次フローに同乗する LT 告知の一括投稿と運営への報告
+        guard.ts        ポスト内コンポーネント操作の共通検証（本人確認・運営確認）
+    commands/          スラッシュコマンドの定義とハンドラ（LT のものは features/lt/commands/）
     shared/
       interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信
       x-post-url.ts   ツイート ID から投稿 URL を組み立てる（本番／テストのアカウントを選ぶ）

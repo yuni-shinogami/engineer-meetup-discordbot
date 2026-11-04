@@ -21,13 +21,13 @@ vi.mock('../storage', () => ({
   },
 }));
 
-vi.mock('../lt/weekly-announce', () => ({
+vi.mock('../features/lt/weekly-announce', () => ({
   runWeeklyLtAnnounce: vi.fn().mockResolvedValue(null),
 }));
 
 import { triggerConfirmMeetup, triggerPreAnnounce } from '../scheduler';
-import { runWeeklyLtAnnounce } from '../lt/weekly-announce';
-import { PRE_ANNOUNCE_TARGETS } from '../lt/announce';
+import { runWeeklyLtAnnounce } from '../features/lt/weekly-announce';
+import { PRE_ANNOUNCE_TARGETS } from '../features/lt/announce';
 import { sendConfirmMeetupToChannel, executePreAnnounce } from '../meetup';
 import { storage } from '../storage';
 import type { Client } from 'discord.js';
