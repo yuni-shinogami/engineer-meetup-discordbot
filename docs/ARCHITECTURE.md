@@ -58,7 +58,6 @@ import の向きに次の決まりがあり、`npm test`（`src/__tests__/depend
 
 | 決まり | 箇所 |
 | :--- | :--- |
-| `no-circular` | `commands/create-instance.ts` ⇄ `vrc-invite.ts` |
 | `lib-not-to-bot` | `src/canva/auth.ts`・`src/canva/login.ts`・`src/x/postUrl.ts` → `config.ts`、`src/x/postAnnouncement.ts` → `lt/dates.ts` |
 | `commands-utils-only-from-commands` | `lt/guard.ts`・`lt-recorder.ts`・`vrc-launcher.ts`・`vrc-invite.ts` → `commands/utils.ts` |
 

@@ -110,35 +110,5 @@
       "severity": "error",
       "name": "lib-not-to-bot"
     }
-  },
-  {
-    "type": "cycle",
-    "from": "src/discordbot/commands/create-instance.ts",
-    "to": "src/discordbot/vrc-invite.ts",
-    "unresolvedTo": "../vrc-invite",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/discordbot/vrc-invite.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/discordbot/commands/create-instance.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      }
-    ]
   }
 ]
