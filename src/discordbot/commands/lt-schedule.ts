@@ -21,7 +21,7 @@ import { resolveOperatorEntry } from '../lt/guard';
 import { materialExists } from '../lt/materials';
 import { ltStore } from '../lt/store';
 import { LtEntry, LtStatus, outstandingItems } from '../lt/types';
-import { formatError } from './utils';
+import { formatError } from '../shared/interaction';
 
 export const LT_SCHEDULE_SELECT = 'lt:pick';
 export const LT_SCHEDULE_MODAL = 'lt:manual';

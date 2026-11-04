@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, GuildChannel, PermissionFlagsBits } from 'discord.js';
 import { config } from '../config';
-import { requireOperatorRole } from './utils';
+import { requireOperatorRole } from '../shared/interaction';
 
 export const checkPermissionsCommand = new SlashCommandBuilder()
   .setName('check-permissions')

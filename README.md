@@ -677,6 +677,8 @@ src/
       weekly-announce.ts 週次フローに同乗する LT 告知の一括投稿と運営への報告
       guard.ts        ポスト内コンポーネント操作の共通検証（本人確認・運営確認）
     commands/          各スラッシュコマンドの定義とハンドラ
+    shared/
+      interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信
   x/
     xBot.ts           X (Twitter) API クライアント
     postAnnouncement.ts  事前告知ツイートの投稿

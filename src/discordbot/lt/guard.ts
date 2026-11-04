@@ -1,5 +1,5 @@
 import { RepliableInteraction } from 'discord.js';
-import { memberHasOperatorRole } from '../commands/utils';
+import { memberHasOperatorRole } from '../shared/interaction';
 import { formatMeetupDate } from './dates';
 import { ltStore } from './store';
 import { LtEntry } from './types';

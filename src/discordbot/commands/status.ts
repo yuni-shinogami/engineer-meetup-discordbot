@@ -8,7 +8,8 @@ import { fetchLtForum } from '../lt/forum';
 import { LT_STATUS_LABELS, resolveLtTags } from '../lt/status';
 import { ltStore } from '../lt/store';
 import { LT_STATUSES } from '../lt/types';
-import { requireOperatorRole, formatNextRun } from './utils';
+import { requireOperatorRole } from '../shared/interaction';
+import { formatNextRun } from './utils';
 
 export const statusCommand = new SlashCommandBuilder()
   .setName('status')

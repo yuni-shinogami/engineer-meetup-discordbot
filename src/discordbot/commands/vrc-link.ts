@@ -11,7 +11,7 @@ import {
 import { AuthError, withSession } from '../../vrchat/session';
 import { LoginResult } from '../../vrchat/api/auth';
 import { VRChatClient } from '../../vrchat/api/client';
-import { formatError, requireOperatorRole } from './utils';
+import { formatError, requireOperatorRole } from '../shared/interaction';
 
 const PROFILE_EXAMPLE = 'https://vrchat.com/home/user/usr_...';
 

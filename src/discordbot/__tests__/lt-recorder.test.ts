@@ -18,7 +18,7 @@ vi.mock('../vrc-launcher', () => ({
   readLatest: mocks.readLatest,
   instanceNameOf: (location: string) => location.split(':')[1]?.split('~')[0] ?? '',
 }));
-vi.mock('../commands/utils', () => ({
+vi.mock('../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));

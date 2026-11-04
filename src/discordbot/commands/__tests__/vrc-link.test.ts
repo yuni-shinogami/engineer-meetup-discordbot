@@ -27,7 +27,7 @@ vi.mock('../../../vrchat/session', () => ({
   withSession: async (fn: (session: unknown) => Promise<unknown>) =>
     fn({ client: {}, user: { userId: 'usr_main', displayName: '慕狼ゆに' } }),
 }));
-vi.mock('../utils', () => ({
+vi.mock('../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));

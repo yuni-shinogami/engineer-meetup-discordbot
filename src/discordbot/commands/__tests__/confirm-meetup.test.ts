@@ -41,7 +41,7 @@ vi.mock('../../vrceve', () => ({
   registerOnVrceve: mocks.registerOnVrceve,
   deleteFromVrceve: mocks.deleteFromVrceve,
 }));
-vi.mock('../utils', () => ({
+vi.mock('../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => String(e),
 }));

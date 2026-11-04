@@ -2,7 +2,7 @@ import { StringSelectMenuInteraction } from 'discord.js';
 import { buildLtComponents, buildLtEmbed } from '../lt/forum';
 import { resolveSpeakerEntry } from '../lt/guard';
 import { ltStore } from '../lt/store';
-import { formatError } from './utils';
+import { formatError } from '../shared/interaction';
 
 /**
  * フォーラムポスト内の「LT の中で動画を流す予定はありますか？」セレクト。

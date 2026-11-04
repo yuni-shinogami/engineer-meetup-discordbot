@@ -11,7 +11,7 @@ vi.mock('../../lt/weekly-announce', () => ({
   runWeeklyLtAnnounce: mocks.runWeeklyLtAnnounce,
   nextMeetupDate: () => '2026-08-21',
 }));
-vi.mock('../utils', () => ({
+vi.mock('../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${(e as Error).message}`,
 }));

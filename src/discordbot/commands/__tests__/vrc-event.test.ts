@@ -10,7 +10,7 @@ vi.mock('../../vrc-event', () => ({
   registerVrcEvent: mocks.registerVrcEvent,
   deleteVrcEvent: mocks.deleteVrcEvent,
 }));
-vi.mock('../utils', () => ({
+vi.mock('../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));

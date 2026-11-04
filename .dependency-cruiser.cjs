@@ -26,10 +26,18 @@ module.exports = {
     },
     {
       name: 'commands-utils-only-from-commands',
-      comment: 'commands/utils はスラッシュコマンド用の部品。コマンド以外からも使うものは共通の場所に置く。',
+      comment: 'commands/utils はスラッシュコマンド用の部品。コマンド以外からも使うものは shared/ に置く。',
       severity: 'error',
       from: { path: '^src/discordbot/', pathNot: '^src/discordbot/commands/' },
       to: { path: '^src/discordbot/commands/utils' },
+    },
+    {
+      name: 'shared-not-to-features',
+      comment:
+        'shared/ はどの機能からも使う共通の部品。特定の機能に引きずられないよう、shared/ と config.ts のほかは import しない。',
+      severity: 'error',
+      from: { path: '^src/discordbot/shared/' },
+      to: { path: '^src/discordbot/', pathNot: '^src/discordbot/(shared/|config\\.ts$)' },
     },
     {
       name: 'libs-independent',

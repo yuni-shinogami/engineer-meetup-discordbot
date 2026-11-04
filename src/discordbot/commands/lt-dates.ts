@@ -19,7 +19,7 @@ import {
 import { resolveSpeakerEntry } from '../lt/guard';
 import { ltStore } from '../lt/store';
 import { LtEntry } from '../lt/types';
-import { formatError } from './utils';
+import { formatError } from '../shared/interaction';
 
 export const LT_CONSULT_MODAL = 'lt:consult';
 

@@ -33,7 +33,7 @@ vi.mock('../../lt/weekly-announce', () => ({
   runWeeklyLtAnnounce: mocks.runWeeklyLtAnnounce,
   nextMeetupDate: () => '2026-08-21',
 }));
-vi.mock('../utils', () => ({ requireOperatorRole: vi.fn().mockResolvedValue(true) }));
+vi.mock('../../shared/interaction', () => ({ requireOperatorRole: vi.fn().mockResolvedValue(true) }));
 
 import { MEETUP_DAY_TARGETS } from '../../lt/announce';
 import { handlePostAnnouncementCommand } from '../post-announcement';

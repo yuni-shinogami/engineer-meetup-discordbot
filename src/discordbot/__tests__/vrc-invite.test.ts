@@ -16,7 +16,7 @@ vi.mock('../../vrchat/createInstance', () => ({
   inviteToInstance: mocks.inviteToInstance,
   AuthError: class AuthError extends Error {},
 }));
-vi.mock('../commands/utils', () => ({
+vi.mock('../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));
