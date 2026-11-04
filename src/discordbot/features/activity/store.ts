@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { config } from '../config';
+import { config } from '../../config';
 
 /** 1 日のうちの 1 人ぶん。キーは Discord のユーザー ID */
 export interface UserDay {

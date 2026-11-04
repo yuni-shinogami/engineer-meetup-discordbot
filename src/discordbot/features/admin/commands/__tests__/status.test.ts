@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('../../config', () => ({
+vi.mock('../../../../config', () => ({
   config: {
     operatorRoleId: 'operator-role',
     operationsChannelId: 'ops-id',
@@ -16,11 +16,11 @@ vi.mock('../../config', () => ({
 
 const { ltList } = vi.hoisted(() => ({ ltList: vi.fn((): unknown[] => []) }));
 
-vi.mock('../../features/lt/store', () => ({
+vi.mock('../../../lt/store', () => ({
   ltStore: { list: ltList },
 }));
 
-vi.mock('../../storage', () => ({
+vi.mock('../../../../storage', () => ({
   storage: {
     isScheduled: true,
     preAnnouncePostUrl: 'https://x.com/foo/status/1',

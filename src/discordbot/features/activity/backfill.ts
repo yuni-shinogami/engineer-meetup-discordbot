@@ -9,7 +9,7 @@ import {
   REST,
   Routes,
 } from 'discord.js';
-import { config } from '../config';
+import { config } from '../../config';
 import { ActivityStore, jstDateHour, MessageRecord } from './store';
 
 /**

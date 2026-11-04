@@ -25,13 +25,6 @@ module.exports = {
       to: { path: '^src/discordbot/' },
     },
     {
-      name: 'commands-utils-only-from-commands',
-      comment: 'commands/utils はスラッシュコマンド用の部品。コマンド以外からも使うものは shared/ に置く。',
-      severity: 'error',
-      from: { path: '^src/discordbot/', pathNot: '^src/discordbot/commands/' },
-      to: { path: '^src/discordbot/commands/utils' },
-    },
-    {
       name: 'shared-not-to-features',
       comment:
         'shared/ はどの機能からも使う共通の部品。特定の機能に引きずられないよう、shared/ と config.ts のほかは import しない。',
@@ -63,7 +56,7 @@ module.exports = {
       name: 'features-on-foundation',
       comment:
         '機能が頼ってよいのは、ほかの機能・shared/・config.ts・interactions.ts・storage.ts（と部品）だけ。'
-        + '入口（index.ts・handlers.ts・commands/index.ts）や、まだ機能のフォルダーに入っていないファイルには依存しない。',
+        + '入口（index.ts・register-commands.ts・scheduler.ts）には依存しない。',
       severity: 'error',
       from: { path: '^src/discordbot/features/' },
       to: {

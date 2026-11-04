@@ -13,7 +13,7 @@
     "deps:graph": "sh scripts/deps-graph.sh",
     "canva:login": "ts-node src/canva/login.ts",
     "image:preview": "ts-node src/image-gen/preview.ts",
-    "activity:backfill": "node dist/discordbot/activity/backfill.js"
+    "activity:backfill": "node dist/discordbot/features/activity/backfill.js"
   },
   "keywords": [],
   "author": "",

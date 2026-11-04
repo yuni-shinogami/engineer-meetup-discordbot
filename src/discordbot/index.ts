@@ -1,6 +1,5 @@
 import { Client, GatewayIntentBits, Interaction, Partials } from 'discord.js';
 import { config } from './config';
-import { startActivityCollector } from './activity/collector';
 import { setupScheduler } from './scheduler';
 import { dispatchButton, dispatchCommand, dispatchModal, dispatchSelect, registerFeature } from './interactions';
 import { ltFeature } from './features/lt/index';
@@ -8,20 +7,21 @@ import { calendarFeature } from './features/calendar/index';
 import { slidesFeature } from './features/slides/index';
 import { meetupFeature } from './features/meetup/index';
 import { instanceFeature } from './features/instance/index';
-import {
-  handleCheckPermissionsCommand,
-  handleStatusCommand,
-  registerCommands,
-} from './commands';
+import { activityFeature } from './features/activity/index';
+import { adminFeature } from './features/admin/index';
+import { registerCommands } from './register-commands';
 
-/** 機能のフォルダー（features/）の機能。コマンドとボタン・モーダル・セレクトは、ここから登録する。 */
-const FEATURES = [ltFeature, calendarFeature, slidesFeature, meetupFeature, instanceFeature];
+/**
+ * Bot の機能（features/）。コマンド・ボタン・モーダル・セレクトと起動時の処理は、すべてここから登録する。
+ * 機能を足したらここに並べる。起動時の処理（onReady）はこの順に呼ぶので、活動の集計は取りこぼしが無いよう先頭に置く。
+ */
+const FEATURES = [activityFeature, ltFeature, calendarFeature, slidesFeature, meetupFeature, instanceFeature, adminFeature];
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    // アクティビティ集計（activity/collector.ts）用
+    // 活動の集計（features/activity/collector.ts）用
     GatewayIntentBits.GuildMessageReactions,
     GatewayIntentBits.GuildVoiceStates,
     ...(config.activityMemberEvents ? [GatewayIntentBits.GuildMembers] : []),
@@ -37,18 +37,21 @@ client.once('ready', async (c) => {
   FEATURES.forEach(registerFeature);
   setupScheduler(c);
   console.log('Scheduler is active.');
-  startActivityCollector(c);
-  for (const feature of FEATURES) await feature.onReady?.(c);
+  // 1 つの機能の起動時の処理が失敗しても、ほかの機能は動かす
+  for (const feature of FEATURES) {
+    try {
+      await feature.onReady?.(c);
+    } catch (error) {
+      console.error('起動時の処理に失敗しました:', error);
+    }
+  }
 });
 
 client.on('interactionCreate', async (interaction: Interaction) => {
   try {
     if (interaction.isChatInputCommand()) {
-      // features/ の機能のコマンドはそちらで受け、残りをここで振り分ける
-      if (await dispatchCommand(interaction)) return;
-      switch (interaction.commandName) {
-        case 'check-permissions':   await handleCheckPermissionsCommand(interaction); break;
-        case 'status':              await handleStatusCommand(interaction); break;
+      if (!await dispatchCommand(interaction)) {
+        console.warn(`未登録のスラッシュコマンド: ${interaction.commandName}`);
       }
     } else if (interaction.isButton()) {
       if (!await dispatchButton(interaction)) {

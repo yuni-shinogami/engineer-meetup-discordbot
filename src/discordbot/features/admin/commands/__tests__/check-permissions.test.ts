@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PermissionFlagsBits } from 'discord.js';
 
-vi.mock('../../config', () => ({
+vi.mock('../../../../config', () => ({
   config: {
     operatorRoleId: 'operator-role',
     operationsChannelId: 'ops-id',
@@ -11,7 +11,7 @@ vi.mock('../../config', () => ({
 }));
 
 import { handleCheckPermissionsCommand } from '../check-permissions';
-import { config } from '../../config';
+import { config } from '../../../../config';
 import type { ChatInputCommandInteraction } from 'discord.js';
 
 function makeChannel(hasFlags: bigint[]) {
