@@ -2,10 +2,10 @@ import { execFile } from 'child_process';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js';
-import { config } from './config';
-import { buildCustomId } from './interactions';
-import { formatError, requireOperatorRole } from './shared/interaction';
-import type { LatestState } from '../vrchat/internal/state';
+import { config } from '../../config';
+import { buildCustomId } from '../../interactions';
+import { formatError, requireOperatorRole } from '../../shared/interaction';
+import type { LatestState } from '../../../vrchat/internal/state';
 
 /**
  * /create-instance の結果に付ける「サブアカウントで入る」ボタン。

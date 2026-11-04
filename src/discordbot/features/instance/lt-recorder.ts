@@ -6,12 +6,12 @@ import {
   ButtonStyle,
   SendableChannels,
 } from 'discord.js';
-import { config } from './config';
-import { buildCustomId } from './interactions';
-import { formatError, requireOperatorRole } from './shared/interaction';
-import { formatDateKey } from './shared/meetup-dates';
-import { ltStore } from './features/lt/index';
-import { ARCHIVE_POLICY_SHORT, type ArchivePolicy, type LtEntry } from './features/lt/index';
+import { config } from '../../config';
+import { buildCustomId } from '../../interactions';
+import { formatError, requireOperatorRole } from '../../shared/interaction';
+import { formatDateKey } from '../../shared/meetup-dates';
+import { ltStore } from '../lt/index';
+import { ARCHIVE_POLICY_SHORT, type ArchivePolicy, type LtEntry } from '../lt/index';
 import { instanceNameOf, readLatest } from './vrc-launcher';
 
 /**

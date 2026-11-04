@@ -12,11 +12,11 @@ vi.mock('../vrc-launcher', () => ({
   instanceNameOf: (location: string) => location.split(':')[1]?.split('~')[0] ?? '',
 }));
 vi.mock('../vrc-links', () => ({ vrcLinkStore: mocks.links }));
-vi.mock('../../vrchat/createInstance', () => ({
+vi.mock('../../../../vrchat/createInstance', () => ({
   inviteToInstance: mocks.inviteToInstance,
   AuthError: class AuthError extends Error {},
 }));
-vi.mock('../shared/interaction', () => ({
+vi.mock('../../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));

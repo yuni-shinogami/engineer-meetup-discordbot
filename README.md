@@ -655,10 +655,7 @@ src/
     scheduler.ts      定期実行の時刻（月曜 12:00 の開催確認 / 木曜 19:00 の事前告知）。処理は features/meetup/weekly.ts
     storage.ts        週次状態の永続化（state/storage.json）
     interactions.ts   customId のルーティング（ボタン・モーダル・セレクト）
-    handlers.ts       まだ features/ に移していないボタンのハンドラと customId キーの紐づけ
     executor.ts       外部スクリプト実行ユーティリティ
-    vrc-launcher.ts   「サブアカウントで入る」ボタン（別の PC の VRChat を SSH で起動）
-    lt-recorder.ts    「LT録画開始」ボタンと録画パネル（別の PC の OBS で録画し、YouTube へ非公開でアップ）
     activity/
       collector.ts    Discord のイベントと VC の見回りから集計を記録する
       store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
@@ -683,6 +680,10 @@ src/
       meetup/         開催確認（YES/NO）・事前告知・開催告知と /confirm-meetup・/pre-announce・/post-announcement
         weekly.ts       毎週の開催確認と事前告知の本体（scheduler.ts と「今すぐ事前告知を投稿する」ボタンから呼ぶ）
         meetup.ts       開催確認のメッセージと事前告知の投稿
+      instance/       VRChat のインスタンス作成・招待・アカウント登録と /create-instance・/vrc-link
+        vrc-launcher.ts   「サブアカウントで入る」ボタン（別の PC の VRChat を SSH で起動）
+        vrc-invite.ts     「自分に招待」ボタン
+        lt-recorder.ts    「LT録画開始」ボタンと録画パネル（別の PC の OBS で録画し、YouTube へ非公開でアップ）
     commands/          スラッシュコマンドの定義とハンドラ（LT のものは features/lt/commands/）
     shared/
       interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信

@@ -1,17 +1,17 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, User } from 'discord.js';
-import { config } from '../config';
+import { config } from '../../../config';
 import { vrcLinkStore } from '../vrc-links';
-import { parseVrchatProfile, profileUrl, VrcLink } from '../../vrchat/links';
-import { getUser } from '../../vrchat/api/user';
+import { parseVrchatProfile, profileUrl, VrcLink } from '../../../../vrchat/links';
+import { getUser } from '../../../../vrchat/api/user';
 import {
   acceptIncomingFriendRequest,
   getFriendStatus,
   sendFriendRequest,
-} from '../../vrchat/api/friends';
-import { AuthError, withSession } from '../../vrchat/session';
-import { LoginResult } from '../../vrchat/api/auth';
-import { VRChatClient } from '../../vrchat/api/client';
-import { formatError, requireOperatorRole } from '../shared/interaction';
+} from '../../../../vrchat/api/friends';
+import { AuthError, withSession } from '../../../../vrchat/session';
+import { LoginResult } from '../../../../vrchat/api/auth';
+import { VRChatClient } from '../../../../vrchat/api/client';
+import { formatError, requireOperatorRole } from '../../../shared/interaction';
 
 const PROFILE_EXAMPLE = 'https://vrchat.com/home/user/usr_...';
 

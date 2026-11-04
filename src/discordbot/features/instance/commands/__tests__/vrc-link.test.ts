@@ -14,20 +14,20 @@ const mocks = vi.hoisted(() => ({
   acceptIncomingFriendRequest: vi.fn(),
 }));
 
-vi.mock('../../config', () => ({ config: { vrcStateDir: '/state' } }));
+vi.mock('../../../../config', () => ({ config: { vrcStateDir: '/state' } }));
 vi.mock('../../vrc-links', () => ({ vrcLinkStore: mocks.store }));
-vi.mock('../../../vrchat/api/user', () => ({ getUser: mocks.getUser }));
-vi.mock('../../../vrchat/api/friends', () => ({
+vi.mock('../../../../../vrchat/api/user', () => ({ getUser: mocks.getUser }));
+vi.mock('../../../../../vrchat/api/friends', () => ({
   getFriendStatus: mocks.getFriendStatus,
   sendFriendRequest: mocks.sendFriendRequest,
   acceptIncomingFriendRequest: mocks.acceptIncomingFriendRequest,
 }));
-vi.mock('../../../vrchat/session', () => ({
+vi.mock('../../../../../vrchat/session', () => ({
   AuthError: class AuthError extends Error {},
   withSession: async (fn: (session: unknown) => Promise<unknown>) =>
     fn({ client: {}, user: { userId: 'usr_main', displayName: '慕狼ゆに' } }),
 }));
-vi.mock('../../shared/interaction', () => ({
+vi.mock('../../../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));

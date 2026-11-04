@@ -1,9 +1,9 @@
 import { ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js';
-import { buildCustomId } from './interactions';
-import { formatError, requireOperatorRole } from './shared/interaction';
+import { buildCustomId } from '../../interactions';
+import { formatError, requireOperatorRole } from '../../shared/interaction';
 import { instanceNameOf, readLatest } from './vrc-launcher';
 import { vrcLinkStore } from './vrc-links';
-import { AuthError, inviteToInstance, InviteOutcome } from '../vrchat/createInstance';
+import { AuthError, inviteToInstance, InviteOutcome } from '../../../vrchat/createInstance';
 
 /**
  * /create-instance の結果に付ける「📨 自分に招待」ボタン。押した人の VRChat アカウント（/vrc-link で登録したもの）に、

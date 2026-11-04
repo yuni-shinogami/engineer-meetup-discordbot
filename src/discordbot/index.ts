@@ -3,21 +3,19 @@ import { config } from './config';
 import { startActivityCollector } from './activity/collector';
 import { setupScheduler } from './scheduler';
 import { dispatchButton, dispatchCommand, dispatchModal, dispatchSelect, registerFeature } from './interactions';
-import { registerInteractionHandlers } from './handlers';
 import { ltFeature } from './features/lt/index';
 import { calendarFeature } from './features/calendar/index';
 import { slidesFeature } from './features/slides/index';
 import { meetupFeature } from './features/meetup/index';
+import { instanceFeature } from './features/instance/index';
 import {
-  handleCreateInstanceCommand,
-  handleVrcLinkCommand,
   handleCheckPermissionsCommand,
   handleStatusCommand,
   registerCommands,
 } from './commands';
 
 /** 機能のフォルダー（features/）の機能。コマンドとボタン・モーダル・セレクトは、ここから登録する。 */
-const FEATURES = [ltFeature, calendarFeature, slidesFeature, meetupFeature];
+const FEATURES = [ltFeature, calendarFeature, slidesFeature, meetupFeature, instanceFeature];
 
 const client = new Client({
   intents: [
@@ -37,7 +35,6 @@ client.once('ready', async (c) => {
   process.env.CLIENT_ID = c.user.id;
   await registerCommands(FEATURES);
   FEATURES.forEach(registerFeature);
-  registerInteractionHandlers();
   setupScheduler(c);
   console.log('Scheduler is active.');
   startActivityCollector(c);
@@ -50,8 +47,6 @@ client.on('interactionCreate', async (interaction: Interaction) => {
       // features/ の機能のコマンドはそちらで受け、残りをここで振り分ける
       if (await dispatchCommand(interaction)) return;
       switch (interaction.commandName) {
-        case 'create-instance':     await handleCreateInstanceCommand(interaction); break;
-        case 'vrc-link':            await handleVrcLinkCommand(interaction); break;
         case 'check-permissions':   await handleCheckPermissionsCommand(interaction); break;
         case 'status':              await handleStatusCommand(interaction); break;
       }
