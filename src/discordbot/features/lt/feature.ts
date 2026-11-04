@@ -4,6 +4,7 @@ import { handleLtAnnounceButton, handleLtAnnounceConfirm, LT_ANNOUNCE_CONFIRM } 
 import { handleLtApplyCommand, handleLtApplyModal, LT_APPLY_MODAL, ltApplyCommand } from './commands/lt-apply';
 import { handleLtConsultModal, handleLtDatesSelect, LT_CONSULT_MODAL } from './commands/lt-dates';
 import { handleLtEditButton, handleLtEditModal, LT_EDIT_MODAL } from './commands/lt-edit';
+import { handleLtEventCommand, ltEventCommand } from './commands/lt-event';
 import { handleLtMaterialCommand, ltMaterialCommand } from './commands/lt-material';
 import {
   handleLtScheduleButton,
@@ -33,6 +34,7 @@ export const ltFeature: BotFeature = {
     { definition: ltApplyCommand, handle: handleLtApplyCommand },
     { definition: ltMaterialCommand, handle: handleLtMaterialCommand },
     { definition: generateLtImageCommand, handle: handleGenerateLtImageCommand },
+    { definition: ltEventCommand, handle: interaction => handleLtEventCommand(interaction) },
   ],
   buttons: {
     [LT_SCHEDULE_BUTTON]: handleLtScheduleButton,

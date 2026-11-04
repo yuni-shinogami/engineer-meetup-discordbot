@@ -62,7 +62,7 @@ export async function handleLtDatesSelect(interaction: StringSelectMenuInteracti
 
 function buildConsultModal(entry: LtEntry): ModalBuilder {
   const usage = ltStore.slotUsageByDate(entry.isProd);
-  const description = allCandidatesFull(usage)
+  const description = allCandidatesFull(usage, entry.isProd)
     ? '現在の候補日はすべて埋まっています。登壇できそうな時期をお知らせください'
     : `例: 「10月中旬以降なら可能」「${formatMeetupDate(upcomingMeetupDates(1)[0] ?? '')}以外の平日」`;
 

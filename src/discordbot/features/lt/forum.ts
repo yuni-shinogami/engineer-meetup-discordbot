@@ -13,7 +13,8 @@ import {
 } from 'discord.js';
 import { config, ltForumChannelId } from '../../config';
 import { buildCustomId } from '../../interactions';
-import { formatMeetupDate, formatShortDate, upcomingMeetupDates } from '../../shared/meetup-dates';
+import { formatMeetupDate, formatShortDate } from '../../shared/meetup-dates';
+import { applicantDateCandidates, dateOptionLabel, ltEventOn, slotsOn } from './events';
 import { ANNOUNCE_TARGETS, announceSummary } from './announce';
 import { materialSummary } from './materials';
 import { LT_STATUS_LABELS, requireLtTagIds, resolveLtTags } from './status';
@@ -198,20 +199,24 @@ export const LT_DATES_CONSULT_VALUE = 'consult';
  */
 export function buildPreferredDatesRow(
   threadId: string,
+  isProd: boolean,
   selected: readonly string[] = [],
   usage: Map<string, number> = new Map(),
   disabled = false,
 ): ActionRowBuilder<StringSelectMenuBuilder> {
-  const candidates = upcomingMeetupDates();
+  // 毎週の集会の候補日と、応募を受け付けている LT 会の日
+  const candidates = applicantDateCandidates(isProd);
   const options = candidates.map(date => {
-    const used = usage.get(date) ?? 0;
-    const remaining = config.ltSlotsPerDay - used;
-    const description = remaining <= 0
+    const slots = slotsOn(date, isProd);
+    const remaining = slots - (usage.get(date) ?? 0);
+    const vacancy = remaining <= 0
       ? '埋まっています（運営と要相談）'
-      : config.ltSlotsPerDay === 1 ? '空き' : `残り ${remaining} 枠`;
+      : slots === 1 ? '空き' : `残り ${remaining} 枠`;
+    const event = ltEventOn(date, isProd);
+    const description = event ? `「${event.theme}」${vacancy}`.slice(0, 100) : vacancy;
 
     return new StringSelectMenuOptionBuilder()
-      .setLabel(formatMeetupDate(date))
+      .setLabel(dateOptionLabel(date, isProd))
       .setValue(date)
       .setDescription(description)
       .setDefault(selected.includes(date));
@@ -324,20 +329,20 @@ export function buildOperatorRow(
  */
 export function buildLtComponents(
   entry: Pick<LtEntry,
-    'id' | 'preferredDates' | 'videoPlayback' | 'eventDate' | 'title' | 'xAccount' | 'announce'>,
+    'id' | 'isProd' | 'preferredDates' | 'videoPlayback' | 'eventDate' | 'title' | 'xAccount' | 'announce'>,
   usage: Map<string, number> = new Map(),
 ): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
   return [
-    buildPreferredDatesRow(entry.id, entry.preferredDates, usage, entry.eventDate !== null),
+    buildPreferredDatesRow(entry.id, entry.isProd, entry.preferredDates, usage, entry.eventDate !== null),
     buildVideoPlaybackRow(entry.id, entry.videoPlayback),
     buildEditRow(entry),
     buildOperatorRow(entry),
   ];
 }
 
-/** 候補として出している開催日がすべて埋まっているか。 */
-export function allCandidatesFull(usage: Map<string, number>): boolean {
-  return upcomingMeetupDates().every(date => (usage.get(date) ?? 0) >= config.ltSlotsPerDay);
+/** 候補として出している開催日（毎週の集会と LT 会）がすべて埋まっているか。 */
+export function allCandidatesFull(usage: Map<string, number>, isProd: boolean): boolean {
+  return applicantDateCandidates(isProd).every(date => (usage.get(date) ?? 0) >= slotsOn(date, isProd));
 }
 
 
@@ -360,7 +365,7 @@ export async function createLtPost(
     notes.push(`⚠️ 録画の公開に制限があります → **${ARCHIVE_POLICY_SHORT[draft.archivePolicy]}**`);
   }
   notes.push('', '**続けて、下のメニューから回答をお願いします。**');
-  if (allCandidatesFull(usage)) {
+  if (allCandidatesFull(usage, draft.isProd)) {
     notes.push(
       '📮 現在お出しできる候補日はすべて埋まっています。'
       + '「**この中に登壇できる日がない**」を選んで希望の時期をお知らせください。運営が個別に調整します。',
@@ -394,6 +399,7 @@ export async function createLtPost(
     components: buildLtComponents(
       {
         id: thread.id,
+        isProd: draft.isProd,
         preferredDates: [],
         videoPlayback: null,
         eventDate: null,

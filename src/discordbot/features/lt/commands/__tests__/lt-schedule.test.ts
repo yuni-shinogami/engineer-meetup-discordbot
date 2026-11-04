@@ -99,15 +99,15 @@ describe('scheduleWarnings', () => {
   const now = new Date(2026, 7, 11); // 2026-08-11 (火)
 
   it('開催曜日の未来日なら警告なし', () => {
-    expect(scheduleWarnings('2026-08-14', now)).toEqual([]);
+    expect(scheduleWarnings('2026-08-14', true, now)).toEqual([]);
   });
 
   it('開催曜日でなければ警告する', () => {
-    expect(scheduleWarnings('2026-08-13', now).join()).toContain('開催曜日ではありません');
+    expect(scheduleWarnings('2026-08-13', true, now).join()).toContain('開催曜日ではありません');
   });
 
   it('過去の日付なら警告する', () => {
-    expect(scheduleWarnings('2026-08-07', now).join()).toContain('過去の日付');
+    expect(scheduleWarnings('2026-08-07', true, now).join()).toContain('過去の日付');
   });
 });
 
@@ -115,25 +115,25 @@ describe('scheduleDateChoices', () => {
   const now = new Date(2026, 7, 11);
 
   it('登壇者の希望日を先頭に並べる', () => {
-    const choices = scheduleDateChoices({ preferredDates: ['2026-09-04'], eventDate: null }, now);
+    const choices = scheduleDateChoices({ isProd: true, preferredDates: ['2026-09-04'], eventDate: null }, now);
     expect(choices[0]).toBe('2026-09-04');
     expect(choices).toContain('2026-08-14');
   });
 
   it('希望日を候補側で重複させない', () => {
-    const choices = scheduleDateChoices({ preferredDates: ['2026-08-14'], eventDate: null }, now);
+    const choices = scheduleDateChoices({ isProd: true, preferredDates: ['2026-08-14'], eventDate: null }, now);
     expect(choices.filter(d => d === '2026-08-14')).toHaveLength(1);
   });
 
   it('候補期間の外で確定していてもその日を含める', () => {
     // 相談を経て候補外の日に決まったあと、選択画面から現在の確定日が消えないこと
-    const choices = scheduleDateChoices({ preferredDates: [], eventDate: '2027-03-05' }, now);
+    const choices = scheduleDateChoices({ isProd: true, preferredDates: [], eventDate: '2027-03-05' }, now);
     expect(choices).toContain('2027-03-05');
   });
 
   it('セレクトの上限を超えない（手入力の1枠を残す）', () => {
     const preferred = Array.from({ length: 40 }, (_, i) => `2026-${String(i % 12 + 1).padStart(2, '0')}-01`);
-    expect(scheduleDateChoices({ preferredDates: preferred, eventDate: null }, now).length)
+    expect(scheduleDateChoices({ isProd: true, preferredDates: preferred, eventDate: null }, now).length)
       .toBeLessThanOrEqual(24);
   });
 });
