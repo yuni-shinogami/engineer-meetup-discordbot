@@ -5,7 +5,7 @@ lt-store.json
 vrc-links.json
 assets/fonts/*.ttf
 assets/fonts/*.otf
-src/**/__snapshots__/*.actual.png
+src/**/__output__/
 .env
 .env.local
 state/

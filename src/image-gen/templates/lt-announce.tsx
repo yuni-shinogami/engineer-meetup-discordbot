@@ -1,9 +1,10 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
-const EM_LOGO = `data:image/png;base64,${readFileSync(join(__dirname, '../assets/images/em_logo_620px_A.png')).toString('base64')}`;
-
-
+/**
+ * LT 告知画像（1200x1600）。
+ *
+ * 見た目は同じディレクトリの `lt-announce.css` に書く。ブラウザ（Chromium）で描くので、
+ * grid・グラデーション・filter・text-shadow など普通の CSS がそのまま使える。
+ * 画像は data URL か、`assets/` 以下のパス（generate.ts が配る）で参照する。
+ */
 export interface LtAnnounceTemplateProps {
   title: string;
   speakerName: string;
@@ -12,8 +13,7 @@ export interface LtAnnounceTemplateProps {
   titleSlideImage: string;
 }
 
-const INK = '#111111';
-const DARK = '#333333';
+export const LT_ANNOUNCE_SIZE = { width: 1200, height: 1600 } as const;
 
 export function LtAnnounceTemplate({
   title,
@@ -23,68 +23,34 @@ export function LtAnnounceTemplate({
   titleSlideImage,
 }: LtAnnounceTemplateProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        height: '100%',
-        backgroundColor: '#ffffff',
-        fontFamily: 'NotoSansJP',
-      }}
-    >
-      {/* ヘッダーのオレンジバー */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#f27205',
-          height: 95,
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ fontSize: 30, fontWeight: 700, color: '#ffffff', letterSpacing: 3 }}>
-          エンジニア集会 lt
-        </span>
-      </div>
+    <main className="lt-announce">
+      <header className="bar">エンジニア集会 lt</header>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-start',
-          padding: '60px 35px 0px',
-        }}
-      >
-        {/* Event logo + title + date */}
-        <div style={{ display: 'flex', marginBottom: '70px', flexDirection: 'column', gap: 6 }}>
-          <img src={EM_LOGO} width={290} height={75} />
-          <span style={{ fontSize: 40, fontWeight: 700, color: INK }}>エンジニア集会LT</span>
-          <span style={{ fontSize: 25, fontWeight: 700, color: DARK }}>{eventDate}（金）22:00 ~</span>
+      <section className="body">
+        <div className="event">
+          <img className="logo" src="assets/images/em_logo_620px_A.png" alt="" />
+          <h1>エンジニア集会LT</h1>
+          <p className="date">{eventDate}（金）22:00 ~</p>
         </div>
 
-        {/* LTタイトル label */}
-        <div style={{ display: 'flex', marginBottom: '120px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', width: '50%' }}>
-            <span style={{ fontSize: 20, fontWeight: 700 }}>LTタイトル：</span>
-            <span style={{ fontSize: 40, fontWeight: 700 }}>
-              {title}
-            </span>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: 26 }}>スピーカー：</span><span style={{ fontSize: 35, fontWeight: 700 }}>{speakerName}</span>
-            </div>
+        <div className="talk">
+          <div className="info">
+            <span className="label">LTタイトル：</span>
+            <span className="title">{title}</span>
+            <p className="speaker">
+              <span className="speaker-label">スピーカー：</span>
+              <span className="speaker-name">{speakerName}</span>
+            </p>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', width: '50%' }}>
-            <img src={speakerIcon} width={510} height={510} style={{ borderRadius: '50%' }} />
+          <div className="icon">
+            <img src={speakerIcon} alt="" />
           </div>
         </div>
-      </div>
+      </section>
 
-      <div style={{ display: 'flex', justifyContent: 'center', height: '600px', backgroundColor: '#f27205', }} >
-        <img src={titleSlideImage} height={600}></img>
-      </div>
-
-    </div >
+      <footer className="slide">
+        <img src={titleSlideImage} alt="" />
+      </footer>
+    </main>
   );
 }
