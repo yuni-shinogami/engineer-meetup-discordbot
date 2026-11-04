@@ -13,8 +13,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('child_process', () => ({ execFile: mocks.execFile }));
 vi.mock('fs', () => ({ readFileSync: mocks.readFileSync }));
-vi.mock('../config', () => ({ config: mocks.config }));
-vi.mock('../shared/interaction', () => ({
+vi.mock('../../../config', () => ({ config: mocks.config }));
+vi.mock('../../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));

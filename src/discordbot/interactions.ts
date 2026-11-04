@@ -79,7 +79,7 @@ export interface SlashCommand {
 
 /**
  * 機能（features/<機能>/）が入口に渡す一覧。
- * 機能のコマンドやボタンを足すときはここに並べるだけで、入口（index.ts・handlers.ts・commands/index.ts）は直さない。
+ * 機能のコマンドやボタンを足すときはここに並べるだけで、入口（index.ts・commands/index.ts）は直さない。
  * ボタン・モーダル・セレクトのキーは customId の先頭（parseCustomId の key）。
  */
 export interface BotFeature {

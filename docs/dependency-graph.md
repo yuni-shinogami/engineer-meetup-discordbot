@@ -23,20 +23,21 @@ subgraph A["features"]
 subgraph B["calendar"]
 C[" "]
 end
-subgraph D["lt"]
+subgraph D["instance"]
 E[" "]
 end
-subgraph F["meetup"]
+subgraph F["lt"]
 G[" "]
 end
-subgraph H["slides"]
+subgraph H["meetup"]
 I[" "]
 end
+subgraph J["slides"]
+K[" "]
 end
-J["handlers.ts"]
-K["index.ts"]
-L["interactions.ts"]
-M["lt-recorder.ts"]
+end
+L["index.ts"]
+M["interactions.ts"]
 N["scheduler.ts"]
 subgraph O["shared"]
 P["interaction.ts"]
@@ -44,102 +45,80 @@ Q["meetup-dates.ts"]
 R["x-post-url.ts"]
 end
 S["storage.ts"]
-T["vrc-invite.ts"]
-U["vrc-launcher.ts"]
-V["vrc-links.ts"]
 end
-subgraph W["image-gen"]
-X[" "]
+subgraph T["image-gen"]
+U[" "]
 end
-subgraph Y["video"]
-Z[" "]
+subgraph V["video"]
+W[" "]
 end
-subgraph 10["vrchat"]
-11[" "]
+subgraph X["vrchat"]
+Y[" "]
 end
-subgraph 12["x"]
-13[" "]
+subgraph Z["x"]
+10[" "]
 end
 end
 5-->8
 7-->8
 7-->P
-7-->11
 7-->M
-7-->S
-7-->T
-7-->U
-7-->V
-7-->L
-7-->E
+7-->G
 7-->N
 7-->Q
+7-->S
 C-->8
 C-->S
-C-->E
-C-->11
-C-->L
+C-->G
+C-->Y
+C-->M
 C-->P
-E-->11
-E-->13
+E-->Y
 E-->8
-E-->R
-E-->Q
-E-->L
-E-->X
 E-->P
-G-->L
+E-->S
+E-->M
+E-->Q
+E-->G
+G-->Y
+G-->10
 G-->8
-G-->P
-G-->S
-G-->C
-G-->I
-G-->13
-G-->Q
 G-->R
-G-->E
-G-->11
-I-->L
-I-->P
-I-->2
-I-->Z
+G-->Q
+G-->M
+G-->U
+G-->P
+I-->M
 I-->8
+I-->P
+I-->S
+I-->C
+I-->K
+I-->10
 I-->Q
-J-->L
-J-->M
-J-->T
-J-->U
-K-->5
-K-->7
+I-->R
+I-->G
+I-->Y
+K-->M
+K-->P
+K-->2
+K-->W
 K-->8
-K-->C
-K-->E
-K-->G
-K-->I
-K-->J
-K-->L
-K-->N
-M-->8
-M-->E
-M-->L
-M-->P
-M-->Q
-M-->U
-N-->G
+K-->Q
+L-->5
+L-->7
+L-->8
+L-->C
+L-->E
+L-->G
+L-->I
+L-->K
+L-->M
+L-->N
+N-->I
 P-->8
 Q-->8
 R-->8
-S-->11
+S-->Y
 S-->8
-T-->11
-T-->L
-T-->P
-T-->U
-T-->V
-U-->11
-U-->8
-U-->L
-U-->P
-V-->11
-V-->8
 ```

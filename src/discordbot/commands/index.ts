@@ -2,13 +2,9 @@ import { REST, Routes } from 'discord.js';
 import { config } from '../config';
 import type { BotFeature } from '../interactions';
 
-export { createInstanceCommand, handleCreateInstanceCommand } from './create-instance';
-export { vrcLinkCommand, handleVrcLinkCommand } from './vrc-link';
 export { checkPermissionsCommand, handleCheckPermissionsCommand } from './check-permissions';
 export { statusCommand, handleStatusCommand } from './status';
 
-import { createInstanceCommand } from './create-instance';
-import { vrcLinkCommand } from './vrc-link';
 import { checkPermissionsCommand } from './check-permissions';
 import { statusCommand } from './status';
 
@@ -19,8 +15,6 @@ import { statusCommand } from './status';
 export async function registerCommands(features: readonly BotFeature[] = []) {
   const commands = [
     ...features.flatMap(feature => (feature.commands ?? []).map(command => command.definition.toJSON())),
-    createInstanceCommand.toJSON(),
-    vrcLinkCommand.toJSON(),
     checkPermissionsCommand.toJSON(),
     statusCommand.toJSON(),
   ];

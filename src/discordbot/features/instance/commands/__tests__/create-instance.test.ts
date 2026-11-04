@@ -14,15 +14,15 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../config', () => ({ config: mocks.config }));
-vi.mock('../../storage', () => ({ storage: mocks.storage }));
+vi.mock('../../../../config', () => ({ config: mocks.config }));
+vi.mock('../../../../storage', () => ({ storage: mocks.storage }));
 vi.mock('../../vrc-links', () => ({ vrcLinkStore: mocks.store }));
-vi.mock('../../features/lt/store', () => ({ ltStore: {} }));
-vi.mock('../../../vrchat/createInstance', () => ({
+vi.mock('../../../lt/store', () => ({ ltStore: {} }));
+vi.mock('../../../../../vrchat/createInstance', () => ({
   createInstance: mocks.createInstance,
   AuthError: class AuthError extends Error {},
 }));
-vi.mock('../../shared/interaction', () => ({
+vi.mock('../../../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));

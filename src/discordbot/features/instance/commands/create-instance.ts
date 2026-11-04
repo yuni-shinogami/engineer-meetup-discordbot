@@ -1,16 +1,16 @@
 import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
-import { config } from '../config';
-import { storage } from '../storage';
+import { config } from '../../../config';
+import { storage } from '../../../storage';
 import { vrcLinkStore } from '../vrc-links';
 import { isVrcLauncherConfigured, joinSubButton } from '../vrc-launcher';
 import { isLtRecorderConfigured, ltRecordStartButton, radioPrepButton } from '../lt-recorder';
 import { describeInvites, inviteMeButton } from '../vrc-invite';
-import { requireOperatorRole, formatError } from '../shared/interaction';
+import { requireOperatorRole, formatError } from '../../../shared/interaction';
 import {
   AuthError,
   createInstance,
   InviteTarget,
-} from '../../vrchat/createInstance';
+} from '../../../../vrchat/createInstance';
 
 export const createInstanceCommand = new SlashCommandBuilder()
   .setName('create-instance')
