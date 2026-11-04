@@ -18,30 +18,30 @@ const mocks = vi.hoisted(() => ({
   deleteDiscordEvent: vi.fn(),
 }));
 
-vi.mock('../../config', () => ({
+vi.mock('../../../../config', () => ({
   config: {
     operationsChannelId: 'ops-channel-id',
     testChannelId: 'test-channel-id',
     canvaAutoPostSlides: false,
   },
 }));
-vi.mock('../../../x/postAnnouncement', () => ({ postAnnouncement: vi.fn() }));
-vi.mock('../../storage', () => ({ storage: mocks.storage }));
-vi.mock('../../scheduler', () => ({ triggerPreAnnounce: mocks.triggerPreAnnounce }));
-vi.mock('../../features/slides/slides', () => ({ postSlidesToChannel: mocks.postSlidesToChannel }));
-vi.mock('../../features/calendar/discord-event', () => ({
+vi.mock('../../../../../x/postAnnouncement', () => ({ postAnnouncement: vi.fn() }));
+vi.mock('../../../../storage', () => ({ storage: mocks.storage }));
+vi.mock('../../weekly', () => ({ triggerPreAnnounce: mocks.triggerPreAnnounce }));
+vi.mock('../../../slides/slides', () => ({ postSlidesToChannel: mocks.postSlidesToChannel }));
+vi.mock('../../../calendar/discord-event', () => ({
   registerDiscordEvent: mocks.registerDiscordEvent,
   deleteDiscordEvent: mocks.deleteDiscordEvent,
 }));
-vi.mock('../../features/calendar/vrc-event', () => ({
+vi.mock('../../../calendar/vrc-event', () => ({
   registerVrcEvent: mocks.registerVrcEvent,
   deleteVrcEvent: mocks.deleteVrcEvent,
 }));
-vi.mock('../../features/calendar/vrceve', () => ({
+vi.mock('../../../calendar/vrceve', () => ({
   registerOnVrceve: mocks.registerOnVrceve,
   deleteFromVrceve: mocks.deleteFromVrceve,
 }));
-vi.mock('../../shared/interaction', () => ({
+vi.mock('../../../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => String(e),
 }));

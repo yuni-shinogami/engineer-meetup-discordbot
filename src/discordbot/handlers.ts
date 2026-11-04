@@ -1,5 +1,4 @@
 import { registerButtonHandler } from './interactions';
-import { CONFIRM_MEETUP_NO, CONFIRM_MEETUP_YES, LATE_PRE_ANNOUNCE_BUTTON } from './meetup';
 import { handleJoinSubButton, VRC_JOIN_SUB_BUTTON } from './vrc-launcher';
 import { handleInviteMeButton, VRC_INVITE_ME_BUTTON } from './vrc-invite';
 import {
@@ -18,16 +17,12 @@ import {
   LT_REC_STOP_BUTTON,
   LT_REC_STOP_CONFIRM,
 } from './lt-recorder';
-import { handleConfirmMeetupButton, handleLatePreAnnounceButton } from './commands';
 
 /**
  * まだ機能のフォルダー（features/）に入っていないボタンのハンドラを customId のキーに紐づける。起動時に一度だけ呼ぶ。
  * features/ の機能のボタン・モーダル・セレクトは、各機能の BotFeature から登録する（index.ts）。
  */
 export function registerInteractionHandlers(): void {
-  registerButtonHandler(CONFIRM_MEETUP_YES, handleConfirmMeetupButton);
-  registerButtonHandler(CONFIRM_MEETUP_NO, handleConfirmMeetupButton);
-  registerButtonHandler(LATE_PRE_ANNOUNCE_BUTTON, handleLatePreAnnounceButton);
   registerButtonHandler(VRC_JOIN_SUB_BUTTON, handleJoinSubButton);
   registerButtonHandler(VRC_INVITE_ME_BUTTON, handleInviteMeButton);
   registerButtonHandler(LT_REC_START_BUTTON, handleLtRecordStartButton);

@@ -1,13 +1,13 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, ButtonInteraction } from 'discord.js';
-import { config } from '../config';
-import { storage } from '../storage';
+import { config } from '../../../config';
+import { storage } from '../../../storage';
 import { CONFIRM_MEETUP_YES, buildLatePreAnnounceRow, sendConfirmMeetupToChannel } from '../meetup';
-import { triggerPreAnnounce } from '../scheduler';
-import { requireOperatorRole, formatError } from '../shared/interaction';
-import { postSlidesToChannel } from '../features/slides/index';
-import { deleteFromVrceve, registerOnVrceve } from '../features/calendar/index';
-import { deleteVrcEvent, registerVrcEvent } from '../features/calendar/index';
-import { deleteDiscordEvent, registerDiscordEvent } from '../features/calendar/index';
+import { triggerPreAnnounce } from '../weekly';
+import { requireOperatorRole, formatError } from '../../../shared/interaction';
+import { postSlidesToChannel } from '../../slides/index';
+import { deleteFromVrceve, registerOnVrceve } from '../../calendar/index';
+import { deleteVrcEvent, registerVrcEvent } from '../../calendar/index';
+import { deleteDiscordEvent, registerDiscordEvent } from '../../calendar/index';
 
 export const confirmMeetupCommand = new SlashCommandBuilder()
   .setName('confirm-meetup')

@@ -8,7 +8,7 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 ## フォルダーの分け方
 
 `src/discordbot/` は、機能ごとのフォルダー（`features/<機能>/`）・どの機能からも使う共通の部品（`shared/`）・入口（`index.ts`・`handlers.ts`・`commands/index.ts`・`scheduler.ts`）に分けていきます。
-いま機能のフォルダーに入っているのは LT（`features/lt/`）・イベント登録（`features/calendar/`）・司会進行スライド（`features/slides/`）で、ほかの機能は順に移していきます。
+いま機能のフォルダーに入っているのは LT（`features/lt/`）・イベント登録（`features/calendar/`）・司会進行スライド（`features/slides/`）・開催確認と告知（`features/meetup/`）で、ほかの機能（VRChat の操作・録画・活動の集計・状態の確認）は順に移していきます。
 
 ## 機能とファイルの対応
 
@@ -16,10 +16,10 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 
 | 機能 | きっかけ | 主なファイル |
 | :--- | :--- | :--- |
-| 開催確認 | 月曜 12:00（cron）・`/confirm-meetup`・YES/NO ボタン | `scheduler.ts`・`meetup.ts`・`commands/confirm-meetup.ts` |
+| 開催確認 | 月曜 12:00（cron）・`/confirm-meetup`・YES/NO ボタン | `features/meetup/`（`weekly.ts`・`meetup.ts`・`commands/confirm-meetup.ts`）。cron の時刻は `scheduler.ts` |
 | イベント登録 | 開催確認の YES/NO・`/event-calendar`・`/vrc-event`・`/discord-event` | `features/calendar/`・`src/vrchat/groupEvent.ts`・`browser-desktop/` |
-| 事前告知 | 木曜 19:00（cron）・`/pre-announce`・「今すぐ事前告知を投稿する」ボタン | `scheduler.ts`・`meetup.ts`・`commands/pre-announce.ts`・`src/x/postAnnouncement.ts` |
-| 開催告知 | `/post-announcement` | `commands/post-announcement.ts`・`src/x/quotePost.ts`・`src/vrchat/postGroupAnnouncement.ts` |
+| 事前告知 | 木曜 19:00（cron）・`/pre-announce`・「今すぐ事前告知を投稿する」ボタン | `features/meetup/`（`weekly.ts`・`meetup.ts`・`commands/pre-announce.ts`）・`src/x/postAnnouncement.ts`。cron の時刻は `scheduler.ts` |
+| 開催告知 | `/post-announcement` | `features/meetup/commands/post-announcement.ts`・`src/x/quotePost.ts`・`src/vrchat/postGroupAnnouncement.ts` |
 | インスタンスと招待 | `/create-instance`・`/vrc-link`・「サブアカウントで入る」「自分に招待」ボタン | `commands/{create-instance,vrc-link}.ts`・`vrc-launcher.ts`・`vrc-invite.ts`・`vrc-links.ts`・`src/vrchat/createInstance.ts`・`recorder-pc/vrc-launcher/` |
 | LT の録画とラジオ準備 | 録画パネルのボタン（`/create-instance` の結果に付く） | `lt-recorder.ts`・`recorder-pc/lt-recorder/` |
 | LT の応募から告知まで | `/lt-apply`・`/lt-material`・フォーラムのポスト内のボタン・セレクト・モーダル・事前告知と開催告知 | `features/lt/`（外に見せるものは `features/lt/index.ts`）・`src/image-gen/` |
@@ -38,7 +38,7 @@ Bot が何かを始めるきっかけは、次の場所で登録しています�
 | スラッシュコマンド | 各機能の `BotFeature`（例: `features/lt/feature.ts`）の `commands` | 定義を `commands/index.ts` の `registerCommands` に並べ、`index.ts` の `switch` で振り分ける |
 | ボタン・モーダル・セレクト | 各機能の `BotFeature` の `buttons`・`modals`・`selects` | `handlers.ts` で customId とハンドラを紐づける |
 | 起動時の処理 | 各機能の `BotFeature` の `onReady` | `index.ts` の `ready` |
-| 定期実行 | — | `scheduler.ts`（開催確認と事前告知の 2 つ） |
+| 定期実行 | `scheduler.ts` が cron の時刻を持ち、機能の `index.ts` の処理（`features/meetup` の `triggerConfirmMeetup`・`triggerPreAnnounce`）を呼ぶ | — |
 | Discord のイベント | — | `activity/collector.ts` |
 
 `index.ts` は `FEATURES`（機能の `BotFeature` の一覧）を `registerFeature`（`interactions.ts`）で登録し、スラッシュコマンドは `dispatchCommand` で機能に振り分けます。機能のものでなければ `switch` が受けます。

@@ -4,11 +4,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // 実行環境によらず結果が安定するよう明示的に JST に固定する。
 process.env.TZ = 'Asia/Tokyo';
 
-vi.mock('../../x/postAnnouncement', () => ({
+vi.mock('../../../../x/postAnnouncement', () => ({
   postAnnouncement: vi.fn().mockResolvedValue('tweet-id-123'),
 }));
 
-vi.mock('../config', () => ({
+vi.mock('../../../config', () => ({
   config: {
     xAccount: 'MainAccount',
     testXAccount: 'TestAccount',
@@ -16,7 +16,7 @@ vi.mock('../config', () => ({
   },
 }));
 
-vi.mock('../storage', () => ({
+vi.mock('../../../storage', () => ({
   storage: {
     lastTweetId: null as string | null,
     preAnnouncePostUrl: null as string | null,
@@ -25,9 +25,9 @@ vi.mock('../storage', () => ({
 }));
 
 import { sendConfirmMeetupToChannel, executePreAnnounce, buildLatePreAnnounceRow } from '../meetup';
-import { postAnnouncement } from '../../x/postAnnouncement';
-import { config } from '../config';
-import { storage } from '../storage';
+import { postAnnouncement } from '../../../../x/postAnnouncement';
+import { config } from '../../../config';
+import { storage } from '../../../storage';
 import type { Client } from 'discord.js';
 
 const mockedPostAnnouncement = vi.mocked(postAnnouncement);

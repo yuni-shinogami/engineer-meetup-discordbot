@@ -7,19 +7,17 @@ import { registerInteractionHandlers } from './handlers';
 import { ltFeature } from './features/lt/index';
 import { calendarFeature } from './features/calendar/index';
 import { slidesFeature } from './features/slides/index';
+import { meetupFeature } from './features/meetup/index';
 import {
-  handleConfirmMeetupCommand,
-  handlePreAnnounceCommand,
   handleCreateInstanceCommand,
   handleVrcLinkCommand,
-  handlePostAnnouncementCommand,
   handleCheckPermissionsCommand,
   handleStatusCommand,
   registerCommands,
 } from './commands';
 
 /** 機能のフォルダー（features/）の機能。コマンドとボタン・モーダル・セレクトは、ここから登録する。 */
-const FEATURES = [ltFeature, calendarFeature, slidesFeature];
+const FEATURES = [ltFeature, calendarFeature, slidesFeature, meetupFeature];
 
 const client = new Client({
   intents: [
@@ -52,11 +50,8 @@ client.on('interactionCreate', async (interaction: Interaction) => {
       // features/ の機能のコマンドはそちらで受け、残りをここで振り分ける
       if (await dispatchCommand(interaction)) return;
       switch (interaction.commandName) {
-        case 'confirm-meetup':      await handleConfirmMeetupCommand(interaction); break;
-        case 'pre-announce':        await handlePreAnnounceCommand(interaction); break;
         case 'create-instance':     await handleCreateInstanceCommand(interaction); break;
         case 'vrc-link':            await handleVrcLinkCommand(interaction); break;
-        case 'post-announcement':   await handlePostAnnouncementCommand(interaction); break;
         case 'check-permissions':   await handleCheckPermissionsCommand(interaction); break;
         case 'status':              await handleStatusCommand(interaction); break;
       }
