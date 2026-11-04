@@ -1,7 +1,8 @@
 import { createHash, randomBytes, timingSafeEqual } from 'crypto';
 import { createServer } from 'http';
+import dotenv from 'dotenv';
 import { AUTHORIZE_URL, CANVA_SCOPES, exchangeCodeForTokens, tokenFilePath } from './auth';
-import { config } from '../discordbot/config';
+import { canvaConfig } from './config';
 
 /** PKCE の code_verifier / code_challenge を作る。Canva は S256 のみ受け付ける。 */
 export function createPkcePair(): { verifier: string; challenge: string } {
@@ -17,8 +18,8 @@ export function buildAuthorizeUrl(challenge: string, state: string): string {
     code_challenge_method: 's256',
     scope: CANVA_SCOPES.join(' '),
     response_type: 'code',
-    client_id: config.canvaClientId,
-    redirect_uri: config.canvaRedirectUri,
+    client_id: canvaConfig.clientId,
+    redirect_uri: canvaConfig.redirectUri,
     state,
   });
   return `${AUTHORIZE_URL}?${params.toString()}`;
@@ -34,8 +35,8 @@ export function statesMatch(expected: string, actual: string | null): boolean {
 
 function missingSettings(): string[] {
   const missing: string[] = [];
-  if (!config.canvaClientId) missing.push('CANVA_CLIENT_ID');
-  if (!config.canvaClientSecret) missing.push('CANVA_CLIENT_SECRET');
+  if (!canvaConfig.clientId) missing.push('CANVA_CLIENT_ID');
+  if (!canvaConfig.clientSecret) missing.push('CANVA_CLIENT_SECRET');
   return missing;
 }
 
@@ -86,7 +87,7 @@ export async function runLogin(): Promise<void> {
     throw new Error(`.env に次の設定がありません: ${missing.join(', ')}`);
   }
 
-  const redirect = new URL(config.canvaRedirectUri);
+  const redirect = new URL(canvaConfig.redirectUri);
   const { verifier, challenge } = createPkcePair();
   const state = randomBytes(16).toString('base64url');
   const authorizeUrl = buildAuthorizeUrl(challenge, state);
@@ -105,6 +106,8 @@ export async function runLogin(): Promise<void> {
 }
 
 if (require.main === module) {
+  // npm run canva:login で単独で動かすときは、Bot を通らないので自分で .env を読む
+  dotenv.config();
   runLogin().catch(error => {
     console.error(`\n❌ ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);

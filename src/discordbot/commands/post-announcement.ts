@@ -4,7 +4,7 @@ import { storage } from '../storage';
 import { requireOperatorRole } from '../shared/interaction';
 import { postGroupAnnouncement, AuthError } from '../../vrchat/postGroupAnnouncement';
 import { postQuoteAnnouncement } from '../../x/quotePost';
-import { xPostUrl } from '../../x/postUrl';
+import { xPostUrl } from '../shared/x-post-url';
 import { formatMeetupDate } from '../lt/dates';
 import { MEETUP_DAY_TARGETS } from '../lt/announce';
 import { nextMeetupDate, runWeeklyLtAnnounce } from '../lt/weekly-announce';

@@ -679,10 +679,10 @@ src/
     commands/          各スラッシュコマンドの定義とハンドラ
     shared/
       interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信
+      x-post-url.ts   ツイート ID から投稿 URL を組み立てる（本番／テストのアカウントを選ぶ）
   x/
     xBot.ts           X (Twitter) API クライアント
     postAnnouncement.ts  事前告知ツイートの投稿
-    postUrl.ts        ツイート ID から投稿 URL を組み立てる
     profileImage.ts   X プロフィール画像 URL の取得
     quotePost.ts      開催告知の引用リポスト
     assets/           投稿テンプレート・画像

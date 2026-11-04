@@ -22,7 +22,7 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 | 司会進行スライド | `/slides` | `slides.ts`・`commands/slides.ts`・`src/canva/`・`src/video/` |
 | 活動の集計 | Discord のイベント（メッセージ・リアクション・VC・参加と退出） | `activity/` |
 | 状態の確認 | `/status`・`/check-permissions` | `commands/{status,check-permissions}.ts` |
-| （共通の部品） | どの機能からも使う | `shared/interaction.ts`（運営ロールの確認・エラーの返信） |
+| （共通の部品） | どの機能からも使う | `shared/interaction.ts`（運営ロールの確認・エラーの返信）・`shared/x-post-url.ts`（ツイートの URL） |
 
 ## 入口
 
@@ -45,7 +45,7 @@ import の向きに次の決まりがあり、`npm test`（`src/__tests__/depend
 | 決まり | 理由 |
 | :--- | :--- |
 | 循環した import をしない（`no-circular`） | どちらを先に読み込むかで動きが変わり、追うのも難しい |
-| `vrchat/`・`x/`・`canva/`・`image-gen/`・`video/` から `discordbot/` を import しない（`lib-not-to-bot`） | これらは Bot から使う部品。必要な値（設定など）は呼び出し側から引数で受け取る |
+| `vrchat/`・`x/`・`canva/`・`image-gen/`・`video/` から `discordbot/` を import しない（`lib-not-to-bot`） | これらは Bot から使う部品。必要な値は呼び出し側から引数で受け取るか、部品の中だけで使う設定なら部品自身が環境変数から読む（`canva/config.ts` など） |
 | `commands/utils` はスラッシュコマンドからだけ使う（`commands-utils-only-from-commands`） | コマンド以外からも使うものは、`shared/` に置く |
 | `shared/` は `shared/` と `config.ts` のほかを import しない（`shared-not-to-features`） | `shared/` はどの機能からも使う共通の部品。特定の機能に引きずられないようにする |
 | 部品どうしは import しない（`libs-independent`） | 部品を組み合わせるのは Bot の側。部品は単独で読めるようにしておく |
@@ -55,12 +55,9 @@ import の向きに次の決まりがあり、`npm test`（`src/__tests__/depend
 
 ### 今ある違反
 
-決まりを入れた時点ですでにあった違反は [`.dependency-cruiser-known-violations.json`](../.dependency-cruiser-known-violations.json) に控えてあり、検査では数えません（新しく増えたときだけ落ちます）。
-直したら `npm run deps:baseline` で控えを作り直してください。控えを作り直して違反を増やすことはしません。
+ありません。決まりを入れた時点の違反（9 件）は、すべて直しました。
 
-| 決まり | 箇所 |
-| :--- | :--- |
-| `lib-not-to-bot` | `src/canva/auth.ts`・`src/canva/login.ts`・`src/x/postUrl.ts` → `config.ts`、`src/x/postAnnouncement.ts` → `lt/dates.ts` |
+新しい決まりを足したときに、すぐには直せない違反があれば [`.dependency-cruiser-known-violations.json`](../.dependency-cruiser-known-violations.json) に控え（`npm run deps:baseline`）、ここに箇所を書いてください。控えた違反は検査では数えず、新しく増えたときだけ落ちます。直したら控えを作り直します。控えを作り直して違反を増やすことはしません。
 
 ## 依存関係の図
 
