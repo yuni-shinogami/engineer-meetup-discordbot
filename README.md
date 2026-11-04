@@ -668,7 +668,6 @@ src/
       types.ts        LtEntry / LtStatus の定義、未入力項目の判定
       status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決
       store.ts        LT レコードの永続化（state/lt-store.json、原子的書き込み）
-      dates.ts        開催日候補の算出と日付整形
       forum.ts        フォーラムポストの作成・タグ同期・ポスト内コンポーネント
       materials.ts    告知素材のダウンロードとローカル保存
       announce-image.ts  告知画像の生成と作り直し
@@ -680,6 +679,7 @@ src/
     shared/
       interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信
       x-post-url.ts   ツイート ID から投稿 URL を組み立てる（本番／テストのアカウントを選ぶ）
+      meetup-dates.ts 次の開催日の算出と日付の書式（MEETUP_WEEKDAY に従う）
   x/
     xBot.ts           X (Twitter) API クライアント
     postAnnouncement.ts  事前告知ツイートの投稿

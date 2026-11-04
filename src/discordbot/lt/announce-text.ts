@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { formatDateKey } from './dates';
+import { formatDateKey } from '../shared/meetup-dates';
 import { LtEntry } from './types';
 
 /**

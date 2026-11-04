@@ -8,7 +8,7 @@ import {
 } from 'discord.js';
 import { config } from '../config';
 import { buildCustomId } from '../interactions';
-import { formatMeetupDate, upcomingMeetupDates } from '../lt/dates';
+import { formatMeetupDate, upcomingMeetupDates } from '../shared/meetup-dates';
 import {
   allCandidatesFull,
   buildLtComponents,

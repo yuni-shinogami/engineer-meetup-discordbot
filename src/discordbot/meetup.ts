@@ -4,7 +4,7 @@ import { storage } from './storage';
 import { postAnnouncement } from '../x/postAnnouncement';
 import { xPostUrl } from './shared/x-post-url';
 import { buildCustomId } from './interactions';
-import { formatSlashDate, upcomingMeetupDates } from './lt/dates';
+import { formatSlashDate, upcomingMeetupDates } from './shared/meetup-dates';
 
 /**
  * 開催確認ボタンの customId。

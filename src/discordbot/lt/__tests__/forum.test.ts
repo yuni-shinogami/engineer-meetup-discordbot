@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { config } from '../../config';
-import { upcomingMeetupDates } from '../dates';
+import { upcomingMeetupDates } from '../../shared/meetup-dates';
 import { emptyAnnounce } from '../types';
 import {
   allCandidatesFull,

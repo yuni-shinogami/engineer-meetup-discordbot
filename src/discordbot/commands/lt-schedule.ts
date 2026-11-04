@@ -15,7 +15,7 @@ import {
 import { config } from '../config';
 import { buildCustomId } from '../interactions';
 import { postAnnounceImage, syncAnnounceImage } from '../lt/announce-image';
-import { formatDateKey, formatMeetupDate, parseDateKey, upcomingMeetupDates } from '../lt/dates';
+import { formatDateKey, formatMeetupDate, parseDateKey, upcomingMeetupDates } from '../shared/meetup-dates';
 import { applyLtEntryToPost, fetchLtThread } from '../lt/forum';
 import { resolveOperatorEntry } from '../lt/guard';
 import { materialExists } from '../lt/materials';

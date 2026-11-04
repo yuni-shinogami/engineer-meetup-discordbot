@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { executePreAnnounce } from '../meetup';
 import { PRE_ANNOUNCE_TARGETS } from '../lt/announce';
-import { formatMeetupDate } from '../lt/dates';
+import { formatMeetupDate } from '../shared/meetup-dates';
 import { nextMeetupDate, runWeeklyLtAnnounce } from '../lt/weekly-announce';
 import { requireOperatorRole, formatError } from '../shared/interaction';
 

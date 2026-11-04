@@ -5,7 +5,7 @@ import {
   formatShortDate,
   parseDateKey,
   upcomingMeetupDates,
-} from '../dates';
+} from '../meetup-dates';
 
 describe('formatDateKey / parseDateKey', () => {
   it('ローカル日付を YYYY-MM-DD に整形する', () => {
