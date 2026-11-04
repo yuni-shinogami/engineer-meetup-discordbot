@@ -1,62 +1,6 @@
 [
   {
     "type": "dependency",
-    "from": "src/discordbot/lt-recorder.ts",
-    "to": "src/discordbot/commands/utils.ts",
-    "unresolvedTo": "./commands/utils",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "commands-utils-only-from-commands"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/discordbot/lt/guard.ts",
-    "to": "src/discordbot/commands/utils.ts",
-    "unresolvedTo": "../commands/utils",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "commands-utils-only-from-commands"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/discordbot/vrc-invite.ts",
-    "to": "src/discordbot/commands/utils.ts",
-    "unresolvedTo": "./commands/utils",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "commands-utils-only-from-commands"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/discordbot/vrc-launcher.ts",
-    "to": "src/discordbot/commands/utils.ts",
-    "unresolvedTo": "./commands/utils",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "commands-utils-only-from-commands"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/canva/auth.ts",
     "to": "src/discordbot/config.ts",
     "unresolvedTo": "../discordbot/config",

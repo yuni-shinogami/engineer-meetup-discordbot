@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, AttachmentBuilder } from 'discord.js';
 import { generateImage } from '../../image-gen/generate';
-import { requireOperatorRole, formatError } from './utils';
+import { requireOperatorRole, formatError } from '../shared/interaction';
 
 export const generateLtImageCommand = new SlashCommandBuilder()
   .setName('generate-lt-image')

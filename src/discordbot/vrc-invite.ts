@@ -1,6 +1,6 @@
 import { ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js';
 import { buildCustomId } from './interactions';
-import { formatError, requireOperatorRole } from './commands/utils';
+import { formatError, requireOperatorRole } from './shared/interaction';
 import { instanceNameOf, readLatest } from './vrc-launcher';
 import { vrcLinkStore } from './vrc-links';
 import { AuthError, inviteToInstance, InviteOutcome } from '../vrchat/createInstance';

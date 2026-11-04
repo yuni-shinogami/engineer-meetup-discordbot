@@ -4,7 +4,7 @@ import { join } from 'path';
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js';
 import { config } from './config';
 import { buildCustomId } from './interactions';
-import { formatError, requireOperatorRole } from './commands/utils';
+import { formatError, requireOperatorRole } from './shared/interaction';
 import type { LatestState } from '../vrchat/internal/state';
 
 /**

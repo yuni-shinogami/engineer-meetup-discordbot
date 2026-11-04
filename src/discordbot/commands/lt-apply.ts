@@ -27,7 +27,7 @@ import {
   isCapturePolicy,
   PolicyChoice,
 } from '../lt/types';
-import { formatError } from './utils';
+import { formatError } from '../shared/interaction';
 
 export const LT_APPLY_MODAL = 'lt:apply';
 

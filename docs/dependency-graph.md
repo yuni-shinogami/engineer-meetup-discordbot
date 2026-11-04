@@ -29,58 +29,62 @@ G[" "]
 end
 H["meetup.ts"]
 I["scheduler.ts"]
-J["slides.ts"]
-K["storage.ts"]
-L["vrc-event.ts"]
-M["vrc-invite.ts"]
-N["vrc-launcher.ts"]
-O["vrc-links.ts"]
-P["vrceve.ts"]
+subgraph J["shared"]
+K["interaction.ts"]
 end
-subgraph Q["image-gen"]
-R[" "]
+L["slides.ts"]
+M["storage.ts"]
+N["vrc-event.ts"]
+O["vrc-invite.ts"]
+P["vrc-launcher.ts"]
+Q["vrc-links.ts"]
+R["vrceve.ts"]
 end
-subgraph S["video"]
+subgraph S["image-gen"]
 T[" "]
 end
-subgraph U["vrchat"]
+subgraph U["video"]
 V[" "]
 end
-subgraph W["x"]
+subgraph W["vrchat"]
 X[" "]
+end
+subgraph Y["x"]
+Z[" "]
 end
 end
 2-->8
 5-->8
 7-->8
+7-->K
 7-->9
 7-->H
 7-->I
-7-->J
-7-->K
 7-->L
-7-->P
-7-->V
-7-->E
 7-->M
 7-->N
-7-->O
 7-->R
 7-->X
+7-->E
+7-->O
+7-->P
+7-->Q
+7-->T
+7-->Z
 7-->D
 7-->G
 9-->8
 9-->G
-9-->K
-9-->L
-9-->P
+9-->M
+9-->N
+9-->R
 B-->7
 B-->D
 B-->E
 B-->G
 B-->H
-B-->M
-B-->N
+B-->O
+B-->P
 C-->5
 C-->7
 C-->8
@@ -88,49 +92,50 @@ C-->B
 C-->D
 C-->G
 C-->I
-E-->7
 E-->8
 E-->D
 E-->G
-E-->N
+E-->K
+E-->P
 G-->8
-G-->V
 G-->X
+G-->Z
 G-->D
-G-->7
-G-->R
-H-->X
+G-->K
+G-->T
+H-->Z
 H-->8
 H-->D
-H-->K
+H-->M
 I-->8
 I-->G
 I-->H
-I-->K
-J-->2
-J-->T
-J-->8
-J-->G
-K-->V
+I-->M
 K-->8
+L-->2
 L-->V
+L-->8
 L-->G
-L-->K
-L-->P
-M-->V
-M-->7
-M-->D
-M-->N
-M-->O
-N-->V
-N-->7
-N-->8
-N-->D
-O-->V
-O-->8
+M-->X
+M-->8
+N-->X
+N-->G
+N-->M
+N-->R
+O-->X
+O-->D
+O-->K
+O-->P
+O-->Q
+P-->X
 P-->8
-P-->G
+P-->D
 P-->K
-X-->8
-X-->G
+Q-->X
+Q-->8
+R-->8
+R-->G
+R-->M
+Z-->8
+Z-->G
 ```

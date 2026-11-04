@@ -5,7 +5,7 @@ import { vrcLinkStore } from '../vrc-links';
 import { isVrcLauncherConfigured, joinSubButton } from '../vrc-launcher';
 import { isLtRecorderConfigured, ltRecordStartButton, radioPrepButton } from '../lt-recorder';
 import { describeInvites, inviteMeButton } from '../vrc-invite';
-import { requireOperatorRole, formatError } from './utils';
+import { requireOperatorRole, formatError } from '../shared/interaction';
 import {
   AuthError,
   createInstance,

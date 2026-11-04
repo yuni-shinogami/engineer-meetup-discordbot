@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, TextChannel } from 'discord.js';
 import { config } from '../config';
 import { storage } from '../storage';
-import { requireOperatorRole } from './utils';
+import { requireOperatorRole } from '../shared/interaction';
 import { postGroupAnnouncement, AuthError } from '../../vrchat/postGroupAnnouncement';
 import { postQuoteAnnouncement } from '../../x/quotePost';
 import { xPostUrl } from '../../x/postUrl';

@@ -3,7 +3,7 @@ import { executePreAnnounce } from '../meetup';
 import { PRE_ANNOUNCE_TARGETS } from '../lt/announce';
 import { formatMeetupDate } from '../lt/dates';
 import { nextMeetupDate, runWeeklyLtAnnounce } from '../lt/weekly-announce';
-import { requireOperatorRole, formatError } from './utils';
+import { requireOperatorRole, formatError } from '../shared/interaction';
 
 export const preAnnounceCommand = new SlashCommandBuilder()
   .setName('pre-announce')

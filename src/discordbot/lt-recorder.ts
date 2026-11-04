@@ -8,7 +8,7 @@ import {
 } from 'discord.js';
 import { config } from './config';
 import { buildCustomId } from './interactions';
-import { formatError, requireOperatorRole } from './commands/utils';
+import { formatError, requireOperatorRole } from './shared/interaction';
 import { formatDateKey } from './lt/dates';
 import { ltStore } from './lt/store';
 import { ARCHIVE_POLICY_SHORT, type ArchivePolicy, type LtEntry } from './lt/types';

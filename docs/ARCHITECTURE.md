@@ -22,6 +22,7 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 | 司会進行スライド | `/slides` | `slides.ts`・`commands/slides.ts`・`src/canva/`・`src/video/` |
 | 活動の集計 | Discord のイベント（メッセージ・リアクション・VC・参加と退出） | `activity/` |
 | 状態の確認 | `/status`・`/check-permissions` | `commands/{status,check-permissions}.ts` |
+| （共通の部品） | どの機能からも使う | `shared/interaction.ts`（運営ロールの確認・エラーの返信） |
 
 ## 入口
 
@@ -45,7 +46,8 @@ import の向きに次の決まりがあり、`npm test`（`src/__tests__/depend
 | :--- | :--- |
 | 循環した import をしない（`no-circular`） | どちらを先に読み込むかで動きが変わり、追うのも難しい |
 | `vrchat/`・`x/`・`canva/`・`image-gen/`・`video/` から `discordbot/` を import しない（`lib-not-to-bot`） | これらは Bot から使う部品。必要な値（設定など）は呼び出し側から引数で受け取る |
-| `commands/utils` はスラッシュコマンドからだけ使う（`commands-utils-only-from-commands`） | コマンド以外からも使うものは、共通の場所に置く |
+| `commands/utils` はスラッシュコマンドからだけ使う（`commands-utils-only-from-commands`） | コマンド以外からも使うものは、`shared/` に置く |
+| `shared/` は `shared/` と `config.ts` のほかを import しない（`shared-not-to-features`） | `shared/` はどの機能からも使う共通の部品。特定の機能に引きずられないようにする |
 | 部品どうしは import しない（`libs-independent`） | 部品を組み合わせるのは Bot の側。部品は単独で読めるようにしておく |
 | 外部サービスの SDK は受け持つ部品の中だけで使う（`twitter-sdk-only-in-x`・`axios-only-in-api-libs`・`renderer-only-in-image-gen`） | `twitter-api-v2` は `x/`、`axios` は `vrchat/`・`canva/`、`puppeteer-core`・`react-dom` は `image-gen/` だけ。外部とのやりとりを探す場所を固定する |
 | 本番のコードから devDependencies を使わない（`not-to-dev-dep`） | テストや開発の道具に本番のコードが頼らないようにする（型だけの import は除く） |
@@ -59,7 +61,6 @@ import の向きに次の決まりがあり、`npm test`（`src/__tests__/depend
 | 決まり | 箇所 |
 | :--- | :--- |
 | `lib-not-to-bot` | `src/canva/auth.ts`・`src/canva/login.ts`・`src/x/postUrl.ts` → `config.ts`、`src/x/postAnnouncement.ts` → `lt/dates.ts` |
-| `commands-utils-only-from-commands` | `lt/guard.ts`・`lt-recorder.ts`・`vrc-launcher.ts`・`vrc-invite.ts` → `commands/utils.ts` |
 
 ## 依存関係の図
 

@@ -13,7 +13,7 @@ import { resolveSpeakerEntry } from '../lt/guard';
 import { materialExists } from '../lt/materials';
 import { ltStore } from '../lt/store';
 import { LtEntry, needsTitle, normalizeXAccount, outstandingItems } from '../lt/types';
-import { formatError } from './utils';
+import { formatError } from '../shared/interaction';
 
 export const LT_EDIT_MODAL = 'lt:info';
 

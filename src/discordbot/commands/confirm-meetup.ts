@@ -3,7 +3,7 @@ import { config } from '../config';
 import { storage } from '../storage';
 import { CONFIRM_MEETUP_YES, buildLatePreAnnounceRow, sendConfirmMeetupToChannel } from '../meetup';
 import { triggerPreAnnounce } from '../scheduler';
-import { requireOperatorRole, formatError } from './utils';
+import { requireOperatorRole, formatError } from '../shared/interaction';
 import { postSlidesToChannel } from '../slides';
 import { deleteFromVrceve, registerOnVrceve } from '../vrceve';
 import { deleteVrcEvent, registerVrcEvent } from '../vrc-event';
