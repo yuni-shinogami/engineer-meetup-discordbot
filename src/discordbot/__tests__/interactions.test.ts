@@ -1,14 +1,23 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { ButtonInteraction } from 'discord.js';
+import type { ButtonInteraction, ChatInputCommandInteraction, ModalSubmitInteraction, StringSelectMenuInteraction } from 'discord.js';
 import {
   buildCustomId,
   clearHandlers,
   dispatchButton,
+  dispatchCommand,
+  dispatchModal,
+  dispatchSelect,
   parseCustomId,
   registerButtonHandler,
+  registerFeature,
 } from '../interactions';
 
 const asButton = (customId: string) => ({ customId }) as ButtonInteraction;
+const asModal = (customId: string) => ({ customId }) as ModalSubmitInteraction;
+const asSelect = (customId: string) => ({ customId }) as StringSelectMenuInteraction;
+const asCommand = (commandName: string) => ({ commandName }) as ChatInputCommandInteraction;
+const command = (name: string, handle = vi.fn().mockResolvedValue(undefined)) =>
+  ({ definition: { name, toJSON: () => ({ name }) }, handle });
 
 describe('parseCustomId', () => {
   it('namespace:action をキーにし、残りを引数にする', () => {
@@ -74,5 +83,47 @@ describe('dispatchButton', () => {
   it('同じキーを二重登録するとエラーになる', () => {
     registerButtonHandler('lt:date', vi.fn());
     expect(() => registerButtonHandler('lt:date', vi.fn())).toThrow(/重複/);
+  });
+});
+
+describe('registerFeature', () => {
+  beforeEach(() => clearHandlers());
+
+  it('機能のスラッシュコマンドを名前で振り分ける', async () => {
+    const apply = command('lt-apply');
+    registerFeature({ commands: [apply] });
+
+    await expect(dispatchCommand(asCommand('lt-apply'))).resolves.toBe(true);
+    expect(apply.handle).toHaveBeenCalledTimes(1);
+  });
+
+  // 機能のものでないコマンドは、入口の switch が受ける
+  it('どの機能のものでもないコマンドなら false を返す', async () => {
+    registerFeature({ commands: [command('lt-apply')] });
+    await expect(dispatchCommand(asCommand('status'))).resolves.toBe(false);
+  });
+
+  it('ボタン・モーダル・セレクトを customId のキーで登録する', async () => {
+    const button = vi.fn().mockResolvedValue(undefined);
+    const modal = vi.fn().mockResolvedValue(undefined);
+    const select = vi.fn().mockResolvedValue(undefined);
+    registerFeature({ buttons: { 'lt:edit': button }, modals: { 'lt:apply': modal }, selects: { 'lt:dates': select } });
+
+    await expect(dispatchButton(asButton('lt:edit:1'))).resolves.toBe(true);
+    await expect(dispatchModal(asModal('lt:apply'))).resolves.toBe(true);
+    await expect(dispatchSelect(asSelect('lt:dates:2'))).resolves.toBe(true);
+    expect(button).toHaveBeenCalledWith(expect.anything(), ['1']);
+    expect(modal).toHaveBeenCalledWith(expect.anything(), []);
+    expect(select).toHaveBeenCalledWith(expect.anything(), ['2']);
+  });
+
+  it('同じ名前のスラッシュコマンドを二重登録するとエラーになる', () => {
+    registerFeature({ commands: [command('lt-apply')] });
+    expect(() => registerFeature({ commands: [command('lt-apply')] })).toThrow(/重複/);
+  });
+
+  it('入口で登録したボタンと機能のボタンのキーが重なるとエラーになる', () => {
+    registerButtonHandler('lt:edit', vi.fn());
+    expect(() => registerFeature({ buttons: { 'lt:edit': vi.fn() } })).toThrow(/重複/);
   });
 });

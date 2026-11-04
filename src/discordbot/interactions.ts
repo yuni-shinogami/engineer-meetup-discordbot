@@ -1,4 +1,10 @@
-import { ButtonInteraction, ModalSubmitInteraction, StringSelectMenuInteraction } from 'discord.js';
+import {
+  ButtonInteraction,
+  ChatInputCommandInteraction,
+  Client,
+  ModalSubmitInteraction,
+  StringSelectMenuInteraction,
+} from 'discord.js';
 
 /**
  * customId のルーティング。
@@ -65,9 +71,52 @@ export const dispatchButton = (interaction: ButtonInteraction) => dispatch(butto
 export const dispatchModal = (interaction: ModalSubmitInteraction) => dispatch(modalHandlers, interaction);
 export const dispatchSelect = (interaction: StringSelectMenuInteraction) => dispatch(selectHandlers, interaction);
 
+/** スラッシュコマンド 1 つ分。definition は SlashCommandBuilder（Discord に登録する定義）。 */
+export interface SlashCommand {
+  definition: { name: string; toJSON(): unknown };
+  handle: (interaction: ChatInputCommandInteraction) => Promise<void>;
+}
+
+/**
+ * 機能（features/<機能>/）が入口に渡す一覧。
+ * 機能のコマンドやボタンを足すときはここに並べるだけで、入口（index.ts・handlers.ts・commands/index.ts）は直さない。
+ * ボタン・モーダル・セレクトのキーは customId の先頭（parseCustomId の key）。
+ */
+export interface BotFeature {
+  commands?: SlashCommand[];
+  buttons?: Record<string, InteractionHandler<ButtonInteraction>>;
+  modals?: Record<string, InteractionHandler<ModalSubmitInteraction>>;
+  selects?: Record<string, InteractionHandler<StringSelectMenuInteraction>>;
+  /** 起動して Discord につながったときに一度だけ呼ぶ処理。 */
+  onReady?: (client: Client<true>) => Promise<void>;
+}
+
+const commandHandlers = new Map<string, SlashCommand['handle']>();
+
+/** 機能のコマンドとボタン・モーダル・セレクトを登録する。起動時に機能ごとに一度だけ呼ぶ。 */
+export function registerFeature(feature: BotFeature): void {
+  for (const command of feature.commands ?? []) {
+    const { name } = command.definition;
+    if (commandHandlers.has(name)) throw new Error(`スラッシュコマンドが重複しています: ${name}`);
+    commandHandlers.set(name, command.handle);
+  }
+  for (const [key, handler] of Object.entries(feature.buttons ?? {})) registerButtonHandler(key, handler);
+  for (const [key, handler] of Object.entries(feature.modals ?? {})) registerModalHandler(key, handler);
+  for (const [key, handler] of Object.entries(feature.selects ?? {})) registerSelectHandler(key, handler);
+}
+
+/** 機能が登録したスラッシュコマンドなら実行して true。どの機能のものでもなければ false。 */
+export async function dispatchCommand(interaction: ChatInputCommandInteraction): Promise<boolean> {
+  const handle = commandHandlers.get(interaction.commandName);
+  if (!handle) return false;
+  await handle(interaction);
+  return true;
+}
+
 /** テスト用。登録済みハンドラを全て消す。 */
 export function clearHandlers(): void {
   buttonHandlers.clear();
   modalHandlers.clear();
   selectHandlers.clear();
+  commandHandlers.clear();
 }

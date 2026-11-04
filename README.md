@@ -656,7 +656,7 @@ src/
     meetup.ts         開催確認・事前告知の実行ロジック
     storage.ts        週次状態の永続化（state/storage.json）
     interactions.ts   customId のルーティング（ボタン・モーダル・セレクト）
-    handlers.ts       ハンドラと customId キーの紐づけ
+    handlers.ts       まだ features/ に移していないボタンのハンドラと customId キーの紐づけ
     executor.ts       外部スクリプト実行ユーティリティ
     vrc-launcher.ts   「サブアカウントで入る」ボタン（別の PC の VRChat を SSH で起動）
     lt-recorder.ts    「LT録画開始」ボタンと録画パネル（別の PC の OBS で録画し、YouTube へ非公開でアップ）
@@ -667,6 +667,7 @@ src/
     features/         機能ごとのフォルダー。外からは各機能の index.ts だけを使う（docs/ARCHITECTURE.md）
       lt/
         index.ts        LT の機能が外に見せるもの
+        feature.ts      LT のスラッシュコマンドとボタン・モーダル・セレクトの一覧（入口がまとめて登録する）
         commands/       LT のスラッシュコマンドとフォーラムのポスト内の操作（/lt-apply・/lt-material・/generate-lt-image など）
         types.ts        LtEntry / LtStatus の定義、未入力項目の判定
         status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決

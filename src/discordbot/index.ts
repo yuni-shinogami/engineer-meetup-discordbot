@@ -2,9 +2,9 @@ import { Client, GatewayIntentBits, Interaction, Partials } from 'discord.js';
 import { config } from './config';
 import { startActivityCollector } from './activity/collector';
 import { setupScheduler } from './scheduler';
-import { dispatchButton, dispatchModal, dispatchSelect } from './interactions';
+import { dispatchButton, dispatchCommand, dispatchModal, dispatchSelect, registerFeature } from './interactions';
 import { registerInteractionHandlers } from './handlers';
-import { logLtForumStatus } from './features/lt/index';
+import { ltFeature } from './features/lt/index';
 import {
   handleConfirmMeetupCommand,
   handlePreAnnounceCommand,
@@ -13,15 +13,15 @@ import {
   handlePostAnnouncementCommand,
   handleCheckPermissionsCommand,
   handleStatusCommand,
-  handleGenerateLtImageCommand,
-  handleLtApplyCommand,
-  handleLtMaterialCommand,
   handleSlidesCommand,
   handleEventCalendarCommand,
   handleVrcEventCommand,
   handleDiscordEventCommand,
   registerCommands,
 } from './commands';
+
+/** 機能のフォルダー（features/）の機能。コマンドとボタン・モーダル・セレクトは、ここから登録する。 */
+const FEATURES = [ltFeature];
 
 const client = new Client({
   intents: [
@@ -39,17 +39,20 @@ const client = new Client({
 client.once('ready', async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
   process.env.CLIENT_ID = c.user.id;
-  await registerCommands();
+  await registerCommands(FEATURES);
+  FEATURES.forEach(registerFeature);
   registerInteractionHandlers();
   setupScheduler(c);
   console.log('Scheduler is active.');
   startActivityCollector(c);
-  await logLtForumStatus(c);
+  for (const feature of FEATURES) await feature.onReady?.(c);
 });
 
 client.on('interactionCreate', async (interaction: Interaction) => {
   try {
     if (interaction.isChatInputCommand()) {
+      // features/ の機能のコマンドはそちらで受け、残りをここで振り分ける
+      if (await dispatchCommand(interaction)) return;
       switch (interaction.commandName) {
         case 'confirm-meetup':      await handleConfirmMeetupCommand(interaction); break;
         case 'pre-announce':        await handlePreAnnounceCommand(interaction); break;
@@ -58,9 +61,6 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         case 'post-announcement':   await handlePostAnnouncementCommand(interaction); break;
         case 'check-permissions':   await handleCheckPermissionsCommand(interaction); break;
         case 'status':              await handleStatusCommand(interaction); break;
-        case 'generate-lt-image':   await handleGenerateLtImageCommand(interaction); break;
-        case 'lt-apply':            await handleLtApplyCommand(interaction); break;
-        case 'lt-material':         await handleLtMaterialCommand(interaction); break;
         case 'slides':              await handleSlidesCommand(interaction); break;
         case 'event-calendar':      await handleEventCalendarCommand(interaction); break;
         case 'vrc-event':           await handleVrcEventCommand(interaction); break;

@@ -31,16 +31,21 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 
 ## 入口
 
-Bot が何かを始めるきっかけは、次の 4 か所で登録しています。
+Bot が何かを始めるきっかけは、次の場所で登録しています。
 
-| きっかけ | 登録している場所 |
-| :--- | :--- |
-| スラッシュコマンド | 定義を `commands/index.ts` の `registerCommands` に並べ、`index.ts` の `switch` で振り分ける |
-| ボタン・モーダル・セレクト | `handlers.ts` で customId とハンドラを紐づけ、`interactions.ts` が振り分ける |
-| 定期実行 | `scheduler.ts`（開催確認と事前告知の 2 つ） |
-| Discord のイベント | `activity/collector.ts` |
+| きっかけ | 機能のフォルダー（`features/`）の機能 | まだ移していないもの |
+| :--- | :--- | :--- |
+| スラッシュコマンド | 各機能の `BotFeature`（例: `features/lt/feature.ts`）の `commands` | 定義を `commands/index.ts` の `registerCommands` に並べ、`index.ts` の `switch` で振り分ける |
+| ボタン・モーダル・セレクト | 各機能の `BotFeature` の `buttons`・`modals`・`selects` | `handlers.ts` で customId とハンドラを紐づける |
+| 起動時の処理 | 各機能の `BotFeature` の `onReady` | `index.ts` の `ready` |
+| 定期実行 | — | `scheduler.ts`（開催確認と事前告知の 2 つ） |
+| Discord のイベント | — | `activity/collector.ts` |
 
-いまはスラッシュコマンドを 1 つ足すと、`commands/<名前>.ts` のほかに `commands/index.ts`（export と `registerCommands`）と `index.ts`（`switch`）も直す必要があります。
+`index.ts` は `FEATURES`（機能の `BotFeature` の一覧）を `registerFeature`（`interactions.ts`）で登録し、スラッシュコマンドは `dispatchCommand` で機能に振り分けます。機能のものでなければ `switch` が受けます。
+
+- **機能にコマンドやボタンを足すとき**: その機能の `BotFeature` に並べるだけで、入口は直しません。
+- **新しい機能を `features/` に移したとき**: その機能の `BotFeature` を `index.ts` の `FEATURES` に足し、入口（`switch`・`handlers.ts`・`commands/index.ts`）から、その機能の分を消します。
+- **まだ移していないコマンドを足すとき**: 今までどおり、`commands/<名前>.ts` のほかに `commands/index.ts`（export と `registerCommands`）と `index.ts`（`switch`）も直します。
 
 ## 依存の決まり
 
