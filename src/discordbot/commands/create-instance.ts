@@ -4,12 +4,11 @@ import { storage } from '../storage';
 import { vrcLinkStore } from '../vrc-links';
 import { isVrcLauncherConfigured, joinSubButton } from '../vrc-launcher';
 import { isLtRecorderConfigured, ltRecordStartButton, radioPrepButton } from '../lt-recorder';
-import { inviteMeButton } from '../vrc-invite';
+import { describeInvites, inviteMeButton } from '../vrc-invite';
 import { requireOperatorRole, formatError } from './utils';
 import {
   AuthError,
   createInstance,
-  InviteOutcome,
   InviteTarget,
 } from '../../vrchat/createInstance';
 
@@ -69,41 +68,4 @@ export async function handleCreateInstanceCommand(interaction: ChatInputCommandI
       await interaction.editReply(formatError(error));
     }
   }
-}
-
-/**
- * 招待の結果を人が読める形にする。招待できたぶんは 1 行にまとめ、
- * フレンドでなかった相手や失敗したぶんだけ理由を個別に出す。
- */
-export function describeInvites(invites: InviteOutcome[]): string[] {
-  const lines: string[] = [];
-
-  const sent = invites.filter(invite => invite.status === 'sent');
-  if (sent.length > 0) {
-    lines.push(`📨 招待を送りました: ${sent.map(invite => invite.label).join(' / ')}`);
-  }
-
-  for (const invite of invites) {
-    switch (invite.status) {
-      case 'friend-request-sent':
-        lines.push(
-          `📨 ${invite.label} はまだフレンドではないので、代わりにフレンド申請を送りました。`
-          + 'VRChat で承認すると次回から招待が届きます（今回は招待URLから入室してください）。',
-        );
-        break;
-      case 'pending-approval':
-        lines.push(
-          `⏳ ${invite.label} へのフレンド申請が承認待ちです。`
-          + 'VRChat で承認すると次回から招待が届きます（今回は招待URLから入室してください）。',
-        );
-        break;
-      case 'failed':
-        lines.push(`⚠️ ${invite.label} への招待に失敗しました: ${invite.error ?? '原因不明'}`);
-        break;
-      default:
-        break;
-    }
-  }
-
-  return lines;
 }

@@ -20,11 +20,6 @@ vi.mock('../commands/utils', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));
-vi.mock('../commands/create-instance', () => ({
-  describeInvites: (invites: { label: string; status: string }[]) =>
-    invites.map(invite => `${invite.status}: ${invite.label}`),
-}));
-
 import { handleInviteMeButton, inviteMeButton } from '../vrc-invite';
 
 const LOCATION = 'wrld_585f45ea-c6a6-4ba5-ad6a-188dd822f574:45350~group(grp_5a802e77-a436-491a-9edb-39fca4ff7805)~groupAccessType(plus)~region(jp)';
@@ -59,7 +54,7 @@ describe('「📨 自分に招待」ボタン', () => {
     expect(mocks.inviteToInstance).toHaveBeenCalledWith('wrld_1', '45350~group(grp_1)', { userId: 'usr_operator', label: 'あなた' });
     // 本人にしか関係ないので、結果は本人にだけ見せる
     expect(i.deferReply).toHaveBeenCalledWith({ ephemeral: true });
-    expect(i.editReply).toHaveBeenCalledWith('sent: あなた');
+    expect(i.editReply).toHaveBeenCalledWith('📨 招待を送りました: あなた');
   });
 
   it('VRChat アカウントが未登録なら、登録のしかたを案内する', async () => {

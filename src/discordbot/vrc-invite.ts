@@ -1,10 +1,9 @@
 import { ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js';
 import { buildCustomId } from './interactions';
 import { formatError, requireOperatorRole } from './commands/utils';
-import { describeInvites } from './commands/create-instance';
 import { instanceNameOf, readLatest } from './vrc-launcher';
 import { vrcLinkStore } from './vrc-links';
-import { AuthError, inviteToInstance } from '../vrchat/createInstance';
+import { AuthError, inviteToInstance, InviteOutcome } from '../vrchat/createInstance';
 
 /**
  * /create-instance の結果に付ける「📨 自分に招待」ボタン。押した人の VRChat アカウント（/vrc-link で登録したもの）に、
@@ -12,6 +11,44 @@ import { AuthError, inviteToInstance } from '../vrchat/createInstance';
  * 引数はインスタンス名。「サブアカウントで入る」と同じく、最新のインスタンスのボタンだけを受け付ける。
  */
 export const VRC_INVITE_ME_BUTTON = 'vrc:invite-me';
+
+/**
+ * 招待の結果を人が読める形にする。招待できたぶんは 1 行にまとめ、
+ * フレンドでなかった相手や失敗したぶんだけ理由を個別に出す。
+ * /create-instance の結果と「📨 自分に招待」ボタンの返信で使う。
+ */
+export function describeInvites(invites: InviteOutcome[]): string[] {
+  const lines: string[] = [];
+
+  const sent = invites.filter(invite => invite.status === 'sent');
+  if (sent.length > 0) {
+    lines.push(`📨 招待を送りました: ${sent.map(invite => invite.label).join(' / ')}`);
+  }
+
+  for (const invite of invites) {
+    switch (invite.status) {
+      case 'friend-request-sent':
+        lines.push(
+          `📨 ${invite.label} はまだフレンドではないので、代わりにフレンド申請を送りました。`
+          + 'VRChat で承認すると次回から招待が届きます（今回は招待URLから入室してください）。',
+        );
+        break;
+      case 'pending-approval':
+        lines.push(
+          `⏳ ${invite.label} へのフレンド申請が承認待ちです。`
+          + 'VRChat で承認すると次回から招待が届きます（今回は招待URLから入室してください）。',
+        );
+        break;
+      case 'failed':
+        lines.push(`⚠️ ${invite.label} への招待に失敗しました: ${invite.error ?? '原因不明'}`);
+        break;
+      default:
+        break;
+    }
+  }
+
+  return lines;
+}
 
 export function inviteMeButton(location: string): ButtonBuilder {
   return new ButtonBuilder()
