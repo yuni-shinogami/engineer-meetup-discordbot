@@ -8,6 +8,9 @@
     "start": "ts-node src/discordbot/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "deps:check": "depcruise src --config .dependency-cruiser.cjs --ignore-known",
+    "deps:baseline": "depcruise-baseline src --config .dependency-cruiser.cjs",
+    "deps:graph": "sh scripts/deps-graph.sh",
     "canva:login": "ts-node src/canva/login.ts",
     "image:preview": "ts-node src/image-gen/preview.ts",
     "activity:backfill": "node dist/discordbot/activity/backfill.js"
@@ -32,6 +35,7 @@
     "@types/node-cron": "^3.0.11",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "dependency-cruiser": "^18.7.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"

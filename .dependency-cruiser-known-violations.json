@@ -1,0 +1,144 @@
+[
+  {
+    "type": "dependency",
+    "from": "src/discordbot/lt-recorder.ts",
+    "to": "src/discordbot/commands/utils.ts",
+    "unresolvedTo": "./commands/utils",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "commands-utils-only-from-commands"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/discordbot/lt/guard.ts",
+    "to": "src/discordbot/commands/utils.ts",
+    "unresolvedTo": "../commands/utils",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "commands-utils-only-from-commands"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/discordbot/vrc-invite.ts",
+    "to": "src/discordbot/commands/utils.ts",
+    "unresolvedTo": "./commands/utils",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "commands-utils-only-from-commands"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/discordbot/vrc-launcher.ts",
+    "to": "src/discordbot/commands/utils.ts",
+    "unresolvedTo": "./commands/utils",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "commands-utils-only-from-commands"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/canva/auth.ts",
+    "to": "src/discordbot/config.ts",
+    "unresolvedTo": "../discordbot/config",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "lib-not-to-bot"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/canva/login.ts",
+    "to": "src/discordbot/config.ts",
+    "unresolvedTo": "../discordbot/config",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "lib-not-to-bot"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/x/postAnnouncement.ts",
+    "to": "src/discordbot/lt/dates.ts",
+    "unresolvedTo": "../discordbot/lt/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "lib-not-to-bot"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/x/postUrl.ts",
+    "to": "src/discordbot/config.ts",
+    "unresolvedTo": "../discordbot/config",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "lib-not-to-bot"
+    }
+  },
+  {
+    "type": "cycle",
+    "from": "src/discordbot/commands/create-instance.ts",
+    "to": "src/discordbot/vrc-invite.ts",
+    "unresolvedTo": "../vrc-invite",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      {
+        "name": "src/discordbot/vrc-invite.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/discordbot/commands/create-instance.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      }
+    ]
+  }
+]
