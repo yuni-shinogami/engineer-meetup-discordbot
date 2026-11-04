@@ -645,6 +645,8 @@ systemctl enable --now engineer-meetup-bot engineer-meetup-deploy.timer
 
 ## ディレクトリ構造
 
+機能とファイルの対応・入口・import の決まりは [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)、依存関係の図は [docs/dependency-graph.md](docs/dependency-graph.md) にあります。
+
 ```
 src/
   discordbot/
@@ -722,6 +724,8 @@ npm test
 テンプレート置換や環境変数バリデーション、状態遷移などのロジックを検証しています。
 `src/image-gen/__tests__/generate.test.ts` の描画テストは、Chromium（`CHROMIUM_PATH`、既定は `/usr/bin/chromium`）があるときだけ動きます。
 Chromium の版で画素が揺れるため画像の一致は見ず、描いた画像を `src/image-gen/__tests__/__output__/` に書き出すので目で確かめてください。
+
+`npm test` には import の決まり（[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) の「依存の決まり」）の検査も入っています。決まりだけを見るときは `npm run deps:check`、依存関係の図を作り直すときは `npm run deps:graph` を使います。
 
 ## 告知画像のテンプレート
 
