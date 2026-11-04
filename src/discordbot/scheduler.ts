@@ -3,8 +3,8 @@ import cron from 'node-cron';
 import { config } from './config';
 import { storage } from './storage';
 import { sendConfirmMeetupToChannel, executePreAnnounce } from './meetup';
-import { PRE_ANNOUNCE_TARGETS } from './lt/announce';
-import { runWeeklyLtAnnounce } from './lt/weekly-announce';
+import { PRE_ANNOUNCE_TARGETS } from './features/lt/index';
+import { runWeeklyLtAnnounce } from './features/lt/index';
 
 export const CRON_SCHEDULES = [
   {

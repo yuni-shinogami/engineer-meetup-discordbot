@@ -11,23 +11,23 @@ import {
   TextInputStyle,
   ThreadChannel,
 } from 'discord.js';
-import { buildCustomId } from '../interactions';
+import { buildCustomId } from '../../../interactions';
 import {
   createLtPost,
   fetchLtForum,
   isProdLtApplyContext,
   operationsChannelIdFor,
-} from '../lt/forum';
-import { requireLtTagIds } from '../lt/status';
-import { ltStore } from '../lt/store';
+} from '../forum';
+import { requireLtTagIds } from '../status';
+import { ltStore } from '../store';
 import {
   ARCHIVE_POLICY_CHOICES,
   CAPTURE_POLICY_CHOICES,
   isArchivePolicy,
   isCapturePolicy,
   PolicyChoice,
-} from '../lt/types';
-import { formatError } from '../shared/interaction';
+} from '../types';
+import { formatError } from '../../../shared/interaction';
 
 export const LT_APPLY_MODAL = 'lt:apply';
 

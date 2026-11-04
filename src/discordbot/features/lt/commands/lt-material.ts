@@ -4,19 +4,19 @@ import {
   SlashCommandBuilder,
   ThreadChannel,
 } from 'discord.js';
-import { fetchXProfileImageUrl } from '../../x/profileImage';
-import { buildAnnounceImage, missingForAnnounceImage, postAnnounceImage } from '../lt/announce-image';
+import { fetchXProfileImageUrl } from '../../../../x/profileImage';
+import { buildAnnounceImage, missingForAnnounceImage, postAnnounceImage } from '../announce-image';
 import {
   applyLtEntryToPost,
   fetchLtThread,
   isProdLtApplyContext,
   isProdLtThread,
-} from '../lt/forum';
-import { resolveSpeakerEntry } from '../lt/guard';
-import { MaterialError, materialExists, saveMaterialFromUrl } from '../lt/materials';
-import { ltStore } from '../lt/store';
-import { LtEntry } from '../lt/types';
-import { formatError } from '../shared/interaction';
+} from '../forum';
+import { resolveSpeakerEntry } from '../guard';
+import { MaterialError, materialExists, saveMaterialFromUrl } from '../materials';
+import { ltStore } from '../store';
+import { LtEntry } from '../types';
+import { formatError } from '../../../shared/interaction';
 
 /** 素材を受け付ける対象。告知が済んだあとの差し替えは想定しないが、取り下げ以外は許す。 */
 const ACTIVE_STATUSES = ['applied', 'scheduled', 'ready', 'announced'] as const;

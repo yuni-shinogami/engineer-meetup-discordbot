@@ -1,6 +1,6 @@
 import { AttachmentBuilder, ThreadChannel } from 'discord.js';
-import { generateImage } from '../../image-gen/generate';
-import { formatImageDate } from '../shared/meetup-dates';
+import { generateImage } from '../../../image-gen/generate';
+import { formatImageDate } from '../../shared/meetup-dates';
 import { materialExists, readMaterialAsDataUrl, writeMaterial } from './materials';
 import { ltStore } from './store';
 import { LtEntry, needsTitle } from './types';

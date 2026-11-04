@@ -10,14 +10,14 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../storage', () => ({ storage: mocks.storage }));
 vi.mock('../config', () => ({ config: { guildId: 'guild-1', vrceveSshTarget: '', vrceveSshKey: '' } }));
-vi.mock('../lt/weekly-announce', () => ({
+vi.mock('../features/lt/weekly-announce', () => ({
   nextMeetupDate: () => '2026-11-06',
   ltEntriesForMeetup: mocks.ltEntriesForMeetup,
 }));
 vi.mock('../../vrchat/groupEvent', () => ({ createMeetupEvent: vi.fn(), deleteMeetupEvent: vi.fn() }));
 
 import { deleteDiscordEvent, discordEventFields, registerDiscordEvent } from '../discord-event';
-import type { LtEntry } from '../lt/types';
+import type { LtEntry } from '../features/lt/types';
 
 const client = {
   guilds: { fetch: vi.fn(async () => ({ scheduledEvents: { create: mocks.create, delete: mocks.remove } })) },

@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../meetup', () => ({ executePreAnnounce: mocks.executePreAnnounce }));
-vi.mock('../../lt/weekly-announce', () => ({
+vi.mock('../../features/lt/weekly-announce', () => ({
   runWeeklyLtAnnounce: mocks.runWeeklyLtAnnounce,
   nextMeetupDate: () => '2026-08-21',
 }));
@@ -16,7 +16,7 @@ vi.mock('../../shared/interaction', () => ({
   formatError: (e: unknown) => `❌ エラーが発生しました: ${(e as Error).message}`,
 }));
 
-import { PRE_ANNOUNCE_TARGETS } from '../../lt/announce';
+import { PRE_ANNOUNCE_TARGETS } from '../../features/lt/announce';
 import { handlePreAnnounceCommand } from '../pre-announce';
 
 function interactionWith(options: Record<string, boolean>) {

@@ -5,7 +5,7 @@ import path from 'path';
 
 const { configMock } = vi.hoisted(() => ({ configMock: { ltMaterialsDir: '', ltMaxMaterialMb: 50 } }));
 
-vi.mock('../../config', () => ({ config: configMock }));
+vi.mock('../../../config', () => ({ config: configMock }));
 
 import {
   MaterialError,

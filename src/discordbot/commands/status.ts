@@ -4,10 +4,10 @@ import { config, ltForumChannelId } from '../config';
 import { storage } from '../storage';
 import { CRON_SCHEDULES } from '../scheduler';
 import { formatDateKey, formatMeetupDate } from '../shared/meetup-dates';
-import { fetchLtForum } from '../lt/forum';
-import { LT_STATUS_LABELS, resolveLtTags } from '../lt/status';
-import { ltStore } from '../lt/store';
-import { LT_STATUSES } from '../lt/types';
+import { fetchLtForum } from '../features/lt/index';
+import { LT_STATUS_LABELS, resolveLtTags } from '../features/lt/index';
+import { ltStore } from '../features/lt/index';
+import { LT_STATUSES } from '../features/lt/index';
 import { requireOperatorRole } from '../shared/interaction';
 import { formatNextRun } from './utils';
 

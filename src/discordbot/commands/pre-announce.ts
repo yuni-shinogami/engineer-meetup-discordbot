@@ -1,8 +1,8 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { executePreAnnounce } from '../meetup';
-import { PRE_ANNOUNCE_TARGETS } from '../lt/announce';
+import { PRE_ANNOUNCE_TARGETS } from '../features/lt/index';
 import { formatMeetupDate } from '../shared/meetup-dates';
-import { nextMeetupDate, runWeeklyLtAnnounce } from '../lt/weekly-announce';
+import { nextMeetupDate, runWeeklyLtAnnounce } from '../features/lt/index';
 import { requireOperatorRole, formatError } from '../shared/interaction';
 
 export const preAnnounceCommand = new SlashCommandBuilder()

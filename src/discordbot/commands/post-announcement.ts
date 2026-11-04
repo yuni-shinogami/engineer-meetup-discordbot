@@ -6,8 +6,8 @@ import { postGroupAnnouncement, AuthError } from '../../vrchat/postGroupAnnounce
 import { postQuoteAnnouncement } from '../../x/quotePost';
 import { xPostUrl } from '../shared/x-post-url';
 import { formatMeetupDate } from '../shared/meetup-dates';
-import { MEETUP_DAY_TARGETS } from '../lt/announce';
-import { nextMeetupDate, runWeeklyLtAnnounce } from '../lt/weekly-announce';
+import { MEETUP_DAY_TARGETS } from '../features/lt/index';
+import { nextMeetupDate, runWeeklyLtAnnounce } from '../features/lt/index';
 
 export const postAnnouncementCommand = new SlashCommandBuilder()
   .setName('post-announcement')

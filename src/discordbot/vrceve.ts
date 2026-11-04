@@ -2,8 +2,8 @@ import { execFile } from 'child_process';
 import { AttachmentBuilder } from 'discord.js';
 import { config } from './config';
 import { storage } from './storage';
-import { ltEntriesForMeetup, nextMeetupDate } from './lt/weekly-announce';
-import { needsTitle, type LtEntry } from './lt/types';
+import { ltEntriesForMeetup, nextMeetupDate } from './features/lt/index';
+import { needsTitle, type LtEntry } from './features/lt/index';
 
 /**
  * VRChat イベントカレンダー（https://vrceve.com/）への登録。

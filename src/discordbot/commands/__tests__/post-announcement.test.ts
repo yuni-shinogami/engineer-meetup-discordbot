@@ -29,13 +29,13 @@ vi.mock('../../../vrchat/postGroupAnnouncement', () => ({
   postGroupAnnouncement: mocks.postGroupAnnouncement,
   AuthError: class AuthError extends Error {},
 }));
-vi.mock('../../lt/weekly-announce', () => ({
+vi.mock('../../features/lt/weekly-announce', () => ({
   runWeeklyLtAnnounce: mocks.runWeeklyLtAnnounce,
   nextMeetupDate: () => '2026-08-21',
 }));
 vi.mock('../../shared/interaction', () => ({ requireOperatorRole: vi.fn().mockResolvedValue(true) }));
 
-import { MEETUP_DAY_TARGETS } from '../../lt/announce';
+import { MEETUP_DAY_TARGETS } from '../../features/lt/announce';
 import { handlePostAnnouncementCommand } from '../post-announcement';
 
 function interactionWith(options: Record<string, boolean>) {

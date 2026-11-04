@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ButtonInteraction, StringSelectMenuInteraction } from 'discord.js';
-import type { LtEntry } from '../../lt/types';
+import type { LtEntry } from '../../types';
 
-vi.mock('../../config', () => ({
+vi.mock('../../../../config', () => ({
   config: {
     operatorRoleId: 'op-role',
     ltSlotsPerDay: 1,
@@ -20,18 +20,18 @@ const { threadSend, syncAnnounceImage, postAnnounceImage } = vi.hoisted(() => ({
   postAnnounceImage: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../lt/announce-image', () => ({ syncAnnounceImage, postAnnounceImage }));
+vi.mock('../../announce-image', () => ({ syncAnnounceImage, postAnnounceImage }));
 
-vi.mock('../../lt/materials', () => ({
+vi.mock('../../materials', () => ({
   materialExists: (path: unknown) => typeof path === 'string' && path !== '',
 }));
 
-vi.mock('../../lt/forum', () => ({
+vi.mock('../../forum', () => ({
   applyLtEntryToPost: vi.fn().mockResolvedValue(undefined),
   fetchLtThread: vi.fn().mockResolvedValue({ id: 't1', send: threadSend }),
 }));
 
-vi.mock('../../lt/store', () => ({
+vi.mock('../../store', () => ({
   ltStore: {
     get: vi.fn(),
     update: vi.fn(),
@@ -40,7 +40,7 @@ vi.mock('../../lt/store', () => ({
   },
 }));
 
-import { ltStore } from '../../lt/store';
+import { ltStore } from '../../store';
 import {
   handleLtScheduleButton,
   handleLtScheduleSelect,

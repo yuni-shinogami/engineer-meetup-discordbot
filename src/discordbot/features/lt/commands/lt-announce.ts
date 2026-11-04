@@ -4,21 +4,21 @@ import {
   ButtonInteraction,
   ButtonStyle,
 } from 'discord.js';
-import { config, ltAnnounceRoleId } from '../config';
-import { xPostUrl } from '../shared/x-post-url';
-import { buildCustomId } from '../interactions';
-import { announceLt, missingForAnnounce } from '../lt/announce';
+import { config, ltAnnounceRoleId } from '../../../config';
+import { xPostUrl } from '../../../shared/x-post-url';
+import { buildCustomId } from '../../../interactions';
+import { announceLt, missingForAnnounce } from '../announce';
 import {
   buildDiscordAnnounceText,
   buildVrchatAnnounce,
   buildXAnnounceText,
-} from '../lt/announce-text';
-import { applyLtEntryToPost, fetchLtThread, isProdLtThread } from '../lt/forum';
-import { resolveOperatorEntry } from '../lt/guard';
-import { materialExists } from '../lt/materials';
-import { ltStore } from '../lt/store';
-import { LtEntry } from '../lt/types';
-import { formatError } from '../shared/interaction';
+} from '../announce-text';
+import { applyLtEntryToPost, fetchLtThread, isProdLtThread } from '../forum';
+import { resolveOperatorEntry } from '../guard';
+import { materialExists } from '../materials';
+import { ltStore } from '../store';
+import { LtEntry } from '../types';
+import { formatError } from '../../../shared/interaction';
 
 export const LT_ANNOUNCE_CONFIRM = 'lt:doannounce';
 

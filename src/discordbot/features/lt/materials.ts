@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { config } from '../config';
+import { config } from '../../config';
 import { LtEntry } from './types';
 
 /** 保存する素材の種類。ファイル名の先頭になる。 */

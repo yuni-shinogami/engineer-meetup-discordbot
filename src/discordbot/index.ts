@@ -4,7 +4,7 @@ import { startActivityCollector } from './activity/collector';
 import { setupScheduler } from './scheduler';
 import { dispatchButton, dispatchModal, dispatchSelect } from './interactions';
 import { registerInteractionHandlers } from './handlers';
-import { logLtForumStatus } from './lt/forum';
+import { logLtForumStatus } from './features/lt/index';
 import {
   handleConfirmMeetupCommand,
   handlePreAnnounceCommand,

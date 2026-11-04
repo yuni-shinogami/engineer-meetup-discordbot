@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { ComponentType } from 'discord.js';
 import type { ChatInputCommandInteraction } from 'discord.js';
 
-vi.mock('../../config', () => ({
+vi.mock('../../../../config', () => ({
   config: {
     ltForumChannelId: 'prod-forum',
     testLtForumChannelId: 'test-forum',
@@ -16,7 +16,7 @@ vi.mock('../../config', () => ({
   ltForumChannelId: (isProd: boolean) => (isProd ? 'prod-forum' : 'test-forum'),
 }));
 
-vi.mock('../../lt/store', () => ({
+vi.mock('../../store', () => ({
   ltStore: {
     get: vi.fn(),
     create: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock('../../lt/store', () => ({
 }));
 
 import { handleLtApplyCommand, ltApplyCommand, parseDuration } from '../lt-apply';
-import { ARCHIVE_POLICY_CHOICES, CAPTURE_POLICY_CHOICES } from '../../lt/types';
+import { ARCHIVE_POLICY_CHOICES, CAPTURE_POLICY_CHOICES } from '../../types';
 
 describe('parseDuration', () => {
   it('半角数字をそのまま分として読む', () => {

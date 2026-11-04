@@ -1,5 +1,5 @@
 import { Client } from 'discord.js';
-import { config } from '../config';
+import { config } from '../../config';
 import {
   ANNOUNCE_TARGETS,
   AnnounceOutcome,
@@ -7,7 +7,7 @@ import {
   announceLt,
   missingForAnnounce,
 } from './announce';
-import { formatMeetupDate, upcomingMeetupDates } from '../shared/meetup-dates';
+import { formatMeetupDate, upcomingMeetupDates } from '../../shared/meetup-dates';
 import { applyLtEntryToPost, fetchLtThread, isProdLtThread } from './forum';
 import { ltStore } from './store';
 import { LtEntry } from './types';

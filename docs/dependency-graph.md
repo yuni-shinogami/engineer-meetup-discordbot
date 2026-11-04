@@ -1,7 +1,7 @@
 # 依存関係の図
 
 `npm run deps:graph` で作り直す（手で書き換えない）。矢印は「import している → されている」。
-フォルダーの枠だけのもの（lt・commands など）は、中のファイルを 1 つにまとめている。
+フォルダーの枠だけのもの（features の各機能・commands など）は、中のファイルを 1 つにまとめている。
 
 ```mermaid
 flowchart LR
@@ -20,130 +20,130 @@ end
 8["config.ts"]
 9["discord-event.ts"]
 A["executor.ts"]
-B["handlers.ts"]
-C["index.ts"]
-D["interactions.ts"]
-E["lt-recorder.ts"]
-subgraph F["lt"]
-G[" "]
+subgraph B["features"]
+subgraph C["lt"]
+D[" "]
 end
-H["meetup.ts"]
-I["scheduler.ts"]
-subgraph J["shared"]
-K["interaction.ts"]
-L["meetup-dates.ts"]
-M["x-post-url.ts"]
 end
-N["slides.ts"]
-O["storage.ts"]
-P["vrc-event.ts"]
-Q["vrc-invite.ts"]
-R["vrc-launcher.ts"]
-S["vrc-links.ts"]
-T["vrceve.ts"]
+E["handlers.ts"]
+F["index.ts"]
+G["interactions.ts"]
+H["lt-recorder.ts"]
+I["meetup.ts"]
+J["scheduler.ts"]
+subgraph K["shared"]
+L["interaction.ts"]
+M["meetup-dates.ts"]
+N["x-post-url.ts"]
 end
-subgraph U["image-gen"]
-V[" "]
+O["slides.ts"]
+P["storage.ts"]
+Q["vrc-event.ts"]
+R["vrc-invite.ts"]
+S["vrc-launcher.ts"]
+T["vrc-links.ts"]
+U["vrceve.ts"]
 end
-subgraph W["video"]
-X[" "]
+subgraph V["image-gen"]
+W[" "]
 end
-subgraph Y["vrchat"]
-Z[" "]
+subgraph X["video"]
+Y[" "]
 end
-subgraph 10["x"]
-11[" "]
+subgraph Z["vrchat"]
+10[" "]
+end
+subgraph 11["x"]
+12[" "]
 end
 end
 5-->8
 7-->8
-7-->K
+7-->L
 7-->9
-7-->H
 7-->I
-7-->N
+7-->J
 7-->O
 7-->P
-7-->T
-7-->Z
-7-->E
 7-->Q
+7-->U
+7-->10
+7-->H
 7-->R
 7-->S
-7-->V
+7-->T
 7-->D
-7-->G
+7-->12
 7-->M
-7-->L
-7-->11
+7-->N
 9-->8
-9-->G
-9-->O
+9-->D
 9-->P
-9-->T
-B-->7
-B-->D
-B-->E
-B-->G
-B-->H
-B-->Q
-B-->R
-C-->5
-C-->7
-C-->8
-C-->B
-C-->D
-C-->G
-C-->I
-E-->8
+9-->Q
+9-->U
+D-->10
+D-->12
+D-->8
+D-->N
+D-->M
+D-->W
+D-->L
+D-->G
+E-->7
 E-->D
 E-->G
-E-->K
-E-->L
+E-->H
+E-->I
 E-->R
-G-->8
-G-->L
-G-->Z
-G-->11
-G-->M
-G-->D
-G-->K
-G-->V
-H-->11
+E-->S
+F-->5
+F-->7
+F-->8
+F-->D
+F-->E
+F-->G
+F-->J
 H-->8
 H-->D
+H-->G
 H-->L
 H-->M
-H-->O
+H-->S
+I-->12
 I-->8
 I-->G
-I-->H
-I-->O
-K-->8
+I-->M
+I-->N
+I-->P
+J-->8
+J-->D
+J-->I
+J-->P
 L-->8
 M-->8
-N-->2
-N-->X
 N-->8
-N-->L
-O-->Z
+O-->2
+O-->Y
 O-->8
-P-->Z
-P-->G
-P-->O
-P-->T
-Q-->Z
+O-->M
+P-->10
+P-->8
+Q-->10
 Q-->D
-Q-->K
-Q-->R
-Q-->S
-R-->Z
-R-->8
-R-->D
-R-->K
-S-->Z
+Q-->P
+Q-->U
+R-->10
+R-->G
+R-->L
+R-->S
+R-->T
+S-->10
 S-->8
+S-->G
+S-->L
+T-->10
 T-->8
-T-->G
-T-->O
+U-->8
+U-->D
+U-->P
 ```

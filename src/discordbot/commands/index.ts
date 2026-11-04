@@ -7,16 +7,16 @@ export {
   handleConfirmMeetupButton,
   handleLatePreAnnounceButton,
 } from './confirm-meetup';
-export { ltApplyCommand, handleLtApplyCommand, handleLtApplyModal, LT_APPLY_MODAL } from './lt-apply';
-export { handleLtDatesSelect, handleLtConsultModal, LT_CONSULT_MODAL } from './lt-dates';
-export { handleLtVideoSelect } from './lt-video';
-export { handleLtEditButton, handleLtEditModal, LT_EDIT_MODAL } from './lt-edit';
-export { ltMaterialCommand, handleLtMaterialCommand } from './lt-material';
+export { ltApplyCommand, handleLtApplyCommand, handleLtApplyModal, LT_APPLY_MODAL } from '../features/lt/index';
+export { handleLtDatesSelect, handleLtConsultModal, LT_CONSULT_MODAL } from '../features/lt/index';
+export { handleLtVideoSelect } from '../features/lt/index';
+export { handleLtEditButton, handleLtEditModal, LT_EDIT_MODAL } from '../features/lt/index';
+export { ltMaterialCommand, handleLtMaterialCommand } from '../features/lt/index';
 export {
   handleLtAnnounceButton,
   handleLtAnnounceConfirm,
   LT_ANNOUNCE_CONFIRM,
-} from './lt-announce';
+} from '../features/lt/index';
 export {
   handleLtScheduleButton,
   handleLtScheduleModal,
@@ -24,14 +24,14 @@ export {
   handleLtUnscheduleButton,
   LT_SCHEDULE_MODAL,
   LT_SCHEDULE_SELECT,
-} from './lt-schedule';
+} from '../features/lt/index';
 export { preAnnounceCommand, handlePreAnnounceCommand } from './pre-announce';
 export { createInstanceCommand, handleCreateInstanceCommand } from './create-instance';
 export { vrcLinkCommand, handleVrcLinkCommand } from './vrc-link';
 export { postAnnouncementCommand, handlePostAnnouncementCommand } from './post-announcement';
 export { checkPermissionsCommand, handleCheckPermissionsCommand } from './check-permissions';
 export { statusCommand, handleStatusCommand } from './status';
-export { generateLtImageCommand, handleGenerateLtImageCommand } from './generate-lt-image';
+export { generateLtImageCommand, handleGenerateLtImageCommand } from '../features/lt/index';
 export { slidesCommand, handleSlidesCommand } from './slides';
 export { eventCalendarCommand, handleEventCalendarCommand } from './event-calendar';
 export { vrcEventCommand, handleVrcEventCommand } from './vrc-event';
@@ -44,10 +44,10 @@ import { vrcLinkCommand } from './vrc-link';
 import { postAnnouncementCommand } from './post-announcement';
 import { checkPermissionsCommand } from './check-permissions';
 import { statusCommand } from './status';
-import { generateLtImageCommand } from './generate-lt-image';
+import { generateLtImageCommand } from '../features/lt/index';
 import { slidesCommand } from './slides';
-import { ltApplyCommand } from './lt-apply';
-import { ltMaterialCommand } from './lt-material';
+import { ltApplyCommand } from '../features/lt/index';
+import { ltMaterialCommand } from '../features/lt/index';
 import { eventCalendarCommand } from './event-calendar';
 import { vrcEventCommand } from './vrc-event';
 import { discordEventCommand } from './discord-event';

@@ -61,7 +61,7 @@ describe('speakerLabel', () => {
 
 describe('buildXAnnounceText', () => {
   const template = readFileSync(
-    join(__dirname, '../../../x/assets/lt_announce_template.txt'), 'utf-8',
+    join(__dirname, '../../../../x/assets/lt_announce_template.txt'), 'utf-8',
   ).trim();
 
   // 普段の投稿と同じ文面になっていることが、この機能でいちばん大事な部分

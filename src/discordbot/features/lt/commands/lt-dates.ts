@@ -6,20 +6,20 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
-import { config } from '../config';
-import { buildCustomId } from '../interactions';
-import { formatMeetupDate, upcomingMeetupDates } from '../shared/meetup-dates';
+import { config } from '../../../config';
+import { buildCustomId } from '../../../interactions';
+import { formatMeetupDate, upcomingMeetupDates } from '../../../shared/meetup-dates';
 import {
   allCandidatesFull,
   buildLtComponents,
   buildLtEmbed,
   LT_DATES_CONSULT_VALUE,
   syncLtThreadName,
-} from '../lt/forum';
-import { resolveSpeakerEntry } from '../lt/guard';
-import { ltStore } from '../lt/store';
-import { LtEntry } from '../lt/types';
-import { formatError } from '../shared/interaction';
+} from '../forum';
+import { resolveSpeakerEntry } from '../guard';
+import { ltStore } from '../store';
+import { LtEntry } from '../types';
+import { formatError } from '../../../shared/interaction';
 
 export const LT_CONSULT_MODAL = 'lt:consult';
 

@@ -5,6 +5,11 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 
 機能を足したり、ファイルを移したりしたら、このページも合わせて直してください。
 
+## フォルダーの分け方
+
+`src/discordbot/` は、機能ごとのフォルダー（`features/<機能>/`）・どの機能からも使う共通の部品（`shared/`）・入口（`index.ts`・`handlers.ts`・`commands/index.ts`・`scheduler.ts`）に分けていきます。
+いま機能のフォルダーに入っているのは LT（`features/lt/`）だけで、ほかの機能は順に移していきます。
+
 ## 機能とファイルの対応
 
 一つの機能が複数のファイルにまたがっているので、機能から引けるようにまとめています（パスは `src/discordbot/` からの相対。`src/` 直下のものは `src/` から書く）。
@@ -17,8 +22,8 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 | 開催告知 | `/post-announcement` | `commands/post-announcement.ts`・`src/x/quotePost.ts`・`src/vrchat/postGroupAnnouncement.ts` |
 | インスタンスと招待 | `/create-instance`・`/vrc-link`・「サブアカウントで入る」「自分に招待」ボタン | `commands/{create-instance,vrc-link}.ts`・`vrc-launcher.ts`・`vrc-invite.ts`・`vrc-links.ts`・`src/vrchat/createInstance.ts`・`recorder-pc/vrc-launcher/` |
 | LT の録画とラジオ準備 | 録画パネルのボタン（`/create-instance` の結果に付く） | `lt-recorder.ts`・`recorder-pc/lt-recorder/` |
-| LT の応募から告知まで | `/lt-apply`・`/lt-material`・フォーラムのポスト内のボタン・セレクト・モーダル・事前告知と開催告知 | `lt/`・`commands/lt-*.ts`・`src/image-gen/` |
-| 告知画像 | `/generate-lt-image`・LT の素材がそろったとき | `commands/generate-lt-image.ts`・`lt/announce-image.ts`・`src/image-gen/` |
+| LT の応募から告知まで | `/lt-apply`・`/lt-material`・フォーラムのポスト内のボタン・セレクト・モーダル・事前告知と開催告知 | `features/lt/`（外に見せるものは `features/lt/index.ts`）・`src/image-gen/` |
+| 告知画像 | `/generate-lt-image`・LT の素材がそろったとき | `features/lt/commands/generate-lt-image.ts`・`features/lt/announce-image.ts`・`src/image-gen/` |
 | 司会進行スライド | `/slides` | `slides.ts`・`commands/slides.ts`・`src/canva/`・`src/video/` |
 | 活動の集計 | Discord のイベント（メッセージ・リアクション・VC・参加と退出） | `activity/` |
 | 状態の確認 | `/status`・`/check-permissions` | `commands/{status,check-permissions}.ts` |
@@ -48,6 +53,9 @@ import の向きに次の決まりがあり、`npm test`（`src/__tests__/depend
 | `vrchat/`・`x/`・`canva/`・`image-gen/`・`video/` から `discordbot/` を import しない（`lib-not-to-bot`） | これらは Bot から使う部品。必要な値は呼び出し側から引数で受け取るか、部品の中だけで使う設定なら部品自身が環境変数から読む（`canva/config.ts` など） |
 | `commands/utils` はスラッシュコマンドからだけ使う（`commands-utils-only-from-commands`） | コマンド以外からも使うものは、`shared/` に置く |
 | `shared/` は `shared/` と `config.ts` のほかを import しない（`shared-not-to-features`） | `shared/` はどの機能からも使う共通の部品。特定の機能に引きずられないようにする |
+| 機能の外からは `features/<機能>/index.ts` だけを import する（`features-via-index`・`features-via-index-between-features`） | 機能が外に見せているものを `index.ts` だけで一覧できるようにする。外で使うものが増えたら `index.ts` に export を足す（テストは中のファイルを直接モックしてよい） |
+| 機能が頼ってよいのは、ほかの機能・`shared/`・`config.ts`・`interactions.ts`・`storage.ts`（と部品）だけ（`features-on-foundation`） | 入口（`index.ts`・`handlers.ts`・`commands/index.ts`）や、まだ機能のフォルダーに入っていないファイルに依存しない |
+| LT からほかの機能は import しない（`lt-is-provider`） | LT は開催確認・イベント登録・録画などから使われる側 |
 | 部品どうしは import しない（`libs-independent`） | 部品を組み合わせるのは Bot の側。部品は単独で読めるようにしておく |
 | 外部サービスの SDK は受け持つ部品の中だけで使う（`twitter-sdk-only-in-x`・`axios-only-in-api-libs`・`renderer-only-in-image-gen`） | `twitter-api-v2` は `x/`、`axios` は `vrchat/`・`canva/`、`puppeteer-core`・`react-dom` は `image-gen/` だけ。外部とのやりとりを探す場所を固定する |
 | 本番のコードから devDependencies を使わない（`not-to-dev-dep`） | テストや開発の道具に本番のコードが頼らないようにする（型だけの import は除く） |
