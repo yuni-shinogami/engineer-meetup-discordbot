@@ -652,8 +652,7 @@ src/
   discordbot/
     index.ts        エントリーポイント、イベントハンドラ登録
     config.ts        環境変数の読み込み
-    scheduler.ts      定期実行タスク（月曜 confirm / 木曜 pre-announce + LT 告知）
-    meetup.ts         開催確認・事前告知の実行ロジック
+    scheduler.ts      定期実行の時刻（月曜 12:00 の開催確認 / 木曜 19:00 の事前告知）。処理は features/meetup/weekly.ts
     storage.ts        週次状態の永続化（state/storage.json）
     interactions.ts   customId のルーティング（ボタン・モーダル・セレクト）
     handlers.ts       まだ features/ に移していないボタンのハンドラと customId キーの紐づけ
@@ -681,6 +680,9 @@ src/
         guard.ts        ポスト内コンポーネント操作の共通検証（本人確認・運営確認）
       calendar/       イベント登録（VRChat イベントカレンダー・VRChat のグループのイベント・Discord のイベント）と /event-calendar・/vrc-event・/discord-event
       slides/         司会進行スライド（Canva から PDF・動画を取って投稿）と /slides
+      meetup/         開催確認（YES/NO）・事前告知・開催告知と /confirm-meetup・/pre-announce・/post-announcement
+        weekly.ts       毎週の開催確認と事前告知の本体（scheduler.ts と「今すぐ事前告知を投稿する」ボタンから呼ぶ）
+        meetup.ts       開催確認のメッセージと事前告知の投稿
     commands/          スラッシュコマンドの定義とハンドラ（LT のものは features/lt/commands/）
     shared/
       interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信

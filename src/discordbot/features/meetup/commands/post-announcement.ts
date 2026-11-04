@@ -1,13 +1,13 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, TextChannel } from 'discord.js';
-import { config } from '../config';
-import { storage } from '../storage';
-import { requireOperatorRole } from '../shared/interaction';
-import { postGroupAnnouncement, AuthError } from '../../vrchat/postGroupAnnouncement';
-import { postQuoteAnnouncement } from '../../x/quotePost';
-import { xPostUrl } from '../shared/x-post-url';
-import { formatMeetupDate } from '../shared/meetup-dates';
-import { MEETUP_DAY_TARGETS } from '../features/lt/index';
-import { nextMeetupDate, runWeeklyLtAnnounce } from '../features/lt/index';
+import { config } from '../../../config';
+import { storage } from '../../../storage';
+import { requireOperatorRole } from '../../../shared/interaction';
+import { postGroupAnnouncement, AuthError } from '../../../../vrchat/postGroupAnnouncement';
+import { postQuoteAnnouncement } from '../../../../x/quotePost';
+import { xPostUrl } from '../../../shared/x-post-url';
+import { formatMeetupDate } from '../../../shared/meetup-dates';
+import { MEETUP_DAY_TARGETS } from '../../lt/index';
+import { nextMeetupDate, runWeeklyLtAnnounce } from '../../lt/index';
 
 export const postAnnouncementCommand = new SlashCommandBuilder()
   .setName('post-announcement')

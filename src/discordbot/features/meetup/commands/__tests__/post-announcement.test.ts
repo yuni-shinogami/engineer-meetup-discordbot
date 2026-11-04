@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../config', () => ({
+vi.mock('../../../../config', () => ({
   config: {
     publicChannelId: 'public-ch',
     testChannelId: 'test-ch',
@@ -22,20 +22,20 @@ vi.mock('../../config', () => ({
     vrcStateDir: '/state',
   },
 }));
-vi.mock('../../storage', () => ({ storage: mocks.storage }));
-vi.mock('../../../x/quotePost', () => ({ postQuoteAnnouncement: mocks.postQuoteAnnouncement }));
-vi.mock('../../shared/x-post-url', () => ({ xPostUrl: (id: string) => `https://x.com/acc/status/${id}` }));
-vi.mock('../../../vrchat/postGroupAnnouncement', () => ({
+vi.mock('../../../../storage', () => ({ storage: mocks.storage }));
+vi.mock('../../../../../x/quotePost', () => ({ postQuoteAnnouncement: mocks.postQuoteAnnouncement }));
+vi.mock('../../../../shared/x-post-url', () => ({ xPostUrl: (id: string) => `https://x.com/acc/status/${id}` }));
+vi.mock('../../../../../vrchat/postGroupAnnouncement', () => ({
   postGroupAnnouncement: mocks.postGroupAnnouncement,
   AuthError: class AuthError extends Error {},
 }));
-vi.mock('../../features/lt/weekly-announce', () => ({
+vi.mock('../../../lt/weekly-announce', () => ({
   runWeeklyLtAnnounce: mocks.runWeeklyLtAnnounce,
   nextMeetupDate: () => '2026-08-21',
 }));
-vi.mock('../../shared/interaction', () => ({ requireOperatorRole: vi.fn().mockResolvedValue(true) }));
+vi.mock('../../../../shared/interaction', () => ({ requireOperatorRole: vi.fn().mockResolvedValue(true) }));
 
-import { MEETUP_DAY_TARGETS } from '../../features/lt/announce';
+import { MEETUP_DAY_TARGETS } from '../../../lt/announce';
 import { handlePostAnnouncementCommand } from '../post-announcement';
 
 function interactionWith(options: Record<string, boolean>) {

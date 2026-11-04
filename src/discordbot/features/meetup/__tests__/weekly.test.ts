@@ -5,7 +5,7 @@ vi.mock('../meetup', () => ({
   executePreAnnounce: vi.fn(),
 }));
 
-vi.mock('../config', () => ({
+vi.mock('../../../config', () => ({
   config: {
     operationsChannelId: 'ops-channel-id',
     testChannelId: 'test-channel-id',
@@ -13,7 +13,7 @@ vi.mock('../config', () => ({
   },
 }));
 
-vi.mock('../storage', () => ({
+vi.mock('../../../storage', () => ({
   storage: {
     isScheduled: true,
     confirmAnswered: false,
@@ -21,15 +21,15 @@ vi.mock('../storage', () => ({
   },
 }));
 
-vi.mock('../features/lt/weekly-announce', () => ({
+vi.mock('../../lt/weekly-announce', () => ({
   runWeeklyLtAnnounce: vi.fn().mockResolvedValue(null),
 }));
 
-import { triggerConfirmMeetup, triggerPreAnnounce } from '../scheduler';
-import { runWeeklyLtAnnounce } from '../features/lt/weekly-announce';
-import { PRE_ANNOUNCE_TARGETS } from '../features/lt/announce';
+import { triggerConfirmMeetup, triggerPreAnnounce } from '../weekly';
+import { runWeeklyLtAnnounce } from '../../lt/weekly-announce';
+import { PRE_ANNOUNCE_TARGETS } from '../../lt/announce';
 import { sendConfirmMeetupToChannel, executePreAnnounce } from '../meetup';
-import { storage } from '../storage';
+import { storage } from '../../../storage';
 import type { Client } from 'discord.js';
 
 const mockedSendConfirm = vi.mocked(sendConfirmMeetupToChannel);
