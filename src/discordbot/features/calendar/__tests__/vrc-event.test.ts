@@ -7,19 +7,19 @@ const mocks = vi.hoisted(() => ({
   deleteMeetupEvent: vi.fn(),
 }));
 
-vi.mock('../storage', () => ({ storage: mocks.storage }));
-vi.mock('../features/lt/weekly-announce', () => ({
+vi.mock('../../../storage', () => ({ storage: mocks.storage }));
+vi.mock('../../lt/weekly-announce', () => ({
   nextMeetupDate: () => '2026-11-06',
   ltEntriesForMeetup: mocks.ltEntriesForMeetup,
 }));
-vi.mock('../../vrchat/groupEvent', () => ({
+vi.mock('../../../../vrchat/groupEvent', () => ({
   createMeetupEvent: mocks.createMeetupEvent,
   deleteMeetupEvent: mocks.deleteMeetupEvent,
 }));
-vi.mock('../config', () => ({ config: { vrceveSshTarget: '', vrceveSshKey: '' } }));
+vi.mock('../../../config', () => ({ config: { vrceveSshTarget: '', vrceveSshKey: '' } }));
 
 import { deleteVrcEvent, jstToIso, registerVrcEvent } from '../vrc-event';
-import type { LtEntry } from '../features/lt/types';
+import type { LtEntry } from '../../lt/types';
 
 beforeEach(() => {
   vi.clearAllMocks();

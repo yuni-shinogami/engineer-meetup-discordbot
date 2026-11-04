@@ -6,10 +6,10 @@ import {
   GuildScheduledEventEntityType,
   GuildScheduledEventPrivacyLevel,
 } from 'discord.js';
-import { config } from './config';
-import { storage } from './storage';
-import { ltEntriesForMeetup, nextMeetupDate } from './features/lt/index';
-import { needsTitle, type LtEntry } from './features/lt/index';
+import { config } from '../../config';
+import { storage } from '../../storage';
+import { ltEntriesForMeetup, nextMeetupDate } from '../lt/index';
+import { needsTitle, type LtEntry } from '../lt/index';
 import { jstToIso } from './vrc-event';
 import { MEETUP_START_TIME, vrceveFields } from './vrceve';
 
@@ -32,7 +32,7 @@ const DESCRIPTION = [
   '23:30～ 自由交流会',
 ].join('\n');
 /** 以前の毎週のイベントの画像。リポジトリの assets/ に置いている */
-const IMAGE_PATH = join(__dirname, '../../assets/discord-event.png');
+const IMAGE_PATH = join(__dirname, '../../../../assets/discord-event.png');
 
 export interface DiscordEventFields {
   name: string;

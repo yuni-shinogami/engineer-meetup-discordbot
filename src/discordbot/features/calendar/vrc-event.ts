@@ -1,7 +1,7 @@
-import { storage } from './storage';
-import { ltEntriesForMeetup, nextMeetupDate } from './features/lt/index';
+import { storage } from '../../storage';
+import { ltEntriesForMeetup, nextMeetupDate } from '../lt/index';
 import { MEETUP_END_TIME, MEETUP_START_TIME, vrceveFields } from './vrceve';
-import { createMeetupEvent, deleteMeetupEvent } from '../vrchat/groupEvent';
+import { createMeetupEvent, deleteMeetupEvent } from '../../../vrchat/groupEvent';
 
 /**
  * VRChat のグループのイベント（VRChat の「イベント」に載るカレンダー）への登録。

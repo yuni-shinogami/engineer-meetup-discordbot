@@ -4,10 +4,10 @@ import { storage } from '../storage';
 import { CONFIRM_MEETUP_YES, buildLatePreAnnounceRow, sendConfirmMeetupToChannel } from '../meetup';
 import { triggerPreAnnounce } from '../scheduler';
 import { requireOperatorRole, formatError } from '../shared/interaction';
-import { postSlidesToChannel } from '../slides';
-import { deleteFromVrceve, registerOnVrceve } from '../vrceve';
-import { deleteVrcEvent, registerVrcEvent } from '../vrc-event';
-import { deleteDiscordEvent, registerDiscordEvent } from '../discord-event';
+import { postSlidesToChannel } from '../features/slides/index';
+import { deleteFromVrceve, registerOnVrceve } from '../features/calendar/index';
+import { deleteVrcEvent, registerVrcEvent } from '../features/calendar/index';
+import { deleteDiscordEvent, registerDiscordEvent } from '../features/calendar/index';
 
 export const confirmMeetupCommand = new SlashCommandBuilder()
   .setName('confirm-meetup')

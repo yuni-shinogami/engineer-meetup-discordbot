@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { deleteVrcEvent, registerVrcEvent } from '../vrc-event';
-import { requireOperatorRole, formatError } from '../shared/interaction';
+import { requireOperatorRole, formatError } from '../../../shared/interaction';
 
 /**
  * VRChat のグループのイベント（VRChat の「イベント」に載るカレンダー）への登録を、開催確認とは別に手で動かす。

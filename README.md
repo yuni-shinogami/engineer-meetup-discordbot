@@ -679,6 +679,8 @@ src/
         announce.ts        X / Discord / VRChat への投稿（冪等・部分失敗対応）
         weekly-announce.ts 週次フローに同乗する LT 告知の一括投稿と運営への報告
         guard.ts        ポスト内コンポーネント操作の共通検証（本人確認・運営確認）
+      calendar/       イベント登録（VRChat イベントカレンダー・VRChat のグループのイベント・Discord のイベント）と /event-calendar・/vrc-event・/discord-event
+      slides/         司会進行スライド（Canva から PDF・動画を取って投稿）と /slides
     commands/          スラッシュコマンドの定義とハンドラ（LT のものは features/lt/commands/）
     shared/
       interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信

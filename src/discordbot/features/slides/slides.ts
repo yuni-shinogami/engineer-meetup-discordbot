@@ -1,8 +1,8 @@
 import { AttachmentBuilder, Client, TextChannel } from 'discord.js';
-import { config } from './config';
-import { exportDesignAsPdf } from '../canva/export';
-import { pdfToWebm } from '../video/pdf-to-webm';
-import { formatMeetupDate, upcomingMeetupDates } from './shared/meetup-dates';
+import { config } from '../../config';
+import { exportDesignAsPdf } from '../../../canva/export';
+import { pdfToWebm } from '../../../video/pdf-to-webm';
+import { formatMeetupDate, upcomingMeetupDates } from '../../shared/meetup-dates';
 
 const MEGABYTE = 1024 * 1024;
 

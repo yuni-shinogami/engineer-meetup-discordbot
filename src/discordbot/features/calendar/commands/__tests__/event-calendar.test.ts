@@ -14,7 +14,7 @@ vi.mock('../../vrceve', () => ({
   deleteFromVrceve: mocks.deleteFromVrceve,
   callVrceve: mocks.callVrceve,
 }));
-vi.mock('../../shared/interaction', () => ({
+vi.mock('../../../../shared/interaction', () => ({
   requireOperatorRole: vi.fn().mockResolvedValue(true),
   formatError: (e: unknown) => `❌ エラーが発生しました: ${e instanceof Error ? e.message : String(e)}`,
 }));

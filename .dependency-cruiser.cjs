@@ -79,6 +79,20 @@ module.exports = {
       to: { path: '^src/discordbot/features/', pathNot: '^src/discordbot/features/lt/' },
     },
     {
+      name: 'calendar-is-provider',
+      comment: 'イベント登録は開催確認から使われる側。使ってよいほかの機能は LT（イベント名に LT のタイトルを入れる）だけ。',
+      severity: 'error',
+      from: { path: '^src/discordbot/features/calendar/' },
+      to: { path: '^src/discordbot/features/', pathNot: '^src/discordbot/features/(calendar|lt)/' },
+    },
+    {
+      name: 'slides-is-provider',
+      comment: '司会進行スライドは開催確認から使われる側。ほかの機能は import しない。',
+      severity: 'error',
+      from: { path: '^src/discordbot/features/slides/' },
+      to: { path: '^src/discordbot/features/', pathNot: '^src/discordbot/features/slides/' },
+    },
+    {
       name: 'libs-independent',
       comment: '部品（vrchat/・x/・canva/・image-gen/・video/）どうしは import しない。組み合わせるのは Bot の側でする。',
       severity: 'error',

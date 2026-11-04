@@ -8,15 +8,15 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('child_process', () => ({ execFile: mocks.execFile }));
-vi.mock('../config', () => ({ config: mocks.config }));
-vi.mock('../storage', () => ({ storage: mocks.storage }));
-vi.mock('../features/lt/weekly-announce', () => ({
+vi.mock('../../../config', () => ({ config: mocks.config }));
+vi.mock('../../../storage', () => ({ storage: mocks.storage }));
+vi.mock('../../lt/weekly-announce', () => ({
   nextMeetupDate: () => '2026-11-06',
   ltEntriesForMeetup: mocks.ltEntriesForMeetup,
 }));
 
 import { deleteFromVrceve, registerOnVrceve, vrceveFields } from '../vrceve';
-import type { LtEntry } from '../features/lt/types';
+import type { LtEntry } from '../../lt/types';
 
 type ExecCallback = (error: Error | null, stdout: string, stderr: string) => void;
 

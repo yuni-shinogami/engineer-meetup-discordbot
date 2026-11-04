@@ -5,6 +5,8 @@ import { setupScheduler } from './scheduler';
 import { dispatchButton, dispatchCommand, dispatchModal, dispatchSelect, registerFeature } from './interactions';
 import { registerInteractionHandlers } from './handlers';
 import { ltFeature } from './features/lt/index';
+import { calendarFeature } from './features/calendar/index';
+import { slidesFeature } from './features/slides/index';
 import {
   handleConfirmMeetupCommand,
   handlePreAnnounceCommand,
@@ -13,15 +15,11 @@ import {
   handlePostAnnouncementCommand,
   handleCheckPermissionsCommand,
   handleStatusCommand,
-  handleSlidesCommand,
-  handleEventCalendarCommand,
-  handleVrcEventCommand,
-  handleDiscordEventCommand,
   registerCommands,
 } from './commands';
 
 /** 機能のフォルダー（features/）の機能。コマンドとボタン・モーダル・セレクトは、ここから登録する。 */
-const FEATURES = [ltFeature];
+const FEATURES = [ltFeature, calendarFeature, slidesFeature];
 
 const client = new Client({
   intents: [
@@ -61,10 +59,6 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         case 'post-announcement':   await handlePostAnnouncementCommand(interaction); break;
         case 'check-permissions':   await handleCheckPermissionsCommand(interaction); break;
         case 'status':              await handleStatusCommand(interaction); break;
-        case 'slides':              await handleSlidesCommand(interaction); break;
-        case 'event-calendar':      await handleEventCalendarCommand(interaction); break;
-        case 'vrc-event':           await handleVrcEventCommand(interaction); break;
-        case 'discord-event':       await handleDiscordEventCommand(interaction); break;
       }
     } else if (interaction.isButton()) {
       if (!await dispatchButton(interaction)) {
