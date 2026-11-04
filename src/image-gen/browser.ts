@@ -121,10 +121,21 @@ export async function renderHtmlToPng({ html, width, height, assets }: RenderOpt
         const asset = url.startsWith(ASSET_ORIGIN) ? assets.get(url.slice(ASSET_ORIGIN.length)) : undefined;
         // 素材はすべて Bot が渡す。テンプレートの書き間違いで外へ取りに行かないよう、それ以外は通さない
         if (!asset) return void request.abort();
-        void request.respond({ status: 200, contentType: asset.contentType, body: asset.body });
+        // ページは about:blank なので素材はクロスオリジンになる。フォントは CORS が無いと読み込まれない
+        void request.respond({
+          status: 200,
+          contentType: asset.contentType,
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: asset.body,
+        });
       });
       await page.setContent(html, { waitUntil: 'load' });
-      await page.evaluate(() => document.fonts.ready.then(() => undefined));
+      const failedFonts = await page.evaluate(async () => {
+        await document.fonts.ready;
+        return [...document.fonts].filter(face => face.status === 'error').map(face => `${face.family} ${face.weight}`);
+      });
+      // フォントが読めないと代わりのフォントで描かれ、日本語が豆腐になる。崩れた画像を返さず失敗にする
+      if (failedFonts.length > 0) throw new Error(`フォントを読み込めませんでした: ${failedFonts.join(', ')}`);
       const png = await page.screenshot({ type: 'png', clip: { x: 0, y: 0, width, height } });
       return Buffer.from(png);
     } finally {

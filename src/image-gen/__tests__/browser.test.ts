@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => {
     setRequestInterception: vi.fn(async () => {}),
     on: vi.fn((_event: string, handler: RequestHandler) => { state.handler = handler; }),
     setContent: vi.fn(async () => {}),
-    evaluate: vi.fn(async () => {}),
+    // 読み込みに失敗したフォント
+    evaluate: vi.fn(async (): Promise<string[]> => []),
     screenshot: vi.fn(async () => new Uint8Array([1, 2, 3])),
     close: vi.fn(async () => {}),
   };
@@ -71,7 +72,12 @@ describe('renderHtmlToPng', () => {
       await render();
       const request = fakeRequest(`${ASSET_ORIGIN}fonts/a.ttf`);
       mocks.state.handler!(request);
-      expect(request.respond).toHaveBeenCalledWith({ status: 200, contentType: 'font/ttf', body: font.body });
+      expect(request.respond).toHaveBeenCalledWith({
+        status: 200,
+        contentType: 'font/ttf',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: font.body,
+      });
     });
 
     it('data URL はそのまま通す', async () => {
@@ -91,6 +97,14 @@ describe('renderHtmlToPng', () => {
         expect(request.respond).not.toHaveBeenCalled();
       }
     });
+  });
+
+  // 代わりのフォントで描くと日本語が豆腐になる
+  it('フォントが読み込めなければ、画像を返さずエラーにする', async () => {
+    mocks.page.evaluate.mockResolvedValueOnce(['NotoSansJP 700']);
+    await expect(render()).rejects.toThrow('フォントを読み込めませんでした: NotoSansJP 700');
+    expect(mocks.page.screenshot).not.toHaveBeenCalled();
+    expect(mocks.page.close).toHaveBeenCalled();
   });
 
   it('Chromium が起動できなければ、入れ方の分かるエラーにする', async () => {
