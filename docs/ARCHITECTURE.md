@@ -46,6 +46,10 @@ import の向きに次の決まりがあり、`npm test`（`src/__tests__/depend
 | 循環した import をしない（`no-circular`） | どちらを先に読み込むかで動きが変わり、追うのも難しい |
 | `vrchat/`・`x/`・`canva/`・`image-gen/`・`video/` から `discordbot/` を import しない（`lib-not-to-bot`） | これらは Bot から使う部品。必要な値（設定など）は呼び出し側から引数で受け取る |
 | `commands/utils` はスラッシュコマンドからだけ使う（`commands-utils-only-from-commands`） | コマンド以外からも使うものは、共通の場所に置く |
+| 部品どうしは import しない（`libs-independent`） | 部品を組み合わせるのは Bot の側。部品は単独で読めるようにしておく |
+| 外部サービスの SDK は受け持つ部品の中だけで使う（`twitter-sdk-only-in-x`・`axios-only-in-api-libs`・`renderer-only-in-image-gen`） | `twitter-api-v2` は `x/`、`axios` は `vrchat/`・`canva/`、`puppeteer-core`・`react-dom` は `image-gen/` だけ。外部とのやりとりを探す場所を固定する |
+| 本番のコードから devDependencies を使わない（`not-to-dev-dep`） | テストや開発の道具に本番のコードが頼らないようにする（型だけの import は除く） |
+| どこからも使われていないファイルを知らせる（`no-orphans`、警告だけ） | 使われていないなら消す |
 
 ### 今ある違反
 

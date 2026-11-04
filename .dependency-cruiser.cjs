@@ -31,6 +31,55 @@ module.exports = {
       from: { path: '^src/discordbot/', pathNot: '^src/discordbot/commands/' },
       to: { path: '^src/discordbot/commands/utils' },
     },
+    {
+      name: 'libs-independent',
+      comment: '部品（vrchat/・x/・canva/・image-gen/・video/）どうしは import しない。組み合わせるのは Bot の側でする。',
+      severity: 'error',
+      from: { path: '^src/(vrchat|x|canva|image-gen|video)/' },
+      to: { path: '^src/(vrchat|x|canva|image-gen|video)/', pathNot: '^src/$1/' },
+    },
+    // 外部サービスの SDK は、それを受け持つ部品の中だけで使う。外部とのやりとりを探す場所を固定するため
+    {
+      name: 'twitter-sdk-only-in-x',
+      comment: 'X（twitter-api-v2）とのやりとりは x/ にまとめる。',
+      severity: 'error',
+      from: { pathNot: '^src/x/' },
+      to: { path: '^node_modules/twitter-api-v2/' },
+    },
+    {
+      name: 'axios-only-in-api-libs',
+      comment: 'HTTP で外部の API を呼ぶのは vrchat/・canva/ にまとめる。',
+      severity: 'error',
+      from: { pathNot: '^src/(vrchat|canva)/' },
+      to: { path: '^node_modules/axios/' },
+    },
+    {
+      name: 'renderer-only-in-image-gen',
+      comment: 'ヘッドレス Chromium（puppeteer-core）と React の HTML 化（react-dom）は image-gen/ にまとめる。',
+      severity: 'error',
+      from: { pathNot: '^src/image-gen/' },
+      to: { path: '^node_modules/(puppeteer-core|react-dom)/' },
+    },
+    {
+      name: 'not-to-dev-dep',
+      comment:
+        '本番の自動デプロイも devDependencies を入れているが、テストや開発の道具に本番のコードが頼らないようにする。'
+        + '型だけの import は数えない。',
+      severity: 'error',
+      from: { path: '^src/' },
+      to: {
+        dependencyTypes: ['npm-dev'],
+        dependencyTypesNot: ['type-only'],
+        pathNot: ['node_modules/@types/'],
+      },
+    },
+    {
+      name: 'no-orphans',
+      comment: 'どこからも import されず、何も import しないファイル。使われていないなら消す。',
+      severity: 'warn',
+      from: { orphan: true, pathNot: ['\\.d\\.ts$'] },
+      to: {},
+    },
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
