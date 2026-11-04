@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import type { SatoriOptions } from 'satori';
+import type { Asset } from './browser';
 
 const CACHE_DIR = join(__dirname, '../../assets/fonts');
 const CACHE_VERSION = 'v3';
@@ -32,17 +32,32 @@ async function downloadFont(weight: 400 | 700): Promise<Buffer> {
   return fontBuffer;
 }
 
-let cachedFonts: SatoriOptions['fonts'] | null = null;
+const WEIGHTS = [400, 700] as const;
 
-export async function loadFonts(): Promise<SatoriOptions['fonts']> {
+export interface FontBundle {
+  /** テンプレートの <style> に入れる @font-face。 */
+  css: string;
+  /** `ASSET_ORIGIN` 以下で配るフォントファイル。 */
+  assets: Map<string, Asset>;
+}
+
+let cachedFonts: FontBundle | null = null;
+
+/**
+ * テンプレートで `font-family: NotoSansJP` を使えるようにする。
+ * ホストのフォントに頼らず、どこで描いても同じ字形になるよう Bot がフォントを配る。
+ */
+export async function loadFonts(): Promise<FontBundle> {
   if (cachedFonts) return cachedFonts;
 
-  const [regular, bold] = await Promise.all([downloadFont(400), downloadFont(700)]);
+  const buffers = await Promise.all(WEIGHTS.map(downloadFont));
+  const assets = new Map<string, Asset>();
+  const faces = WEIGHTS.map((weight, i) => {
+    const path = `fonts/noto-sans-jp-${weight}.ttf`;
+    assets.set(path, { body: buffers[i]!, contentType: 'font/ttf' });
+    return `@font-face { font-family: 'NotoSansJP'; font-weight: ${weight}; font-style: normal; src: url('${path}') format('truetype'); }`;
+  });
 
-  cachedFonts = [
-    { name: 'NotoSansJP', data: regular, weight: 400, style: 'normal' },
-    { name: 'NotoSansJP', data: bold, weight: 700, style: 'normal' },
-  ];
-
+  cachedFonts = { css: faces.join('\n'), assets };
   return cachedFonts;
 }

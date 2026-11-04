@@ -596,10 +596,10 @@ ssh engineer-meetup-bot /home/engineer-meetup/app/deploy/deploy.sh
 
 ##### 初回セットアップ
 
-Node.js 24 と、動画変換に使う ffmpeg・poppler-utils を入れておきます。
+Node.js 24 と、動画変換に使う ffmpeg・poppler-utils、告知画像の描画に使う chromium を入れておきます。
 
 ```bash
-apt install git ffmpeg poppler-utils   # Node.js 24 は NodeSource の apt リポジトリから入れる
+apt install git ffmpeg poppler-utils chromium   # Node.js 24 は NodeSource の apt リポジトリから入れる
 useradd --system --create-home --home-dir /home/engineer-meetup --shell /usr/sbin/nologin engineer-meetup
 runuser -u engineer-meetup -- git clone https://github.com/yuni-shinogami/engineer-meetup-discordbot.git /home/engineer-meetup/app
 cd /home/engineer-meetup/app
@@ -692,10 +692,13 @@ src/
     postGroupAnnouncement.ts  グループ掲示板への告知フロー
     assets/           グループ投稿テンプレート
   image-gen/
-    generate.ts       画像生成エントリーポイント
+    generate.ts       画像生成エントリーポイント（テンプレートを HTML にして Chromium で描く）
+    browser.ts        ヘッドレス Chromium の起動と描画
     fonts.ts          フォント読み込み
+    preview.ts        テンプレートのプレビュー（npm run image:preview）
     templates/
-      lt-announce.tsx     LT 告知画像テンプレート
+      lt-announce.tsx     LT 告知画像テンプレート（構造）
+      lt-announce.css     LT 告知画像テンプレート（見た目）
     assets/
       images/             テンプレートで使用する画像素材
 assets/
@@ -717,5 +720,24 @@ npm test
 
 [Vitest](https://vitest.dev/) を使用しています。Discord・X・VRChat の各 API 呼び出しはモックし、
 テンプレート置換や環境変数バリデーション、状態遷移などのロジックを検証しています。
-`src/image-gen/__tests__/generate.test.ts` は画像生成結果をスナップショット（PNG）と比較します。
-スナップショットを更新する場合は `UPDATE_SNAPSHOTS=1 npm test` を実行してください。
+`src/image-gen/__tests__/generate.test.ts` の描画テストは、Chromium（`CHROMIUM_PATH`、既定は `/usr/bin/chromium`）があるときだけ動きます。
+Chromium の版で画素が揺れるため画像の一致は見ず、描いた画像を `src/image-gen/__tests__/__output__/` に書き出すので目で確かめてください。
+
+## 告知画像のテンプレート
+
+告知画像は **HTML と CSS をヘッドレス Chromium で描いて** PNG にしています。
+以前は Satori で描いていましたが、使える CSS が限られていたため切り替えました。grid・グラデーション・`filter`・`text-shadow`・`object-fit` など、ブラウザで使える CSS はそのまま使えます。
+
+| ファイル | 書くもの |
+| :--- | :--- |
+| `templates/<名前>.tsx` | 構造（React の要素）。差し込む文字列は自動でエスケープされる |
+| `templates/<名前>.css` | 見た目。普通の CSS |
+
+- フォントは `font-family: 'NotoSansJP'`（400 / 700）が使えます。ホストのフォントには頼らず、Bot が配ります
+- 画像は data URL か、`assets/images/` 以下の相対パスで参照します（`generate.ts` の `imageAssets` に登録したものだけ）
+- **外部の URL には取りに行きません。** 描画中のリクエストは Bot が配る素材と data URL 以外すべて遮断します
+- 見た目を確かめるときは `npm run image:preview [出力先.png]` でサンプルの素材から PNG を書き出せます
+
+本番では Chromium を `apt install chromium` で入れます。systemd の制限（`NoNewPrivileges`・HOME が読み取り専用）の下で動かすため、
+サンドボックスを切り（`--no-sandbox`）、プロファイルは一時ディレクトリに置いています。描くのは Bot が組み立てた HTML だけで、外部への通信も遮断しているためです。
+ブラウザは描画のときに起動し、使い終わって 60 秒たったら閉じます。

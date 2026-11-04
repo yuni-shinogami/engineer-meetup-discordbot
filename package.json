@@ -4,11 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf dist && tsc && cp -r src/image-gen/assets dist/image-gen/ && cp -r src/x/assets dist/x/ && cp -r src/vrchat/assets dist/vrchat/",
+    "build": "rm -rf dist && tsc && cp -r src/image-gen/assets dist/image-gen/ && cp src/image-gen/templates/*.css dist/image-gen/templates/ && cp -r src/x/assets dist/x/ && cp -r src/vrchat/assets dist/vrchat/",
     "start": "ts-node src/discordbot/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "canva:login": "ts-node src/canva/login.ts",
+    "image:preview": "ts-node src/image-gen/preview.ts",
     "activity:backfill": "node dist/discordbot/activity/backfill.js"
   },
   "keywords": [],
@@ -16,20 +17,21 @@
   "license": "ISC",
   "dependencies": {
     "@fontsource/noto-sans-jp": "^5.2.9",
-    "@resvg/resvg-js": "^2.6.2",
     "axios": "^1.7.0",
     "cron-parser": "^5.5.0",
     "discord.js": "^14.26.4",
     "dotenv": "^17.4.2",
     "node-cron": "^3.0.3",
-    "react": "^19.2.7",
-    "satori": "^0.26.0",
+    "puppeteer-core": "^25.16.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "twitter-api-v2": "^1.29.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
     "@types/node-cron": "^3.0.11",
-    "@types/react": "^19.2.17",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"

@@ -1,0 +1,121 @@
+/* LT 告知画像（lt-announce.tsx）の見た目。普通の CSS がそのまま使える。 */
+:root {
+  --accent: #f27205;
+  --ink: #111111;
+  --dark: #333333;
+}
+
+.lt-announce {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 95px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: 60px 35px 0;
+}
+
+.event {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 70px;
+}
+
+.logo {
+  width: 290px;
+  height: 75px;
+}
+
+.event h1 {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.date {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.talk {
+  display: flex;
+  margin-bottom: 120px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 50%;
+  font-weight: 700;
+}
+
+.label {
+  font-size: 20px;
+}
+
+.title {
+  font-size: 40px;
+  overflow-wrap: anywhere;
+}
+
+.speaker {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  margin: 0;
+}
+
+.speaker-label {
+  font-size: 26px;
+  font-weight: 400;
+}
+
+.speaker-name {
+  font-size: 35px;
+}
+
+.icon {
+  display: flex;
+  justify-content: center;
+  width: 50%;
+}
+
+.icon img {
+  width: 510px;
+  height: 510px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.slide {
+  display: flex;
+  justify-content: center;
+  height: 600px;
+  background: var(--accent);
+}
+
+.slide img {
+  height: 600px;
+}

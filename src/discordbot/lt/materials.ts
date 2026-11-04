@@ -9,7 +9,7 @@ export type MaterialKind = (typeof MATERIAL_KINDS)[number];
 
 /**
  * 受け付ける画像形式。
- * 告知画像の生成に satori を使うため、確実に描画できる形式に絞っている。
+ * 告知画像の生成（Chromium）で確実に描画できる形式に絞っている。
  */
 const EXTENSION_BY_MIME = new Map([
   ['image/png', 'png'],
@@ -111,7 +111,7 @@ export function materialExists(filePath: string | null | undefined): filePath is
   return typeof filePath === 'string' && filePath !== '' && fs.existsSync(filePath);
 }
 
-/** 保存済みの素材を satori に渡せる data URL にする。 */
+/** 保存済みの素材を告知画像のテンプレートに渡せる data URL にする。 */
 export function readMaterialAsDataUrl(filePath: string): string {
   const extension = path.extname(filePath).slice(1).toLowerCase();
   const mime = MIME_BY_EXTENSION.get(extension) ?? 'image/png';
