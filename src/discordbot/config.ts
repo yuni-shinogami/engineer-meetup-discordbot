@@ -38,6 +38,8 @@ export const config = {
   ltForumChannelId: process.env.LT_FORUM_CHANNEL_ID || '',
   testLtForumChannelId: process.env.TEST_LT_FORUM_CHANNEL_ID || '',
   ltStorePath: process.env.LT_STORE_PATH || './state/lt-store.json',
+  /** LT 会（毎週の集会とは別の日に開く LT のイベント）の記録 */
+  ltEventStorePath: process.env.LT_EVENT_STORE_PATH || './state/lt-events.json',
   ltMaterialsDir: process.env.LT_MATERIALS_DIR || './state/lt-materials',
   /** 集会の開催曜日（0=日 ... 5=金 ... 6=土） */
   meetupWeekday: intEnv('MEETUP_WEEKDAY', 5),

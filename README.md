@@ -410,6 +410,25 @@ Discord 側のタグ名を変える場合はこの定数も合わせて変更し
 
 `/confirm-meetup`・`/pre-announce`・`/create-instance`・`/post-announcement` には `production` オプション（Boolean、デフォルト `False`）があり、`False`（テストモード）ではテスト用アカウント・テストチャンネル・テスト用 VRChat グループを使用します。**`/pre-announce` と `/post-announcement` は同じ `production` 値で実行してください**（片方が本番・もう片方がテストだと、X 側の「引用元の投稿に自分がメンションされていない」制限に引っかかり引用リポストが 403 で失敗します）。
 
+### LT 会（`/lt-event`）
+
+**LT 会**は、毎週の集会とは別の日に開く、複数人が登壇するイベントです。運営が `/lt-event` で作ると、その日が応募の候補日に加わります。応募そのもの（フォーラムのポスト・素材の回収・告知画像）は、毎週の LT と同じ仕組みを使います。
+
+| サブコマンド | 内容 |
+| :--- | :--- |
+| `create` | LT 会を作る。開催日・開始/終了時刻（`HH:MM`）・枠数（1〜20）・テーマ・応募の締切を指定する |
+| `show` | これから開く LT 会と、それぞれの確定数/枠数・希望だけの応募の数・登壇者を出す |
+| `edit` | 時刻・枠数・テーマ・締切を変える（開催日は変えられないので、取りやめて作り直す）。確定済みの登壇より枠を減らすことはできない |
+| `cancel` | 取りやめて候補日から外す。記録は残し、その日に確定している応募があれば一覧で知らせる（応募の確定は自動では外さない） |
+
+- **運営限定**です。`production` オプション（既定 `False`）で本番とテストを分けます。テストの LT 会は、テストフォーラムの応募の候補日にだけ出ます
+- **毎週の集会の日に開くこともできます**。その日の LT 枠は、毎週の 1 枠（`LT_SLOTS_PER_DAY`）の代わりに LT 会の枠数になり、その日に確定した登壇者は毎週の事前告知・開催告知の LT 告知とイベント登録の「【LTあり】」に全員載ります（作るときにも知らせます）。その日に毎週の LT の登壇がすでに確定していれば、その人数より少ない枠数では作れません
+- **登壇者の希望日のセレクト**には、応募の締切までの LT 会の日が「🎤LT会」の印とテーマつきで出ます。残りの枠は LT 会の枠数で数えます
+- **運営の日程確定**の候補には、締切を過ぎた LT 会の日も出ます（締切後の調整や差し替えのため）。LT 会の日には「通常の開催曜日ではありません」の警告を出しません
+- すでにある応募ポストのメニューは、LT 会を作った時点では書き換えません。次にポストが更新されたとき（希望日や動画の回答など）に候補が反映されます
+- `/status` に、これから開く本番の LT 会を出します
+- 記録は `state/lt-events.json`（`LT_EVENT_STORE_PATH`）に保存します
+
 ## VRChat アカウントの登録と招待
 
 `/create-instance` は、インスタンスを立てた**担当者本人にも VRChat の招待**を送ります。
@@ -489,6 +508,7 @@ Bot はパスワードも 2FA の秘密鍵も持ちません。
 | :--- | :--- | :--- |
 | `state/storage.json` | 週次の開催予定・直近のツイートID・招待URL | `STORAGE_PATH` |
 | `state/lt-store.json` | LT 応募レコード | `LT_STORE_PATH` |
+| `state/lt-events.json` | LT 会の記録 | `LT_EVENT_STORE_PATH` |
 | `state/lt-materials/` | LT 告知の素材画像 | `LT_MATERIALS_DIR` |
 | `state/latest.json` | 直近に作成したインスタンス情報 | `VRC_STATE_DIR` |
 | `state/vrc-links.json` | Discord ↔ VRChat アカウント対応表 | `VRC_LINK_STORE_PATH` |
@@ -538,6 +558,7 @@ npm install
 | `LT_SLOTS_PER_DAY` | 1回の集会あたりの LT 枠数（任意、デフォルト `1`） |
 | `LT_DATE_CANDIDATES` | 日程選択で提示する候補の開催回数（任意、デフォルト `8`） |
 | `LT_STORE_PATH` | LT レコードの保存先（任意、デフォルト `./state/lt-store.json`） |
+| `LT_EVENT_STORE_PATH` | LT 会の記録の保存先（任意、デフォルト `./state/lt-events.json`） |
 | `LT_MATERIALS_DIR` | LT 素材の保存先ディレクトリ（任意、デフォルト `./state/lt-materials`） |
 | `LT_MAX_MATERIAL_MB` | 素材画像1枚あたりの上限MB（任意、デフォルト `50`） |
 | `LT_ANNOUNCE_ROLE_ID` | LT 告知でメンションするロール ID（任意、未設定なら `ANNOUNCE_ROLE_ID` と同じロール） |
@@ -631,6 +652,7 @@ systemctl enable --now engineer-meetup-bot engineer-meetup-deploy.timer
 | `/generate-lt-image` | LT 告知画像を生成して返信 |
 | `/lt-apply` | LT に応募（モーダル入力 → フォーラムポスト自動作成）。オプションなし |
 | `/lt-material` | LT 告知の素材を登録（そろえば告知画像を自動生成） |
+| `/lt-event` | LT 会（毎週の集会とは別の日の LT イベント）を作る・見る・変える・取りやめる（`create` / `show` / `edit` / `cancel`） |
 
 ### `/generate-lt-image` のオプション
 
@@ -664,6 +686,7 @@ src/
         types.ts        LtEntry / LtStatus の定義、未入力項目の判定
         status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決
         store.ts        LT レコードの永続化（state/lt-store.json、原子的書き込み）
+        events.ts       LT 会の記録（state/lt-events.json）と、候補日・枠数の判定
         forum.ts        フォーラムポストの作成・タグ同期・ポスト内コンポーネント
         materials.ts    告知素材のダウンロードとローカル保存
         announce-image.ts  告知画像の生成と作り直し

@@ -39,3 +39,8 @@ export {
 export {
   fetchLtForum,
 } from './forum';
+
+// --- LT 会（/status から読む） ---
+
+export { upcomingLtEvents } from './events';
+export { describeLtEventStatus } from './commands/lt-event';

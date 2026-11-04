@@ -15,7 +15,8 @@ import {
 import { config } from '../../../config';
 import { buildCustomId } from '../../../interactions';
 import { postAnnounceImage, syncAnnounceImage } from '../announce-image';
-import { formatDateKey, formatMeetupDate, parseDateKey, upcomingMeetupDates } from '../../../shared/meetup-dates';
+import { formatDateKey, formatMeetupDate, parseDateKey } from '../../../shared/meetup-dates';
+import { dateOptionLabel, ltEventOn, operatorDateCandidates, slotsOn } from '../events';
 import { applyLtEntryToPost, fetchLtThread } from '../forum';
 import { resolveOperatorEntry } from '../guard';
 import { materialExists } from '../materials';
@@ -38,11 +39,12 @@ const MAX_DATE_OPTIONS = 24;
  * 相談で候補外の日に決まった場合に備え、確定済みの日も必ず含める。
  */
 export function scheduleDateChoices(
-  entry: Pick<LtEntry, 'preferredDates' | 'eventDate'>,
+  entry: Pick<LtEntry, 'isProd' | 'preferredDates' | 'eventDate'>,
   now: Date = new Date(),
 ): string[] {
   const preferred = [...entry.preferredDates].sort();
-  const candidates = upcomingMeetupDates(config.ltDateCandidates, now);
+  // 毎週の集会の候補日と、これから開く LT 会の日（締切を過ぎていても運営は入れられる）
+  const candidates = operatorDateCandidates(entry.isProd, now);
   const merged = [...preferred, ...candidates.filter(date => !preferred.includes(date))];
   if (entry.eventDate && !merged.includes(entry.eventDate)) merged.unshift(entry.eventDate);
   return merged.slice(0, MAX_DATE_OPTIONS);
@@ -56,7 +58,7 @@ function competitorsOn(eventDate: string, entry: LtEntry): LtEntry[] {
 
 function describeDate(date: string, entry: LtEntry): string {
   const others = competitorsOn(date, entry);
-  if (others.length >= config.ltSlotsPerDay) {
+  if (others.length >= slotsOn(date, entry.isProd)) {
     return `⛔ ${others.map(other => other.speakerName).join('、')} で埋まっています`.slice(0, 100);
   }
   if (date === entry.eventDate) return '✅ 現在の確定日';
@@ -67,7 +69,7 @@ function describeDate(date: string, entry: LtEntry): string {
 function buildScheduleRow(entry: LtEntry): ActionRowBuilder<StringSelectMenuBuilder> {
   const options = scheduleDateChoices(entry).map(date =>
     new StringSelectMenuOptionBuilder()
-      .setLabel(formatMeetupDate(date) + (entry.preferredDates.includes(date) ? ' ⭐' : ''))
+      .setLabel(dateOptionLabel(date, entry.isProd) + (entry.preferredDates.includes(date) ? ' ⭐' : ''))
       .setValue(date)
       .setDescription(describeDate(date, entry))
       .setDefault(date === entry.eventDate),
@@ -152,12 +154,13 @@ export function normalizeDateInput(raw: string): string | null {
  * 確定してよいが運営に気づいてほしいこと。
  * 手入力を許している以上、打ち間違いは弾けないので警告として見せる。
  */
-export function scheduleWarnings(eventDate: string, now: Date = new Date()): string[] {
+export function scheduleWarnings(eventDate: string, isProd: boolean, now: Date = new Date()): string[] {
   const date = parseDateKey(eventDate);
   if (!date) return [];
 
   const warnings: string[] = [];
-  if (date.getDay() !== config.meetupWeekday) {
+  // LT 会の日は、もともと毎週の集会とは別の曜日に開く
+  if (date.getDay() !== config.meetupWeekday && !ltEventOn(eventDate, isProd)) {
     warnings.push(`⚠️ ${formatMeetupDate(eventDate)} は通常の開催曜日ではありません。`);
   }
   if (eventDate < formatDateKey(now)) {
@@ -183,7 +186,7 @@ async function applySchedule(
   // ボタンを押した時点の空き状況で判断する。
   // コンポーネントは作られた時点の状態を持っているため、別の応募が先に確定している可能性がある。
   const others = competitorsOn(eventDate, entry);
-  if (others.length >= config.ltSlotsPerDay) {
+  if (others.length >= slotsOn(eventDate, entry.isProd)) {
     const names = others.map(other => `**${other.speakerName}**（<#${other.id}>）`).join('、');
     return `⛔ ${formatMeetupDate(eventDate)} は既に ${names} で埋まっています。\n`
       + '先にそちらのポストで「運営: 確定を取り消す」を実行してください。';
@@ -206,7 +209,7 @@ async function applySchedule(
   const headline = previous
     ? `✅ ${formatMeetupDate(previous)} → **${formatMeetupDate(eventDate)}** に変更しました。`
     : `✅ **${formatMeetupDate(eventDate)}** で確定しました。`;
-  return [headline, ...scheduleWarnings(eventDate)].join('\n');
+  return [headline, ...scheduleWarnings(eventDate, entry.isProd)].join('\n');
 }
 
 /** 確定内容を応募ポストに投稿する。登壇者が次にすることも併せて案内する。 */

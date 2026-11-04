@@ -1,4 +1,5 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { ltEventStore, type LtEvent } from '../events';
 import { config } from '../../../config';
 import { upcomingMeetupDates } from '../../../shared/meetup-dates';
 import { emptyAnnounce } from '../types';
@@ -38,12 +39,12 @@ describe('buildPreferredDatesRow', () => {
   const candidates = () => upcomingMeetupDates();
 
   it('スレッドIDを customId に埋め込む', () => {
-    expect(select(buildPreferredDatesRow('1518647607705079828')).custom_id)
+    expect(select(buildPreferredDatesRow('1518647607705079828', true)).custom_id)
       .toBe('lt:dates:1518647607705079828');
   });
 
   it('候補日と相談用の選択肢を出し、複数選択できる', () => {
-    const menu = select(buildPreferredDatesRow('1'));
+    const menu = select(buildPreferredDatesRow('1', true));
     expect(menu.options.map(o => o.value)).toEqual([...candidates(), LT_DATES_CONSULT_VALUE]);
     expect(menu.min_values).toBe(1);
     expect(menu.max_values).toBe(menu.options.length);
@@ -51,20 +52,20 @@ describe('buildPreferredDatesRow', () => {
 
   it('相談用の選択肢は日付と取り違えない値を持つ', () => {
     expect(LT_DATES_CONSULT_VALUE).not.toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    const menu = select(buildPreferredDatesRow('1'));
+    const menu = select(buildPreferredDatesRow('1', true));
     expect(menu.options[menu.options.length - 1]!.label).toBe('この中に登壇できる日がない');
   });
 
   it('1集会1枠なので、空いている日は「空き」と表示する', () => {
     expect(config.ltSlotsPerDay).toBe(1);
-    const menu = select(buildPreferredDatesRow('1'));
+    const menu = select(buildPreferredDatesRow('1', true));
     const dateOptions = menu.options.filter(o => o.value !== LT_DATES_CONSULT_VALUE);
     expect(dateOptions.every(o => o.description === '空き')).toBe(true);
   });
 
   it('既に埋まっている日は選べるが埋まっている旨を表示する', () => {
     const taken = candidates()[0]!;
-    const menu = select(buildPreferredDatesRow('1', [], new Map([[taken, 1]])));
+    const menu = select(buildPreferredDatesRow('1', true, [], new Map([[taken, 1]])));
 
     const option = menu.options.find(o => o.value === taken)!;
     expect(option.description).toBe('埋まっています（運営と要相談）');
@@ -73,7 +74,7 @@ describe('buildPreferredDatesRow', () => {
   it('全日程が埋まっていても選択肢は空にならず、相談の導線が残る', () => {
     // 選択肢が 0 件だと Discord がセレクトを拒否するため、満枠の日も残す
     const usage = new Map(candidates().map(date => [date, 1]));
-    const menu = select(buildPreferredDatesRow('1', [], usage));
+    const menu = select(buildPreferredDatesRow('1', true, [], usage));
 
     const dateOptions = menu.options.filter(o => o.value !== LT_DATES_CONSULT_VALUE);
     expect(dateOptions).toHaveLength(candidates().length);
@@ -83,7 +84,7 @@ describe('buildPreferredDatesRow', () => {
 
   it('選択済みの日付は初期選択状態になる', () => {
     const [first, , third] = candidates();
-    const menu = select(buildPreferredDatesRow('1', [first!, third!]));
+    const menu = select(buildPreferredDatesRow('1', true, [first!, third!]));
 
     expect(menu.options.filter(o => o.default).map(o => o.value)).toEqual([first, third]);
   });
@@ -205,7 +206,7 @@ describe('buildLtComponents', () => {
   // 一部だけ差し替えると他の行が消えるため、常に4行そろって返る必要がある
   it('希望日・動画再生・登壇情報・運営操作の4行を必ず返す', () => {
     const rows = buildLtComponents({
-      ...base, id: '1', preferredDates: [], videoPlayback: null, eventDate: null,
+      ...base, isProd: true, id: '1', preferredDates: [], videoPlayback: null, eventDate: null,
     });
 
     expect(rows).toHaveLength(4);
@@ -219,7 +220,7 @@ describe('buildLtComponents', () => {
   it('レコードの現在値がそれぞれの行に反映される', () => {
     const first = upcomingMeetupDates()[0]!;
     const rows = buildLtComponents({
-      ...base, id: '9', preferredDates: [first], videoPlayback: true, eventDate: null,
+      ...base, isProd: true, id: '9', preferredDates: [first], videoPlayback: true, eventDate: null,
     });
 
     expect(select(rows[0]!).options.filter(o => o.default).map(o => o.value)).toEqual([first]);
@@ -228,7 +229,7 @@ describe('buildLtComponents', () => {
 
   it('日程が確定したら登壇者の希望日セレクトを無効化する', () => {
     const rows = buildLtComponents({
-      ...base, id: '9', preferredDates: [], videoPlayback: true, eventDate: '2026-08-14',
+      ...base, isProd: true, id: '9', preferredDates: [], videoPlayback: true, eventDate: '2026-08-14',
     });
 
     expect(select(rows[0]!).disabled).toBe(true);
@@ -239,18 +240,18 @@ describe('buildLtComponents', () => {
 
 describe('allCandidatesFull', () => {
   it('空きがあれば false', () => {
-    expect(allCandidatesFull(new Map())).toBe(false);
+    expect(allCandidatesFull(new Map(), true)).toBe(false);
     const partial = new Map(upcomingMeetupDates().slice(1).map(d => [d, 1]));
-    expect(allCandidatesFull(partial)).toBe(false);
+    expect(allCandidatesFull(partial, true)).toBe(false);
   });
 
   it('候補日がすべて枠数に達していれば true', () => {
     const full = new Map(upcomingMeetupDates().map(d => [d, config.ltSlotsPerDay]));
-    expect(allCandidatesFull(full)).toBe(true);
+    expect(allCandidatesFull(full, true)).toBe(true);
   });
 
   it('候補期間外の日が埋まっていても影響しない', () => {
-    expect(allCandidatesFull(new Map([['2020-01-03', 99]]))).toBe(false);
+    expect(allCandidatesFull(new Map([['2020-01-03', 99]]), true)).toBe(false);
   });
 });
 
@@ -293,5 +294,44 @@ describe('isProdLtApplyContext', () => {
     expect(isProdLtApplyContext('general', null)).toBe(true);
     expect(isProdLtApplyContext('', null)).toBe(true);
     expect(isProdLtApplyContext('some-post', '')).toBe(true);
+  });
+});
+
+describe('buildPreferredDatesRow（LT 会）', () => {
+  // 次の集会の翌日に LT 会がある、という状態をストアの読み出しだけ差し替えて作る
+  const friday = upcomingMeetupDates()[0]!;
+  const next = new Date(`${friday}T00:00:00`);
+  next.setDate(next.getDate() + 1);
+  const saturday = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+  const event: LtEvent = {
+    date: saturday, isProd: true, startTime: '21:00', endTime: '23:00', slots: 3, theme: 'はじめての LT',
+    applyDeadline: friday, cancelled: false, createdAt: '', updatedAt: '',
+  };
+
+  beforeEach(() => {
+    vi.spyOn(ltEventStore, 'list').mockImplementation(isProd => (isProd ? [event] : []));
+    vi.spyOn(ltEventStore, 'get').mockImplementation((date, isProd) => (isProd && date === saturday ? event : undefined));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('LT 会の日を印つきで候補に出し、LT 会の枠数で残りを数える', () => {
+    const menu = select(buildPreferredDatesRow('1', true, [], new Map([[saturday, 1]])));
+    const option = menu.options.find(o => o.value === saturday);
+    expect(option?.label).toContain('🎤LT会');
+    expect(option?.description).toBe('「はじめての LT」残り 2 枠');
+  });
+
+  it('テストの応募には本番の LT 会を出さない', () => {
+    const menu = select(buildPreferredDatesRow('1', false));
+    expect(menu.options.map(o => o.value)).not.toContain(saturday);
+  });
+
+  it('LT 会の枠が残っていれば、候補日がすべて埋まったとはみなさない', () => {
+    const weeklyFull = new Map(upcomingMeetupDates().map(date => [date, 1]));
+    expect(allCandidatesFull(weeklyFull, true)).toBe(false);
+    expect(allCandidatesFull(new Map([...weeklyFull, [saturday, 3]]), true)).toBe(true);
   });
 });

@@ -8,6 +8,7 @@ import { fetchLtForum } from '../../lt/index';
 import { LT_STATUS_LABELS, resolveLtTags } from '../../lt/index';
 import { ltStore } from '../../lt/index';
 import { LT_STATUSES } from '../../lt/index';
+import { describeLtEventStatus, upcomingLtEvents } from '../../lt/index';
 import { requireOperatorRole } from '../../../shared/interaction';
 import { formatNextRun } from '../next-run';
 
@@ -78,6 +79,8 @@ export async function handleStatusCommand(interaction: ChatInputCommandInteracti
     .map(e => `　${formatMeetupDate(e.eventDate!)} ${e.speakerName}「${e.title}」`
       + `（${LT_STATUS_LABELS[e.status]}）`);
 
+  const ltEvents = upcomingLtEvents(true);
+
   const lines = [
     '📊 **システム状態**',
     '',
@@ -100,6 +103,9 @@ export async function handleStatusCommand(interaction: ChatInputCommandInteracti
     `・進行中: ${activeCounts.join(' / ')}（本番 全 ${entries.length} 件`
     + `${testCount ? ` ／ テスト ${testCount} 件` : ''}）`,
     upcoming.length ? `・確定済みの登壇:\n${upcoming.join('\n')}` : '・確定済みの登壇: なし',
+    '',
+    '**LT 会（本番）**',
+    ...(ltEvents.length ? ltEvents.map(event => describeLtEventStatus(event)) : ['・これから開く LT 会: なし（/lt-event create で作れます）']),
     '',
     '**自動実行スケジュール**',
     ...CRON_SCHEDULES.map(({ label, expr, description }) =>

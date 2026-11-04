@@ -5,7 +5,7 @@ import { ltFeature } from '../feature';
 describe('ltFeature', () => {
   it('LT のスラッシュコマンドをそろえて持つ', () => {
     expect(ltFeature.commands?.map(command => command.definition.name).sort())
-      .toEqual(['generate-lt-image', 'lt-apply', 'lt-material']);
+      .toEqual(['generate-lt-image', 'lt-apply', 'lt-event', 'lt-material']);
   });
 
   it('フォーラムのポスト内のボタン・モーダル・セレクトをそろえて持つ', () => {

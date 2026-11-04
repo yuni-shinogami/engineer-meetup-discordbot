@@ -31,6 +31,7 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 | インスタンスと招待 | `/create-instance`・`/vrc-link`・「サブアカウントで入る」「自分に招待」ボタン | `features/instance/`（`commands/`・`vrc-launcher.ts`・`vrc-invite.ts`・`vrc-links.ts`）・`src/vrchat/createInstance.ts`・`recorder-pc/vrc-launcher/` |
 | LT の録画とラジオ準備 | 録画パネルのボタン（`/create-instance` の結果に付く） | `features/instance/lt-recorder.ts`・`recorder-pc/lt-recorder/` |
 | LT の応募から告知まで | `/lt-apply`・`/lt-material`・フォーラムのポスト内のボタン・セレクト・モーダル・事前告知と開催告知 | `features/lt/`（外に見せるものは `features/lt/index.ts`）・`src/image-gen/` |
+| LT 会 | `/lt-event` | `features/lt/events.ts`（記録・候補日・枠数）・`features/lt/commands/lt-event.ts` |
 | 告知画像 | `/generate-lt-image`・LT の素材がそろったとき | `features/lt/commands/generate-lt-image.ts`・`features/lt/announce-image.ts`・`src/image-gen/` |
 | 司会進行スライド | `/slides`・開催確認の YES | `features/slides/`・`src/canva/`・`src/video/` |
 | 活動の集計 | Discord のイベント（メッセージ・リアクション・VC・参加と退出）・`npm run activity:backfill` | `features/activity/` |
