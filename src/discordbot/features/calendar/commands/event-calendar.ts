@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { callVrceve, deleteFromVrceve, isVrceveConfigured, registerOnVrceve } from '../vrceve';
-import { requireOperatorRole, formatError } from '../shared/interaction';
+import { requireOperatorRole, formatError } from '../../../shared/interaction';
 
 /**
  * VRChat イベントカレンダーへの登録を、開催確認とは別に手で動かす。

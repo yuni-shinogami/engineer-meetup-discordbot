@@ -28,16 +28,16 @@ vi.mock('../../config', () => ({
 vi.mock('../../../x/postAnnouncement', () => ({ postAnnouncement: vi.fn() }));
 vi.mock('../../storage', () => ({ storage: mocks.storage }));
 vi.mock('../../scheduler', () => ({ triggerPreAnnounce: mocks.triggerPreAnnounce }));
-vi.mock('../../slides', () => ({ postSlidesToChannel: mocks.postSlidesToChannel }));
-vi.mock('../../discord-event', () => ({
+vi.mock('../../features/slides/slides', () => ({ postSlidesToChannel: mocks.postSlidesToChannel }));
+vi.mock('../../features/calendar/discord-event', () => ({
   registerDiscordEvent: mocks.registerDiscordEvent,
   deleteDiscordEvent: mocks.deleteDiscordEvent,
 }));
-vi.mock('../../vrc-event', () => ({
+vi.mock('../../features/calendar/vrc-event', () => ({
   registerVrcEvent: mocks.registerVrcEvent,
   deleteVrcEvent: mocks.deleteVrcEvent,
 }));
-vi.mock('../../vrceve', () => ({
+vi.mock('../../features/calendar/vrceve', () => ({
   registerOnVrceve: mocks.registerOnVrceve,
   deleteFromVrceve: mocks.deleteFromVrceve,
 }));

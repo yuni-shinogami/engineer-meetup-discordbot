@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { buildSlidesAttachment, slidesMessage, SlidesFormat } from '../slides';
-import { requireOperatorRole, formatError } from '../shared/interaction';
+import { requireOperatorRole, formatError } from '../../../shared/interaction';
 
 export const slidesCommand = new SlashCommandBuilder()
   .setName('slides')

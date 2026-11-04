@@ -13,9 +13,9 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../canva/export', () => ({ exportDesignAsPdf: mocks.exportDesignAsPdf }));
-vi.mock('../../video/pdf-to-webm', () => ({ pdfToWebm: mocks.pdfToWebm }));
-vi.mock('../config', () => ({ config: mocks.config }));
+vi.mock('../../../../canva/export', () => ({ exportDesignAsPdf: mocks.exportDesignAsPdf }));
+vi.mock('../../../../video/pdf-to-webm', () => ({ pdfToWebm: mocks.pdfToWebm }));
+vi.mock('../../../config', () => ({ config: mocks.config }));
 
 import { buildSlidesAttachment, postSlidesToChannel, slidesFileName, slidesMessage } from '../slides';
 

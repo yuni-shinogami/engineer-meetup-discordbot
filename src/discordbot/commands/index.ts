@@ -14,10 +14,6 @@ export { vrcLinkCommand, handleVrcLinkCommand } from './vrc-link';
 export { postAnnouncementCommand, handlePostAnnouncementCommand } from './post-announcement';
 export { checkPermissionsCommand, handleCheckPermissionsCommand } from './check-permissions';
 export { statusCommand, handleStatusCommand } from './status';
-export { slidesCommand, handleSlidesCommand } from './slides';
-export { eventCalendarCommand, handleEventCalendarCommand } from './event-calendar';
-export { vrcEventCommand, handleVrcEventCommand } from './vrc-event';
-export { discordEventCommand, handleDiscordEventCommand } from './discord-event';
 
 import { confirmMeetupCommand } from './confirm-meetup';
 import { preAnnounceCommand } from './pre-announce';
@@ -26,10 +22,6 @@ import { vrcLinkCommand } from './vrc-link';
 import { postAnnouncementCommand } from './post-announcement';
 import { checkPermissionsCommand } from './check-permissions';
 import { statusCommand } from './status';
-import { slidesCommand } from './slides';
-import { eventCalendarCommand } from './event-calendar';
-import { vrcEventCommand } from './vrc-event';
-import { discordEventCommand } from './discord-event';
 
 /**
  * スラッシュコマンドを Discord に登録する。
@@ -45,10 +37,6 @@ export async function registerCommands(features: readonly BotFeature[] = []) {
     postAnnouncementCommand.toJSON(),
     checkPermissionsCommand.toJSON(),
     statusCommand.toJSON(),
-    slidesCommand.toJSON(),
-    eventCalendarCommand.toJSON(),
-    vrcEventCommand.toJSON(),
-    discordEventCommand.toJSON(),
   ];
   const rest = new REST({ version: '10' }).setToken(config.discordToken);
 

@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { deleteDiscordEvent, registerDiscordEvent } from '../discord-event';
-import { requireOperatorRole, formatError } from '../shared/interaction';
+import { requireOperatorRole, formatError } from '../../../shared/interaction';
 
 /**
  * Discord のイベントの作成を、開催確認とは別に手で動かす。
