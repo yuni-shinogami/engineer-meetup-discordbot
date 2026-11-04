@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { config } from '../discordbot/config';
+import { canvaConfig } from './config';
 
 export const AUTHORIZE_URL = 'https://www.canva.com/api/oauth/authorize';
 const TOKEN_URL = 'https://api.canva.com/rest/v1/oauth/token';
@@ -38,7 +38,7 @@ export class CanvaReauthRequiredError extends Error {
 }
 
 export function tokenFilePath(): string {
-  return join(config.canvaStateDir, 'canva-tokens.json');
+  return join(canvaConfig.stateDir, 'canva-tokens.json');
 }
 
 export function readTokenFile(): CanvaTokenFile | null {
@@ -63,7 +63,7 @@ export function readTokenFile(): CanvaTokenFile | null {
  */
 export function saveTokenFile(refreshToken: string): void {
   const path = tokenFilePath();
-  mkdirSync(config.canvaStateDir, { recursive: true });
+  mkdirSync(canvaConfig.stateDir, { recursive: true });
   const body: CanvaTokenFile = { refreshToken, updatedAt: new Date().toISOString() };
   const tmp = `${path}.tmp`;
   writeFileSync(tmp, `${JSON.stringify(body, null, 2)}\n`);
@@ -71,7 +71,7 @@ export function saveTokenFile(refreshToken: string): void {
 }
 
 function basicAuthHeader(): string {
-  const raw = `${config.canvaClientId}:${config.canvaClientSecret}`;
+  const raw = `${canvaConfig.clientId}:${canvaConfig.clientSecret}`;
   return `Basic ${Buffer.from(raw).toString('base64')}`;
 }
 
@@ -97,7 +97,7 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string):
     grant_type: 'authorization_code',
     code,
     code_verifier: codeVerifier,
-    redirect_uri: config.canvaRedirectUri,
+    redirect_uri: canvaConfig.redirectUri,
   });
   saveTokenFile(token.refresh_token);
 }

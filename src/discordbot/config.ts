@@ -102,15 +102,9 @@ export const config = {
    */
   vrceveSshKey: process.env.VRCEVE_SSH_KEY || '',
 
-  // --- Canva（司会進行スライドの PDF 配布） ---
-  canvaClientId: process.env.CANVA_CLIENT_ID || '',
-  canvaClientSecret: process.env.CANVA_CLIENT_SECRET || '',
+  // --- Canva（司会進行スライドの PDF 配布）。認可の設定（CANVA_CLIENT_ID など）は canva/config.ts ---
   /** 司会進行スライドのデザイン ID。Canva の編集 URL /design/<ここ>/edit */
   canvaSlideDesignId: process.env.CANVA_SLIDE_DESIGN_ID || '',
-  /** 初回認可のコールバック先。Developer Portal に登録した値と一致していないと弾かれる。 */
-  canvaRedirectUri: process.env.CANVA_REDIRECT_URI || 'http://127.0.0.1:8976/callback',
-  /** リフレッシュトークンの置き場所。VRChat のインスタンス情報と同じ state ディレクトリ。 */
-  canvaStateDir: process.env.CANVA_STATE_DIR || './state',
   /**
    * 添付できる PDF の上限（MB）。超えたら投稿せずサイズを知らせる。
    * LT 素材（LT_MAX_MATERIAL_MB）と同じサーバーの添付上限に合わせて 50MB を既定にしている。

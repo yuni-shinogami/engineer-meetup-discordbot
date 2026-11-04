@@ -24,7 +24,7 @@ vi.mock('../../config', () => ({
 }));
 vi.mock('../../storage', () => ({ storage: mocks.storage }));
 vi.mock('../../../x/quotePost', () => ({ postQuoteAnnouncement: mocks.postQuoteAnnouncement }));
-vi.mock('../../../x/postUrl', () => ({ xPostUrl: (id: string) => `https://x.com/acc/status/${id}` }));
+vi.mock('../../shared/x-post-url', () => ({ xPostUrl: (id: string) => `https://x.com/acc/status/${id}` }));
 vi.mock('../../../vrchat/postGroupAnnouncement', () => ({
   postGroupAnnouncement: mocks.postGroupAnnouncement,
   AuthError: class AuthError extends Error {},

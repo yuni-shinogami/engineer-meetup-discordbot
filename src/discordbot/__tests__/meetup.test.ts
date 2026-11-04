@@ -1,4 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// 開催日の算出はサーバーのローカルタイムゾーンに依存するため、
+// 実行環境によらず結果が安定するよう明示的に JST に固定する。
+process.env.TZ = 'Asia/Tokyo';
 
 vi.mock('../../x/postAnnouncement', () => ({
   postAnnouncement: vi.fn().mockResolvedValue('tweet-id-123'),
@@ -8,6 +12,7 @@ vi.mock('../config', () => ({
   config: {
     xAccount: 'MainAccount',
     testXAccount: 'TestAccount',
+    meetupWeekday: 5,
   },
 }));
 
@@ -59,10 +64,33 @@ describe('executePreAnnounce', () => {
     storage.preAnnouncePostUrl = null;
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('直近の金曜日の日付を YYYY/MM/DD 形式で渡す', async () => {
+    // 2026/07/13 は月曜日 -> 直近の金曜日は 2026/07/17
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-13T00:00:00+09:00'));
+
+    await executePreAnnounce(true);
+
+    expect(mockedPostAnnouncement).toHaveBeenCalledWith('2026/07/17', true);
+  });
+
+  it('当日が金曜日の場合はその日の日付を使う', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-17T00:00:00+09:00'));
+
+    await executePreAnnounce(true);
+
+    expect(mockedPostAnnouncement).toHaveBeenCalledWith('2026/07/17', true);
+  });
+
   it('本番アカウントのツイートURLを組み立てて storage に保存する', async () => {
     const url = await executePreAnnounce(true);
 
-    expect(mockedPostAnnouncement).toHaveBeenCalledWith(true);
+    expect(mockedPostAnnouncement).toHaveBeenCalledWith(expect.any(String), true);
     expect(url).toBe('https://x.com/MainAccount/status/tweet-id-123');
     expect(storage.lastTweetId).toBe('tweet-id-123');
     expect(storage.preAnnouncePostUrl).toBe('https://x.com/MainAccount/status/tweet-id-123');
@@ -77,7 +105,7 @@ describe('executePreAnnounce', () => {
   it('テストアカウントのツイートURLを組み立てる', async () => {
     const url = await executePreAnnounce(false);
 
-    expect(mockedPostAnnouncement).toHaveBeenCalledWith(false);
+    expect(mockedPostAnnouncement).toHaveBeenCalledWith(expect.any(String), false);
     expect(url).toBe('https://x.com/TestAccount/status/tweet-id-123');
   });
 

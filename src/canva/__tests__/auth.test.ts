@@ -6,15 +6,15 @@ import { join } from 'path';
 const mocks = vi.hoisted(() => ({
   post: vi.fn(),
   config: {
-    canvaClientId: 'client-id',
-    canvaClientSecret: 'cnvca-secret',
-    canvaRedirectUri: 'http://127.0.0.1:8976/callback',
-    canvaStateDir: '',
+    clientId: 'client-id',
+    clientSecret: 'cnvca-secret',
+    redirectUri: 'http://127.0.0.1:8976/callback',
+    stateDir: '',
   },
 }));
 
 vi.mock('axios', () => ({ default: { post: mocks.post } }));
-vi.mock('../../discordbot/config', () => ({ config: mocks.config }));
+vi.mock('../config', () => ({ canvaConfig: mocks.config }));
 
 import {
   CanvaReauthRequiredError,
@@ -43,7 +43,7 @@ describe('Canva の認証', () => {
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), 'canva-auth-test-'));
-    mocks.config.canvaStateDir = dir;
+    mocks.config.stateDir = dir;
     mocks.post.mockReset();
     resetAccessTokenCache();
   });

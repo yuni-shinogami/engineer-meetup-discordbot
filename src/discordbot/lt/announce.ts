@@ -2,7 +2,7 @@ import { AttachmentBuilder, Client, TextChannel } from 'discord.js';
 import { postLtGroupAnnouncement } from '../../vrchat/postLtAnnouncement';
 import { postTweet, postTweetWithImage } from '../../x/xBot';
 import { config, ltAnnounceRoleId } from '../config';
-import { xPostUrl } from '../../x/postUrl';
+import { xPostUrl } from '../shared/x-post-url';
 import {
   buildDiscordAnnounceText,
   buildVrchatAnnounce,

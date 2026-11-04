@@ -2,8 +2,9 @@ import { Client, TextChannel, ActionRowBuilder, ButtonBuilder, ButtonStyle } fro
 import { config } from './config';
 import { storage } from './storage';
 import { postAnnouncement } from '../x/postAnnouncement';
-import { xPostUrl } from '../x/postUrl';
+import { xPostUrl } from './shared/x-post-url';
 import { buildCustomId } from './interactions';
+import { formatSlashDate, upcomingMeetupDates } from './lt/dates';
 
 /**
  * 開催確認ボタンの customId。
@@ -49,7 +50,9 @@ export function buildLatePreAnnounceRow(isProd: boolean): ActionRowBuilder<Butto
 }
 
 export async function executePreAnnounce(isProd: boolean): Promise<string> {
-  const tweetId = await postAnnouncement(isProd);
+  // 開催日の算出は LT 側と同じ `MEETUP_WEEKDAY` に従わせる（曜日の定義を二重に持たない）
+  const dateStr = formatSlashDate(upcomingMeetupDates(1)[0] ?? '');
+  const tweetId = await postAnnouncement(dateStr, isProd);
 
   const postUrl = xPostUrl(tweetId, isProd);
 

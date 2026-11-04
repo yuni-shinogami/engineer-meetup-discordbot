@@ -1,4 +1,4 @@
-import { config } from '../discordbot/config';
+import { config } from '../config';
 
 /**
  * ツイート ID から投稿 URL を組み立てる。

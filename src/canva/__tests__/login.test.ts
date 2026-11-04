@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createHash } from 'crypto';
 
-vi.mock('../../discordbot/config', () => ({
-  config: {
-    canvaClientId: 'client-id',
-    canvaClientSecret: 'cnvca-secret',
-    canvaRedirectUri: 'http://127.0.0.1:8976/callback',
-    canvaStateDir: '/tmp/unused',
+vi.mock('../config', () => ({
+  canvaConfig: {
+    clientId: 'client-id',
+    clientSecret: 'cnvca-secret',
+    redirectUri: 'http://127.0.0.1:8976/callback',
+    stateDir: '/tmp/unused',
   },
 }));
 
