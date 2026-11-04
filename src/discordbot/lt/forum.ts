@@ -13,7 +13,7 @@ import {
 } from 'discord.js';
 import { config, ltForumChannelId } from '../config';
 import { buildCustomId } from '../interactions';
-import { formatMeetupDate, formatShortDate, upcomingMeetupDates } from './dates';
+import { formatMeetupDate, formatShortDate, upcomingMeetupDates } from '../shared/meetup-dates';
 import { ANNOUNCE_TARGETS, announceSummary } from './announce';
 import { materialSummary } from './materials';
 import { LT_STATUS_LABELS, requireLtTagIds, resolveLtTags } from './status';

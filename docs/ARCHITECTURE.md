@@ -22,7 +22,7 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 | 司会進行スライド | `/slides` | `slides.ts`・`commands/slides.ts`・`src/canva/`・`src/video/` |
 | 活動の集計 | Discord のイベント（メッセージ・リアクション・VC・参加と退出） | `activity/` |
 | 状態の確認 | `/status`・`/check-permissions` | `commands/{status,check-permissions}.ts` |
-| （共通の部品） | どの機能からも使う | `shared/interaction.ts`（運営ロールの確認・エラーの返信）・`shared/x-post-url.ts`（ツイートの URL） |
+| （共通の部品） | どの機能からも使う | `shared/interaction.ts`（運営ロールの確認・エラーの返信）・`shared/x-post-url.ts`（ツイートの URL）・`shared/meetup-dates.ts`（開催日の算出と日付の書式） |
 
 ## 入口
 

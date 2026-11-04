@@ -3,7 +3,7 @@ import { existsSync } from 'fs';
 import { config, ltForumChannelId } from '../config';
 import { storage } from '../storage';
 import { CRON_SCHEDULES } from '../scheduler';
-import { formatDateKey, formatMeetupDate } from '../lt/dates';
+import { formatDateKey, formatMeetupDate } from '../shared/meetup-dates';
 import { fetchLtForum } from '../lt/forum';
 import { LT_STATUS_LABELS, resolveLtTags } from '../lt/status';
 import { ltStore } from '../lt/store';
