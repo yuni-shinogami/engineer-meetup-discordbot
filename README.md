@@ -650,16 +650,12 @@ systemctl enable --now engineer-meetup-bot engineer-meetup-deploy.timer
 ```
 src/
   discordbot/
-    index.ts        エントリーポイント、イベントハンドラ登録
+    index.ts        エントリーポイント。FEATURES（各機能の BotFeature）を登録する
+    register-commands.ts  各機能のスラッシュコマンドを Discord に登録する
     config.ts        環境変数の読み込み
-    scheduler.ts      定期実行の時刻（月曜 12:00 の開催確認 / 木曜 19:00 の事前告知）。処理は features/meetup/weekly.ts
+    scheduler.ts      定期実行の登録（時刻は features/meetup/schedules.ts、処理は features/meetup/weekly.ts）
     storage.ts        週次状態の永続化（state/storage.json）
-    interactions.ts   customId のルーティング（ボタン・モーダル・セレクト）
-    executor.ts       外部スクリプト実行ユーティリティ
-    activity/
-      collector.ts    Discord のイベントと VC の見回りから集計を記録する
-      store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
-      backfill.ts     過去のメッセージ履歴からメッセージの集計を作り直す（npm run activity:backfill）
+    interactions.ts   BotFeature の型と、スラッシュコマンド・customId（ボタン・モーダル・セレクト）の振り分け
     features/         機能ごとのフォルダー。外からは各機能の index.ts だけを使う（docs/ARCHITECTURE.md）
       lt/
         index.ts        LT の機能が外に見せるもの
@@ -680,11 +676,16 @@ src/
       meetup/         開催確認（YES/NO）・事前告知・開催告知と /confirm-meetup・/pre-announce・/post-announcement
         weekly.ts       毎週の開催確認と事前告知の本体（scheduler.ts と「今すぐ事前告知を投稿する」ボタンから呼ぶ）
         meetup.ts       開催確認のメッセージと事前告知の投稿
+        schedules.ts    毎週の定期実行の時刻（cron 式。CONFIRM_CRON・PRE_ANNOUNCE_CRON で変えられる）
       instance/       VRChat のインスタンス作成・招待・アカウント登録と /create-instance・/vrc-link
         vrc-launcher.ts   「サブアカウントで入る」ボタン（別の PC の VRChat を SSH で起動）
         vrc-invite.ts     「自分に招待」ボタン
         lt-recorder.ts    「LT録画開始」ボタンと録画パネル（別の PC の OBS で録画し、YouTube へ非公開でアップ）
-    commands/          スラッシュコマンドの定義とハンドラ（LT のものは features/lt/commands/）
+      activity/       Discord の活動の集計（起動したら集計を始める）
+        collector.ts    Discord のイベントと VC の見回りから集計を記録する
+        store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
+        backfill.ts     過去のメッセージ履歴からメッセージの集計を作り直す（npm run activity:backfill）
+      admin/          運営向けの確認（/status・/check-permissions）
     shared/
       interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信
       x-post-url.ts   ツイート ID から投稿 URL を組み立てる（本番／テストのアカウントを選ぶ）

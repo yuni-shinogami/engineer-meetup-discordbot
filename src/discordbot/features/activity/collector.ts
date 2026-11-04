@@ -1,5 +1,5 @@
 import { Client, Events, GuildMember, Message, PartialGuildMember, User } from 'discord.js';
-import { config } from '../config';
+import { config } from '../../config';
 import { ActivityStore, activityStore, UserRef, VoiceSample } from './store';
 
 const MINUTE_MS = 60 * 1000;

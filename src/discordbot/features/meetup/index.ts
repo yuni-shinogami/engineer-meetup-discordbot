@@ -8,9 +8,10 @@
 
 export { meetupFeature } from './feature';
 
-// --- 毎週の定期実行（scheduler.ts）から呼ぶ ---
+// --- 毎週の定期実行（scheduler.ts）の時刻と、そこから呼ぶ処理。時刻は /status も表示する ---
 
 export {
   triggerConfirmMeetup,
   triggerPreAnnounce,
 } from './weekly';
+export { CRON_SCHEDULES } from './schedules';

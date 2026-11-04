@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { instanceFeature } from '../feature';
 
-// 入口から登録が漏れていないか。index.ts の switch・handlers.ts・commands/index.ts で登録していたものと同じ一覧
+// 機能のコマンドやボタンの一覧から、登録が漏れていないか
 describe('instanceFeature', () => {
   it('インスタンス作成とアカウント登録のスラッシュコマンドを持つ', () => {
     expect(instanceFeature.commands?.map(command => command.definition.name).sort())
