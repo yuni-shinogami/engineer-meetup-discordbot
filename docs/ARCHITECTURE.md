@@ -1,7 +1,7 @@
 # Bot の構成
 
 Bot の実装の地図です。「この機能はどのファイル？」「何をきっかけに動く？」「どこからどこへ import してよい？」に答えるためのもので、
-機能の使い方は [README](../README.md)、ファイルごとの役割は README の「ディレクトリ構造」にあります。
+機能の使い方は [features.md](features.md)、ファイルごとの役割はこのページの「[ディレクトリ構造](#ディレクトリ構造)」にあります。
 
 機能を足したり、ファイルを移したりしたら、このページも合わせて直してください。
 
@@ -84,3 +84,84 @@ import の向きに次の決まりがあり、`npm test`（`src/__tests__/depend
 ## 依存関係の図
 
 [dependency-graph.md](dependency-graph.md) にあります。`npm run deps:graph` で作り直せます。
+
+## ディレクトリ構造
+
+```
+src/
+  discordbot/
+    index.ts        エントリーポイント。FEATURES（各機能の BotFeature）を登録する
+    register-commands.ts  各機能のスラッシュコマンドを Discord に登録する
+    config.ts        環境変数の読み込み
+    scheduler.ts      定期実行の登録（時刻は features/meetup/schedules.ts、処理は features/meetup/weekly.ts）
+    storage.ts        週次状態の永続化（state/storage.json）
+    interactions.ts   BotFeature の型と、スラッシュコマンド・customId（ボタン・モーダル・セレクト）の振り分け
+    features/         機能ごとのフォルダー。外からは各機能の index.ts だけを使う（docs/ARCHITECTURE.md）
+      lt/
+        index.ts        LT の機能が外に見せるもの
+        feature.ts      LT のスラッシュコマンドとボタン・モーダル・セレクトの一覧（入口がまとめて登録する）
+        commands/       LT のスラッシュコマンドとフォーラムのポスト内の操作（/lt-apply・/lt-material・/generate-lt-image など）
+        types.ts        LtEntry / LtStatus の定義、未入力項目の判定
+        status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決
+        store.ts        LT レコードの永続化（state/lt-store.json、原子的書き込み）
+        forum.ts        フォーラムポストの作成・タグ同期・ポスト内コンポーネント
+        materials.ts    告知素材のダウンロードとローカル保存
+        announce-image.ts  告知画像の生成と作り直し
+        announce-text.ts   媒体ごとの告知文の組み立て
+        announce.ts        X / Discord / VRChat への投稿（冪等・部分失敗対応）
+        weekly-announce.ts 週次フローに同乗する LT 告知の一括投稿と運営への報告
+        guard.ts        ポスト内コンポーネント操作の共通検証（本人確認・運営確認）
+      calendar/       イベント登録（VRChat イベントカレンダー・VRChat のグループのイベント・Discord のイベント）と /event-calendar・/vrc-event・/discord-event
+      slides/         司会進行スライド（Canva から PDF・動画を取って投稿）と /slides
+      meetup/         開催確認（YES/NO）・事前告知・開催告知と /confirm-meetup・/pre-announce・/post-announcement
+        weekly.ts       毎週の開催確認と事前告知の本体（scheduler.ts と「今すぐ事前告知を投稿する」ボタンから呼ぶ）
+        meetup.ts       開催確認のメッセージと事前告知の投稿
+        schedules.ts    毎週の定期実行の時刻（cron 式。CONFIRM_CRON・PRE_ANNOUNCE_CRON で変えられる）
+      instance/       VRChat のインスタンス作成・招待・アカウント登録と /create-instance・/vrc-link
+        vrc-launcher.ts   「サブアカウントで入る」ボタン（別の PC の VRChat を SSH で起動）
+        vrc-invite.ts     「自分に招待」ボタン
+        lt-recorder.ts    「LT録画開始」ボタンと録画パネル（別の PC の OBS で録画し、YouTube へ非公開でアップ）
+      activity/       Discord の活動の集計（起動したら集計を始める）
+        collector.ts    Discord のイベントと VC の見回りから集計を記録する
+        store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
+        backfill.ts     過去のメッセージ履歴からメッセージの集計を作り直す（npm run activity:backfill）
+      admin/          運営向けの確認（/status・/check-permissions）
+    shared/
+      interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信
+      x-post-url.ts   ツイート ID から投稿 URL を組み立てる（本番／テストのアカウントを選ぶ）
+      meetup-dates.ts 次の開催日の算出と日付の書式（MEETUP_WEEKDAY に従う）
+  x/
+    xBot.ts           X (Twitter) API クライアント
+    postAnnouncement.ts  事前告知ツイートの投稿
+    profileImage.ts   X プロフィール画像 URL の取得
+    quotePost.ts      開催告知の引用リポスト
+    assets/           投稿テンプレート・画像
+  vrchat/
+    api/              VRChat API クライアント（vrchat-gateway 経由。ログイン中のアカウント・ユーザー・フレンド・インスタンス作成・投稿）
+    actions/          VRChat 上のアクション（グループ投稿・招待）
+    session.ts        ゲートウェイ経由のクライアントとログイン中のアカウントを取る
+    links.ts          プロフィールURLの解釈と Discord ↔ VRChat 対応表の永続化
+    postLtAnnouncement.ts  LT 告知のグループ掲示板投稿（インスタンス情報に依存しない）
+    createInstance.ts     インスタンス作成フロー
+    postGroupAnnouncement.ts  グループ掲示板への告知フロー
+    assets/           グループ投稿テンプレート
+  image-gen/
+    generate.ts       画像生成エントリーポイント（テンプレートを HTML にして Chromium で描く）
+    browser.ts        ヘッドレス Chromium の起動と描画
+    fonts.ts          フォント読み込み
+    preview.ts        テンプレートのプレビュー（npm run image:preview）
+    templates/
+      lt-announce.tsx     LT 告知画像テンプレート（構造）
+      lt-announce.css     LT 告知画像テンプレート（見た目）
+    assets/
+      images/             テンプレートで使用する画像素材
+assets/
+  fonts/              フォントキャッシュ（自動生成、.gitignore 対象）
+deploy/
+  deploy.sh                       本番でのデプロイ（pull・ビルド・再起動・起動確認）
+  auto-deploy.sh                  main に新しいコミットがあれば deploy.sh を実行し、失敗したら巻き戻す
+  engineer-meetup-bot.service     本番の systemd ユニット
+  engineer-meetup-deploy.service  auto-deploy.sh を実行するユニット
+  engineer-meetup-deploy.timer    上を 1 分ごとに起動するタイマー
+  analytics-export.sh             analytics が取得用の鍵で入ったときに動く（LT の記録とアクティビティの集計を返す）
+```
