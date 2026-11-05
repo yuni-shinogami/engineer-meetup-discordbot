@@ -1,759 +1,83 @@
 # Engineer Meetup Discord Bot
 
-エンジニア集会の運営をサポートするための Discord Bot です。
-毎週の開催確認・事前告知・インスタンス起動・SNS 告知を半自動化します。
-また、LT（ライトニングトーク）の告知画像を生成する機能を持ちます。
+技術コミュニティ「[エンジニア集会](https://engineer-meetup.com/)」の運営を自動化する Discord Bot です。
+エンジニア集会は、2021 年から VRChat で毎週金曜日に開いている、ジャンルを問わないエンジニアの集まりです。
 
-## 主な機能
+毎週の開催確認から、SNS での告知、VRChat のインスタンス作成、LT（ライトニングトーク）の応募受付と録画の公開まで、
+運営が手で回していた作業を Discord のコマンドとボタンにまとめています。運営の誰かが忙しくなっても、集会が止まらないようにするためです。
 
-1. **開催確認 (毎週月曜 12:00 自動 / `/confirm-meetup` で手動)**
-   - 運営チャンネルに「今週やる？」の YES/NO ボタンを送信します。
-   - YES が押されると、その週の事前告知が予約されます（`storage.json` に保存）。
-   - `VRCEVE_SSH_KEY` を設定していれば、YES で **VRChat イベントカレンダー**（vrceve.com）にもその週の集会を登録し、編集用 URL を運営チャンネルに流します（22:00〜23:30。LT がある週はイベント名に「【LTあり】タイトル」、内容に LT の一覧を入れます）。登録は Google ログインが要るフォームなので、ログイン済みの Chrome を置いたデスクトップ VM が送ります（[`browser-desktop/`](browser-desktop/README.md)）。あとから NO に変えると削除します。テストチャンネルの YES では送らずに、入力した画面だけを添付します。
-   - 開催確認とは別に、`/event-calendar` で手で登録・削除したり、VM の Chrome のログインを確かめたりできます。
-   - YES で **VRChat のグループのイベント**（VRChat の「イベント」に載るカレンダー）にもその週の集会を作ります（公開・Hangout・作成時の通知なし。タイトル・内容・時刻は VRChat イベントカレンダーと同じ）。あとから NO に変えると削除します。テストチャンネルの YES では、テスト用のグループにグループ内だけで作ります。開催確認とは別に `/vrc-event` で手で登録・削除できます。
-   - YES で **Discord のイベント**もその週の分だけ作ります（以前は毎週の繰り返しのイベントを 1 つ置いていたが、開催しない週にも載ってしまうため）。中身は以前の毎週のイベントと同じ（外部の場所「VRChat」、22:00〜翌 3:00、説明・画像 `assets/discord-event.png`）で、LT がある週は名前と説明に LT を足します。NO に変えると削除します。テストチャンネルの YES では作らずに内容だけを返します。`/discord-event` で手で作成・削除もできます。Bot のロールに「イベントの作成」か「イベントの管理」の権限が必要です。vrchat-gateway で `POST /calendar/<グループ>/event` と `DELETE /calendar/<グループ>/*` を許可しておく必要があります。
+## できること
 
-2. **事前告知 (毎週木曜 19:00 自動 / `/pre-announce` で手動)**
-   - 開催予約済みの場合、X（Twitter）に事前告知ツイート（画像付き）を投稿します。
-   - 投稿したツイート ID を `storage.json` に保存し、`/post-announcement` の引用リポストで使用します。
-   - **開催決定が遅れた場合のリマインド**: 19:00 の時点で開催確認が未回答なら、運営ロール（`OPERATOR_ROLE_ID`）にメンションして運営チャンネルに知らせます（NO 回答済みの週は通知しません）。
-   - その後 YES が押されると、開催確認のメッセージに **「今すぐ事前告知を投稿する」ボタン** を出します。押すと 19:00 の自動実行と同じ処理（事前告知＋翌日の LT 告知）を行い、結果を運営チャンネルに流します。テストチャンネルで押した YES からはテストモードで投稿します。
-   - ボタンを押すまでに NO へ変更した場合や、`/pre-announce` で投稿済みの場合は二重投稿しません。
-   - 翌日の LT が確定していれば、続けて **X の LT 告知**も投稿します（事前告知とは別投稿。`LT_AUTO_ANNOUNCE=false` で停止）。Discord と VRChat の LT 告知は当日の `/post-announcement` に回ります。
-
-3. **インスタンス起動 (`/create-instance`)**
-   - VRChat にログインし、Group+ インスタンスを作成、自分とサブアカウントを招待します。
-   - **コマンドを実行した担当者にも招待を送ります**（`/vrc-link` で VRChat アカウントを登録している場合）。
-   - 招待 URL を取得し `storage.json` に保存します（告知は行いません）。
-   - 招待やフレンド申請が失敗してもインスタンス情報は保存されるので、続けて `/post-announcement` を実行できます。
-   - `VRC_LAUNCHER_SSH_TARGET` と `VRC_LAUNCHER_SSH_KEY` を設定していれば、結果に **「🖥️ サブアカウントで入る」ボタン**が付きます。
-     押すと、別の PC（gaming-laptop）でサブアカウントの VRChat をデスクトップモードで起動し、そのインスタンスに直接入ります（運営ロール限定）。
-     ボタンは最新のインスタンスにだけ有効で、後から別のインスタンスを作った場合は古いボタンでは入りません。
-     起動したあとは、その PC の VRChat のログでインスタンスへの入室（ワールドの読み込みまで）を確かめ、入れたら ✅、入れなかったら理由を返信に表示します（最大 3 分ほど待ちます）。
-   - 結果には **「📨 自分に招待」ボタン**が付きます（運営ロール限定）。押した人の VRChat アカウント（`/vrc-link set` で登録したもの）に、そのインスタンスへの招待を送ります。作成時の招待が流れてしまったときや、作成した人以外の運営が入るときに使います（フレンドでなければ代わりにフレンド申請を送ります）。
-   - `LT_RECORDER_SSH_KEY` を設定していれば、**「🎥 LT録画開始」ボタン**も付きます（運営ロール限定）。
-     サブアカウントが入室したあとに押すと、サブアカウントをひな壇前にワープさせて配信用画面を 4 アングルにし、OBS で録画を始めます。
-     返信が録画パネルになり、今日の LT ごとの **「▶ 登壇者名」** で LT の始まりを、**「⏸ 区切り」** で終わりを記録します。
-     **「⏹ 録画終了」** で録画を止めると、録画 PC が記録した時刻で LT ごとに切り分け、過去の LT 動画と同じ作り（オープニングのロゴと日付カード、スライド＋登壇者カメラ＋タイトルの帯、エンディング曲付きのエンディング）に編集します（`archivePolicy` が `none` の LT は編集しません）。
-     録画 PC で YouTube を認可していれば、続けて YouTube に**非公開**でアップロードし、チャンネルに動画の URL と登壇者の希望（一般公開／限定公開）に合わせた切り替え方を報告します。
-     認可していないとき（または録画 PC の `config.toml` で `auto_upload = false` にしたとき）は編集までで止め、書き出したファイル名を報告します（あとで認可すればアップロードだけやり直せます）。途中経過は「🔄 状況」で確認できます。
-     録画 PC 側のスクリプトとセットアップ手順は [`recorder-pc/`](recorder-pc/README.md) にあります。
-   - 同じ条件で **「📻 ラジオ準備」ボタン**も付きます（運営ロール限定）。エンジニア集会アフターラジオの前に押すと、サブアカウントを右Shift＋2 でラジオブースへワープさせ（ワールドがすりガラス・配信中の表示・マイクゾーンをオンにする）、向きをそろえてストリームカメラを開き、Spout に流して、録画 PC の OBS をラジオのシーンにします。配信は OBS で手で開始します。
-
-4. **開催告知 (`/post-announcement`)**
-   - X への引用リポスト・Discord のお知らせチャンネルへの投稿・VRChat グループ告知（掲示板投稿）を一括実行します。
-   - `/pre-announce` を先に実行していないと X 告知はスキップされます。`/create-instance` を先に実行していないとコマンド自体が失敗します。
-   - 当日 LT があれば、続けて **Discord と VRChat グループの LT 告知**も別メッセージで投稿します（`LT_AUTO_ANNOUNCE=false` で停止）。
-
-5. **LT 告知画像生成 (`/generate-lt-image`)**
-   - タイトル・スピーカー名・開催月日・アイコン画像・タイトルスライド画像を受け取り、PNG 画像を生成して返信します。
-
-6. **LT 応募受付 (`/lt-apply`)**
-   - モーダルで応募内容を受け取り、LT フォーラムにポストを自動作成、`受付中` タグを付けて運営チャンネルへ通知します。
-   - 作成されたフォーラムポストが、そのまま応募1件のレコード兼・登壇者との連絡窓口になります。
-   - ポスト内のセレクトで登壇者が発表希望日（候補は `MEETUP_WEEKDAY` から自動算出）と動画再生の予定を回答します。
-   - 運営はポスト内のボタンで日程を確定・変更・取り消しできます。確定するとタイトルとタグが更新され、登壇者へ次の準備を案内します。
-   - `/lt-material` で素材（タイトルスライド・アイコン）を受け取り、そろった時点で告知画像を自動生成してポストに投稿します。
-   - 運営が「告知する」を押すと、内容を確認したうえで X・Discord・VRChat グループへ告知を投稿します（媒体ごとに冪等）。
-   - 応募は登壇者本人が行うため、このコマンドだけは `OPERATOR_ROLE_ID` を要求しません（日程の確定は運営限定）。
-   - **`production` オプションはありません。** 応募先は実行した場所から決まります（後述）。
-
-7. **設定確認 (`/status`, `/check-permissions`)**
-   - `/status`: 今週のスケジュール状況、X/VRChat 連携設定、Bot が参照する各チャンネルの疎通、自動実行スケジュールの次回実行時刻を確認します。
-   - `/check-permissions`: Bot が各チャンネルで必要な権限（閲覧・送信・リンク埋め込み・ロールping）を持っているか確認します。
-
-8. **サーバーのアクティビティ集計（自動）**
-   - サーバーのメッセージ・リアクション・メンション・VC・参加/退出を、日本時間の 1 日ごとに `state/activity/YYYY-MM-DD.json` へ集計します。チャンネル別・時間帯別・ロール別の件数、VC の人・分と同時接続の最大に加え、**ユーザーごと**の発言数（チャンネル別）・付けたリアクション・メンション/リプライした相手・VC の滞在時間を Discord のユーザー ID で持ちます。
-   - ユーザー名と表示名は日別ファイルには入れず、`state/activity/users.json` に最後に見たときのものを持ちます（改名しても過去の集計は ID で追えます）。
-   - **本文は保存しません**（Message Content Intent も使いません）。個人に紐づくデータなので `state/` の外（Git や公開の場所）には出さないでください。
-   - VC の滞在時間は 1 分ごとの見回りで数えます（Bot と AFK チャンネルは除く）。
-   - **過去のメッセージの取り込み**: `npm run activity:backfill -- [--since YYYY-MM-DD] [--until YYYY-MM-DD]` で、チャンネルとスレッド（アーカイブ済みを含む）の履歴からメッセージの集計を作り直します。`--since` を省くと最初から、`--until`（その日の前日まで）を省くと昨日までです。今日の分は Bot が集計中なので指定できません。期間内の日はメッセージ由来の集計を空にしてから数え直すので、何度実行しても同じ結果になります。履歴から取れない投稿時点のロール・リアクション・VC・参加/退出は作らず、既存の値を残します。ゲートウェイには繋がないので Bot を止めずに実行でき、本番では `runuser -u engineer-meetup -- npm run activity:backfill` のようにアプリのユーザーで実行します（`npm run build` 済みであること）。
-   - **analytics への受け渡し**: engineer-meetup-analytics は、取得用の鍵で ssh して `activity` を送ると、`state/activity/` の日別ファイルと `users.json` を tar.gz で受け取ります（`deploy/analytics-export.sh`。コマンドなしなら前からの LT の記録）。このスクリプトは鍵を置いたユーザーの権限で動くので、`install -m 755 -o root -g root deploy/analytics-export.sh /usr/local/bin/analytics-export` でコピーし、authorized_keys の `command=` をそこに向けます。変えたときはもう一度コピーしてください。
-   - 参加・退出は特権 Intent（Server Members）が要るので、Developer Portal の Bot 設定で **Server Members Intent** を有効にしてから `ACTIVITY_MEMBER_EVENTS=true` にしたときだけ数えます。有効にしないまま `true` にすると Bot がログインできません。
-
-9. **権限制御**
-   - `/lt-apply` と `/lt-material` を除く全コマンドは `OPERATOR_ROLE_ID` で指定したロールを持つユーザーのみ実行可能です（この 2 つは登壇者本人が使うため）。
-
-## LT 応募ワークフロー
-
-LT の応募は「応募 → 日程調整 → 素材回収 → 告知」を1本のステートマシンとして扱います。
-**フォーラムポスト1つ＝応募1件**で、スレッド ID がレコードの主キーです。
-ステータスはフォーラムのタグとして表示されますが、**正はあくまでレコード側**で、Bot はレコード → タグの一方向にのみ同期します。
-
-| 内部キー | フォーラムのタグ名 | 意味 |
-| :--- | :--- | :--- |
-| `applied` | 受付中 | 応募受付済み・日程未定 |
-| `scheduled` | 日程確定 | 運営が日程を承認済み |
-| `ready` | 準備完了 | 素材がそろい告知画像を生成済み |
-| `announced` | 告知済み | LT 告知を投稿済み |
-| `done` | 登壇完了 | 登壇が終わった |
-| `cancelled` | 取り下げ | 応募が取り下げられた |
-
-### フォーラムのタイトル
-
-タイトルは **「日付 登壇者名」**（例: `8/14 ゆに`）で、レコードの変化に追従して自動更新されます。
-
-| 状態 | タイトル |
+| 機能 | 内容 |
 | :--- | :--- |
-| 応募直後（希望日未選択） | `日程未定 ゆに` |
-| 希望日を選択（複数なら最も早い日） | `8/14 ゆに` |
-| 運営が日程を確定 | 確定日で更新 |
-
-希望日か確定日かはフォーラムのタグ（`受付中` / `日程確定`）で判別できるため、タイトルには含めていません。
-LT のタイトルはポストの埋め込みに表示されます。
-
-なお **スレッド名の変更は Discord 側で 10 分あたり 2 回に制限** されています。
-`syncLtThreadName` は名前が変わらないときは API を呼ばず、失敗しても応募処理自体は止めません
-（希望日を短時間に何度も選び直すと、タイトルの反映だけが遅れることがあります）。
-
-### 応募先（本番／テスト）の決まり方
-
-`/lt-apply` には `production` オプションがありません。**応募するのは一般の登壇者**なので、
-本番／テストという運営側の都合をコマンド入力で問わない、という方針です。
-代わりに、**実行した場所**から応募先を決めます（`isProdLtApplyContext`）。
-
-| 実行した場所 | 応募先 |
-| :--- | :--- |
-| 運営のテストチャンネル（`TEST_CHANNEL_ID`） | テスト LT フォーラム |
-| テスト LT フォーラムのポストの中 | テスト LT フォーラム |
-| **上記以外のすべて** | **本番 LT フォーラム** |
-
-**既定を本番にしているのが要点です。** テストフォーラムに落ちた応募は運営の目に触れないのに、
-登壇者からは受理されたように見えるため、取りこぼしがいちばん危険な事故になります。
-`TEST_CHANNEL_ID` / `TEST_LT_FORUM_CHANNEL_ID` が未設定の場合も、すべて本番に向かいます。
-
-運営がテストする場合の取り違えは、**モーダルのタイトル**で防いでいます。
-テスト扱いのときだけ「LT応募フォーム**（テスト）**」と表示されるので、送信前に気づけます。
-受付完了の返信にも「（テストフォーラム）」が付きます。
-
-なお `/lt-apply` はコマンドを実行しただけでは何も起きません。モーダルを送信して初めてポストが作られるため、
-誤って実行した場合はそのまま閉じれば影響はありません。
-
-### 本番とテストの分離
-
-`lt-store.json` は本番とテストの応募を 1 ファイルに持つため、レコード自身が応募先を覚えています（`LtEntry.isProd`）。
-`/lt-apply` の実行場所から決まった値を、応募の作成時に記録します。
-
-これが無いと、**テストの応募が本番の枠を埋めます**。`LT_SLOTS_PER_DAY` は既定 1 なので、
-動作確認で 1 件日程を確定させるだけで、その開催日が本物の応募者から `⛔ 〜で埋まっています` と見えてしまいます。
-
-| 対象 | 分離のしかた |
-| :--- | :--- |
-| 枠の消費・満枠判定（`entriesOnDate` / `slotUsageByDate`） | `isProd` で別勘定。引数必須なので呼び出し側で付け忘れられない |
-| 進行中の応募の検索（`findBySpeaker`） | 同上 |
-| `/status` の件数・確定済みの登壇 | 本番のみを表示し、テストは件数だけ添える |
-| 週次の LT 告知 | `entriesOnDate` で絞ったうえ、ポストの置き場所（`isProdLtThread`）でも二重に確認する |
-
-告知だけは二重にしています。冪等キー（`LtEntry.announce`）が本番・テストで共用なので、
-テスト実行が本番分を「投稿済み」にすると木曜の投稿が丸ごと飛ぶためです。
-
-`isProd` を持たない古いレコードは、読み込み時に**テスト扱い**へ倒します（`store.ts`）。
-本番の枠を誤って埋めるより、本番の応募が漏れるほうが `/status` から見えて気づけるためです。
-
-### 応募モーダルの設問
-
-Discord のモーダルは **コンポーネント 5 個まで**（API 仕様）という制約があるため、
-従来の Google フォームの設問を次のように再構成しています。
-
-| モーダルの設問 | 型 | 元フォームの設問 |
-| :--- | :--- | :--- |
-| 発表者の名前 | テキスト | 発表者の名前（Discord 表示名を初期値に設定） |
-| 発表テーマ・タイトル | テキスト | 発表テーマ・タイトル（「未定」可） |
-| LTの所要時間（分） | テキスト | LT の所要時間 |
-| 参加者による撮影・SNS拡散 | セレクト（2択） | 写真撮影/SNS拡散の可否 |
-| 集会YouTubeチャンネルへの録画公開 | セレクト（3択） | 撮影動画の公開可否 |
-
-- **発表者の Discord ユーザー名**は設問から削除しました。`interaction.user.id` から確実に取得できるため、
-  名寄せが不要になり、以降のメンション・催促・本人限定操作がすべて ID ベースで動きます。
-モーダルの 5 枠に収まらない次の 2 つは、作成されたフォーラムポスト内のセレクトで受け取ります。
-
-| ポスト内の設問 | 内容 |
-| :--- | :--- |
-| 発表希望日（複数選択可） | 候補日は Bot が算出して提示するので、開催日を問い合わせる必要はありません。「**この中に登壇できる日がない**」も常に選べます（後述） |
-| LTの中で動画を流す予定はありますか？ | ワールド側の準備要否に関わるため。日程確定後も変更できます |
-| タイトル・Xアカウント（✏️ ボタン → モーダル） | 応募時点では未定でよい情報。後から埋められるようにしています（後述） |
-
-`videoPlayback` は未回答を `null` で保持します。`false`（動画なし）に倒すと未回答と区別できず、
-ワールド準備の確認漏れにつながるためです。ポストの埋め込みには「❔ 未回答」と表示されます。
-
-### 後から埋める情報（タイトル・X アカウント）
-
-応募フォームは「タイトル未定の場合は『未定』と書く」運用なので、**応募時点でタイトルが確定していないことがあります**。
-また、告知画像のアイコンには通常 **X のプロフィール画像**を使うため、X アカウントも回収する必要があります。
-どちらもポスト内の「✏️ タイトル・Xアカウントを登録」ボタンから、いつでも登録・修正できます。
-
-- タイトルが「未定」かどうかは `needsTitle()` で判定します（`未定` / `みてい` / `TBD` / 空欄に**完全一致**した場合のみ。
-  「未定義動作の話」のような正当なタイトルを巻き込まないため、部分一致では判定しません）。
-- X アカウントは `@example`・`example`・`https://x.com/example` のいずれでも受け取り、ID に正規化して保存します。
-  空欄は「未登録」として保存し、エラーにはしません（X を持っていない登壇者もいるため）。
-- このボタンは**登壇者本人に加えて運営も操作できます**。口頭やチャットで聞いた内容を運営が代理入力できるようにするためです。
-
-未入力の項目は `outstandingItems()` にまとめてあり、**ポストの埋め込み・日程確定の連絡・編集後の返信**で同じ一覧を提示します。
-残っている間はボタンが目立つ色（Primary）になります。
-### 撮影・拡散と録画公開の許諾
-
-この 2 つは **行為者が違う別の許諾** です。混同しないよう、レコードでも独立したフィールドで保持しています。
-
-| フィールド | 何の許諾か | 値 | 使いどころ |
-| :--- | :--- | :--- | :--- |
-| `capturePolicy` | **参加者**がスライドを写真撮影し SNS で拡散してよいか | `allowed` / `denied` | 当日アナウンス、告知文の注記 |
-| `archivePolicy` | **運営**が録画を集会 YouTube チャンネルに公開してよいか | `public` / `unlisted` / `none` | 登壇後のアーカイブ作業 |
-
-`unlisted` は「YouTube の限定公開にして URL を集会 Discord 内でのみ共有する」運用を指します。
-
-「参加者に撮られるのは困るが、公式アーカイブなら可」は矛盾しないため、**2 × 3 = 6 通りすべてが有効**です。
-1 問に統合すると選択肢が 6 個になり読みづらいので、モーダルでは 2 問（2択 + 3択）に分けています
-（`src/discordbot/lt/types.ts` の `CAPTURE_POLICY_CHOICES` / `ARCHIVE_POLICY_CHOICES`）。
-その 2 枠を確保するため、「LTの中で動画を流す予定」をポスト側に移しています。
-
-フォーラムポストでは次の場合に警告を表示します。
-
-- `capturePolicy` が `denied` → 当日アナウンスでの周知を促す
-- `archivePolicy` が `public` 以外 → アーカイブ時の制限を明示
-- `videoPlayback` が `true` → ワールド側の準備確認を促す
-
-### 候補日が合わない場合
-
-1 集会あたりの LT 枠は既定で 1 枠（`LT_SLOTS_PER_DAY`）です。候補日は `LT_DATE_CANDIDATES` 回分（既定 8 回＝約2か月先まで）を提示し、
-埋まっている日も「埋まっています（運営と要相談）」として選択肢には残します。**選択肢が 0 件になると Discord がセレクト自体を拒否する**ため、除外はしません。
-
-どの候補日も都合が合わない場合の導線として、セレクトには常に「この中に登壇できる日がない」が入っています。
-これを選ぶと希望時期を書くモーダルが開き、内容は `LtEntry.scheduleNote` に保存されたうえで、
-**その応募のフォーラムポスト内に投稿** されます（`OPERATOR_ROLE_ID` をメンション）。
-運営チャンネルには送りません。日程のやり取りは応募ポストに集約したほうが、後から経緯を追えるためです。
-候補日がすべて埋まっている状態で応募された場合は、ポスト作成時の案内文も自動でこの導線を促す文面に切り替わります。
-
-候補日と「登壇できる日がない」は同時に選べます（「基本はこの日だけど他も相談したい」を表現できます）。
-
-### 日程の確定（運営）
-
-日程の確定も応募ポストの中で完結します。ポストには運営専用のボタンが 3 つ並びます。
-
-| ボタン | 動作 |
-| :--- | :--- |
-| 運営: 日程を確定 / 変更 | 候補日のセレクトを**押した本人にだけ**表示し、選んだ日で確定する |
-| 運営: 確定を取り消す | 確定日を消して `受付中` に戻し、枠を解放する（未確定なら押せない） |
-| 運営: 告知する | 3 媒体への告知をまとめて投稿する（日程未確定なら押せない。詳細は後述） |
-
-ボタン自体は登壇者にも見えていますが、押しても `OPERATOR_ROLE_ID` を持たない場合は拒否されます。
-
-選択画面には運営が判断するのに必要な材料（登壇者の希望日・相談内容・現在の確定日）を添えています。
-候補は **希望日を先頭**に並べ、続けて通常の候補日を出します。各選択肢には空き状況（`⭐ 登壇者の希望日` / `空き` / `⛔ 〜で埋まっています`）を表示します。
-相談を経て候補外の日に決まった場合は「**その他の日付を入力する**」からモーダルで直接入力できます（`2026/9/4`・`2026年9月4日`・全角数字も受け付けます）。
-
-- **枠の重複はボタンを押した時点で再判定します。** コンポーネントは作られた時点の空き状況を持っているため、
-  別の応募が先に確定していることがあります。埋まっている場合は確定せず、競合しているポストへのリンクを返します。
-- 確定すると応募ポストに登壇者宛の通知が投稿され、未入力の項目（タイトル・X アカウント・動画再生の有無）と、
-  告知画像に使う素材（アイコン＝X のプロフィール画像／タイトルスライド）を案内します。
-- 確定済みのレコードは登壇者側の希望日セレクトが**無効化**されます。変更したい場合は運営が「確定を取り消す」か「日程を変更」を使います。
-- 素材回収や告知まで進んだレコード（`ready` / `announced`）の日付を変更しても、**ステータスは巻き戻しません**。
-- 確定 → 取り消し → 再確定を短時間に繰り返すと、スレッド名の変更が 10 分 2 回の上限に触れてタイトルの反映だけが遅れることがあります（レコードと本文は正しいまま）。
-
-確定済みの登壇予定は `/status` の「LT 応募」セクションで開催日順に確認できます。
-
-### 告知素材の回収と告知画像の生成（`/lt-material`）
-
-登壇者が `/lt-material` で素材を送ると、Bot が保存して**告知画像まで自動生成**し、応募ポストに投稿します。
-
-| オプション | 内容 |
-| :--- | :--- |
-| `title-slide` | タイトルスライドの画像（発表の1枚目） |
-| `icon` | 登壇者アイコン画像。**省略時は X のプロフィール画像を使います** |
-
-- **応募ポストの中で実行**するのが基本です。進行中の応募が1件しかない場合はどこから実行しても構いません（複数ある場合はポスト内での実行を促します）。
-- 登壇者本人に加えて**運営も代理で実行できます**。
-- 受け付けるのは PNG / JPEG / WebP。形式やサイズの不備はそのまま利用者に返します。
-- サイズの上限は `LT_MAX_MATERIAL_MB`（既定 50MB）です。Discord が添付を通した画像は基本的に受けたいので、
-  Nitro Basic / ブーストレベル2 の添付上限に合わせています。サーバーの上限がこれより大きい場合は引き上げてください。
-
-**素材はローカルに保存します**（`LT_MATERIALS_DIR/<スレッドID>/speakerIcon.png` など）。
-Discord の添付 URL は署名付きで約24時間で失効するため、URL を控えるのではなくその場で実体をダウンロードします。
-同じ種類の素材は拡張子が変わっても古いファイルを消してから書くので、差し替え時に取り残しは出ません。
-
-**アイコンは X のプロフィール画像を既定にしています。** `icon` の添付が無くアイコンも未登録なら、
-登録済みの X アカウントから 400×400 版のプロフィール画像を取得して設定します。
-ただし **X API のユーザー検索はプランによっては利用できない**ため、取得に失敗しても素材登録全体は止めず、
-「`icon` に画像を添付してください」と案内するだけにしています。
-
-告知画像は次がすべてそろった時点で生成され、ステータスが `準備完了` に進みます。
-
-- 開催日の確定（運営）
-- LT のタイトル（「未定」でないこと）
-- 登壇者アイコン画像
-- タイトルスライド画像
-
-足りないものがある場合は生成せず、**何が必要かを一覧で返します**。
-
-**そろう順番は問いません**（`syncAnnounceImage`）。素材が先に届いていれば日程の確定やタイトルの登録が引き金になり、
-最後の 1 つが埋まった時点で生成してポストに投稿します。タイトルや開催日を後から変えた場合も、生成済みの画像を自動で作り直します
-（この場合はポストに投げ直しません）。
-一方 `/lt-material` の再実行では、素材が変わっていなければ作り直しません（同じ画像をポストに投げ直さないため）。
-
-告知画像が無くても告知の投稿自体は通ります（テキストのみ）。**画像の有無で投稿は止まりません**。
-
-### LT 告知の投稿
-
-**X・Discord お知らせチャンネル・VRChat グループ掲示板**の 3 媒体へ投稿します。
-週次の事前告知・開催告知とは**別の投稿**で、事前告知ツイートに LT の内容が混ざることはありません。
-
-媒体ごとに**出すタイミングが違います**。普段の手作業に合わせて、週次フローに1つずつ同乗させる形にしています。
-
-| 媒体 | いつ出るか | 文面の性格 |
-| :--- | :--- | :--- |
-| **X** | 木曜の事前告知の直後（`/pre-announce`・cron） | 告知画像つき。日時は画像に入っているので本文に書かない |
-| **Discord** | 当日の開催告知（`/post-announcement`） | お知らせping と一緒。X の告知へのリンクで詳細に誘導 |
-| **VRChat グループ** | 同上 | タイトルは登壇者名のみ、本文で LT タイトルを紹介 |
-
-どの媒体も**週次の告知とは別メッセージ**です（事前告知ツイートや開催告知に LT の内容が混ざることはありません）。
-これに加えて、応募ポストの **[📣 運営: 告知する]** ボタンからいつでも 3 媒体まとめて出せます（プレビュー必須）。
-
-#### 週次フローへの同乗
-
-対象は「次の開催日 = `MEETUP_WEEKDAY` で算出した直近の開催日」に確定しているレコードだけです（`登壇済み`・`取り下げ` は除外）。
-実装は `lt/weekly-announce.ts` で、媒体の振り分けは `lt/announce.ts` の `PRE_ANNOUNCE_TARGETS` / `MEETUP_DAY_TARGETS` が持っています。
-
-- 週次の告知とは独立して実行するので、**事前告知ツイートや開催告知が失敗しても LT 告知は出ます**。
-- **タイトル未定など情報が足りないレコードは投稿を見送り**、運営チャンネルに理由付きで報告します。
-- 応募ポストが**本番 LT フォーラムにあるものだけ**が本番実行の対象です。テスト実行（`production: False`）ではテストフォーラムのポストだけを扱います。
-  冪等キー（`LtEntry.announce`）は本番・テストで共用なので、テスト実行が本番分を「投稿済み」にして木曜の投稿を飛ばすのを防ぐためです。
-  この仕分けで外れた応募も「対象外」として報告に残します（黙って落とすと対象ゼロと区別が付かないため）。
-- 結果は媒体ごとに運営チャンネルへ流れます。失敗した媒体はポストのボタンから出し直せます。
-- `LT_AUTO_ANNOUNCE=false` で同乗を止められます（その場合はボタンのみ）。
-- **`lt-only:True` で LT 告知だけを実行できます**（`/pre-announce` なら X、`/post-announcement` なら Discord・VRCGroup）。
-  週次の告知を巻き添えにしないので動作確認に使えます。`/post-announcement lt-only:True` は**招待 URL を要求しない**ため、
-  `/create-instance` でインスタンスを立てずに試せます。
-  名指しの指示なので `LT_AUTO_ANNOUNCE=false` でも実行され、対象が無ければ確認した開催日を添えて返します。
-- 1 回だけ LT を止めたい場合はどちらのコマンドでも `skip-lt:True` です。
-
-#### ボタンからの手動投稿
-
-**押しただけでは投稿しません。** 実際に投稿される 3 媒体分の文面をボタンを押した本人にだけ表示し、
-「この内容で投稿する」を押して初めて外部に出ます。告知は取り消せないうえ同時に 3 媒体へ出るため、確認を必須にしています。
-
-#### 告知文
-
-X の文面は `src/x/assets/lt_announce_template.txt` に置いてあります。どちらもこれまで手で投稿してきた形そのままです。
-
-**X**
-
-```
-{when}のエンジニア集会ではLTがあります！
-
-{speaker} の｢{title}｣です！
-
-良かったらぜひ遊びに来てくださいーー！！
-#エンジニア集会
+| 開催確認 | 毎週月曜に「今週やる？」を運営に聞き、YES なら VRChat・Discord・外部のイベントカレンダーに登録する |
+| 告知 | 前日に X へ事前告知、当日に X・Discord・VRChat グループへ開催告知を投稿する |
+| インスタンス作成 | VRChat のグループインスタンスを作り、運営とサブアカウントを招待する |
+| LT 応募 | 応募を Discord のフォーラムで受け付け、日程調整・素材の回収・告知画像の生成・告知までを 1 本の流れで扱う |
+| LT 録画 | 録画用 PC の VRChat と OBS を操作して LT を録画し、LT ごとに編集して YouTube にアップロードする |
+| 活動の集計 | Discord サーバーの発言・リアクション・VC を日ごとに集計する（本文は保存しない） |
+
+機能ごとの詳しい説明は [docs/features.md](docs/features.md) にあります。
+
+## 全体の構成
+
+```mermaid
+flowchart LR
+  subgraph Discord
+    ops[運営・登壇者]
+  end
+  bot[Discord Bot<br/>TypeScript]
+  gw[vrchat-gateway<br/>VRChat のログインを持つ中継]
+  vrc[(VRChat API)]
+  x[(X API)]
+  pc[録画用 PC<br/>VRChat・OBS・ffmpeg]
+  vm[ブラウザ用 VM<br/>ログイン済みの Chrome]
+  yt[(YouTube)]
+  cal[(イベントカレンダー)]
+
+  ops -- コマンド・ボタン --> bot
+  bot -- 許可した API だけ --> gw --> vrc
+  bot --> x
+  bot -- 用途ごとの SSH 鍵 --> pc --> yt
+  bot -- 用途ごとの SSH 鍵 --> vm --> cal
 ```
 
-**Discord**（`buildDiscordAnnounceText`）
+## 設計で工夫したこと
 
-```
-@お知らせping
-今日はLTがあるよー！
-信濃眞伊さんの｢自作ルータを使用した10Gbps回線の導入 + VRRPによる回線の冗長化をしてみた（途中経過）｣です！
-良かったらぜひ遊びに来てくださいーー！！
-https://x.com/VRENGAssoc/status/2060342403836649944
-```
+- **機能ごとのフォルダー**: `src/discordbot/features/<機能>/` に機能をまとめ、外に見せるものは `index.ts` だけにしています。
+  機能が増えて全体を把握しにくくなったため、少しずつ PR を分けて移しました（[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)）。
+- **import の決まりをテストで守る**: [dependency-cruiser](https://github.com/sverweij/dependency-cruiser) で「機能は他の機能の内部を直接 import しない」などの決まりを書き、`npm test` で検査しています。違反は 0 件です。
+- **秘密をゲートウェイに集める**: VRChat のパスワードと 2FA の秘密鍵は vrchat-gateway だけが持ち、Bot には許した API を呼べるトークンしか渡していません（[docs/vrchat.md](docs/vrchat.md)）。
+- **1 つの鍵で 1 つのことしかできない SSH**: 録画用 PC とブラウザ用 VM には、`command=` で実行できるスクリプトを 1 つに固定した鍵で入ります。Bot が乗っ取られても、その PC で好きなコマンドは打てません（[recorder-pc/](recorder-pc/README.md)、[browser-desktop/](browser-desktop/README.md)）。
+- **本番とテストの分離**: テスト用チャンネルから操作すると、投稿や登録は送らずに内容だけを返すか、テスト用のグループに作ります。
+- **告知画像は HTML と CSS で描く**: ヘッドレス Chromium で PNG にしています。描画中は外部への通信をすべて遮断しています。
 
-| 差し込み | 中身 |
-| :--- | :--- |
-| `{when}` | 開催日当日なら `今日`、前日なら `今週`（`announceWhen`） |
-| `{speaker}` | X 向けは `暁月蒼空さん @_Sora_Akatuki`、Discord 向けは `暁月蒼空さん`（`@` が Discord のメンションと紛らわしいため併記しない）。名前が既に「さん」で終わっていれば重ねない |
-| `{title}` | LT のタイトル。X は 280 重み（日本語 1 文字 = 2）を超える場合、ここだけを縮めて `…` を付ける |
-| 末尾の URL | Discord のみ。X の LT 告知が済んでいればそのリンクを載せ、まだなら行ごと落とす |
+## 使っている技術
 
-メンションは `LT_ANNOUNCE_ROLE_ID`、未設定なら週次と同じ `ANNOUNCE_ROLE_ID`（お知らせping）に飛ばします。
-本文にはタイトルなど登壇者の自由記述が入るため、`allowedMentions` でそのロール以外へのメンションは飛びません。
+- **Bot**: TypeScript、discord.js、node-cron、twitter-api-v2、Vitest、dependency-cruiser
+- **告知画像**: React（テンプレート）、puppeteer-core と Chromium
+- **録画用 PC**: PowerShell、Python、OBS、ffmpeg、VRChat の OSC
+- **ブラウザ用 VM**: Python、Playwright
+- **動かしている場所**: Proxmox VE 上の LXC（systemd）。main にマージすると自動でデプロイされます
 
-**VRChat グループ掲示板**（`buildVrchatAnnounce`）
-
-```
-title: 今日はさみっとさんの LT があります！
-body:  今日はさみっとさんの LT がありますーーー！！
-       タイトルは、「SteamVR Overlay用のUIフレームワーク、作りたくない? FloatSodaと過ごした4ヶ月」です！
-       よかったら遊びに来てねーーー！！
-```
-
-掲示板の一覧で読み切れるよう、**タイトルには LT のタイトルを入れず登壇者名だけ**にしています
-（`VRCHAT_TITLE_MAX = 64` を超える場合は末尾を詰めますが、登壇者名が極端に長くない限り発生しません）。
-本文の括弧だけ全角「」なのも実際の投稿に合わせたものです（X と Discord は半角 ｢｣）。
-メンバー全員への通知はインスタンス告知と同じく既定で飛ばします（`LT_GROUP_POST_NOTIFY`）。
-
-応募時に聞いている**撮影・拡散の可否（`capturePolicy`）は告知文には出しません**。
-応募ポストの埋め込みには表示されるので、当日のアナウンスで扱ってください。
-
-| 媒体 | 内容 | 冪等キー |
-| :--- | :--- | :--- |
-| X | 上記テンプレートの文面＋告知画像 | ツイート ID |
-| Discord | お知らせチャンネル（本番/テストは応募ポストの置き場所で決まる）＋告知画像 | メッセージ URL |
-| VRChat | グループ掲示板の投稿 | 投稿 ID |
-
-- **投稿済みの媒体は再投稿しません。** 各媒体の投稿結果は `LtEntry.announce` に残り、
-  一部が失敗して「告知をやり直す」を押しても、**失敗した媒体だけ**が再送されます。
-- 媒体ごとに独立して実行するので、X が落ちていても Discord と VRChat には出ます。
-  1 つでも投稿できていればステータスは `告知済み` に進み、どこまで出せたかはポストの埋め込みで確認できます。
-- チャンネルや `VRC_STATE_DIR` が未設定の媒体は「スキップ」として扱い、失敗にはしません。
-- 告知画像がまだ無くても投稿できます（テキストのみ）。プレビューで警告します。
-
-**通知は週次の告知と同じ強さで飛ばします。** Discord のロールメンションは `LT_ANNOUNCE_ROLE_ID`
-（未設定なら週次と同じ `ANNOUNCE_ROLE_ID` = お知らせping）、VRChat グループのメンバー全員への通知は
-`LT_GROUP_POST_NOTIFY`（既定 `true`、インスタンス告知の `GROUP_POST_SEND_NOTIFICATION` と同じ扱い）です。
-掲示板に載るだけでは気づかれないため、どちらも既定で通知します。LT だけ静かに出したい場合にこの 2 つを下げてください。
-
-### ステータスとタグ
-
-タグ名は `src/discordbot/lt/status.ts` の `LT_STATUS_LABELS` で管理しています。
-Discord 側のタグ名を変える場合はこの定数も合わせて変更してください。絵文字はタグの `name` とは別フィールドなので、タグに絵文字を付けても名前の引き当てには影響しません。
-
-**事前準備**: LT フォーラムに上記6つのタグを手動で作成してください。タグに「モデレーターのみ設定可」を付けると登壇者による付け替えを防げます（この場合 Bot に `ManageThreads` 権限が必要）。設定漏れは起動時のログと `/status` で確認できます。
-
-`/confirm-meetup`・`/pre-announce`・`/create-instance`・`/post-announcement` には `production` オプション（Boolean、デフォルト `False`）があり、`False`（テストモード）ではテスト用アカウント・テストチャンネル・テスト用 VRChat グループを使用します。**`/pre-announce` と `/post-announcement` は同じ `production` 値で実行してください**（片方が本番・もう片方がテストだと、X 側の「引用元の投稿に自分がメンションされていない」制限に引っかかり引用リポストが 403 で失敗します）。
-
-## VRChat アカウントの登録と招待
-
-`/create-instance` は、インスタンスを立てた**担当者本人にも VRChat の招待**を送ります。
-そのために Discord ユーザーと VRChat アカウントの対応を `/vrc-link` で登録しておきます。
-
-### 招待はフレンド限定という制約
-
-VRChat の招待 API（`POST /invite/{userId}`）は、**フレンドでない相手には 403
-`You need to be friends with that user first.`** を返します。
-そのため `/vrc-link set` は、登録と同時にフレンド状態を確認し、フレンドでなければ
-メインアカウント（vrchat-gateway がログインしている慕狼ゆに）から**フレンド申請を送ります**。
-
-フレンド申請は相手の承認待ちなのでその場では完結しません。だから申請は
-インスタンス作成時ではなく**登録した時点で前倒しに送り**、集会当日までに承認が済んだ状態を作ります。
-`/create-instance` 側は保険として毎回フレンド状態を確認し、まだ非フレンドならその場で申請します。
-
-なお VRChat API は**フレンド申請にメッセージを添えられません**（このエンドポイントは
-リクエストボディを持ちません）。「誰からの申請か」は `/vrc-link` の応答に
-メインアカウントの表示名を出すことで伝えています。
-
-インスタンスは Group+ なので、招待が飛ばなくてもグループメンバーは招待 URL から入室できます。
-**招待とフレンド申請の失敗はすべて非致命扱い**で、インスタンス作成を巻き込みません。
-
-### `/vrc-link` の使い方
-
-| サブコマンド | 説明 |
-| :--- | :--- |
-| `/vrc-link set profile:<プロフィールURL> [user:<@メンバー>]` | VRChat アカウントを登録し、必要ならフレンド申請を送る |
-| `/vrc-link show [user:<@メンバー>]` | 登録内容とフレンド状態を表示 |
-| `/vrc-link clear [user:<@メンバー>]` | 登録を解除（フレンド関係・送信済みの申請には触れません） |
-
-`profile` には **VRChat のプロフィール URL をそのまま貼ってください**。
-プロフィールの Copy Link で取れるので、ユーザーIDの探し方を知らなくても登録できます。
-
-```
-https://vrchat.com/home/user/usr_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-```
-
-末尾のスラッシュ・クエリ・`www.` 付き・スキーム無しも受け付けます。`usr_...` 単体でも構いません。
-ワールドやグループの URL を貼った場合は、何を貼るべきかを指摘して弾きます。
-
-ユーザーIDの形式は**厳密に検証していません**。VRChat のレガシーアカウントは `usr_` プレフィックスを
-持たず `8JoV9XEdpo` のような ID になるため、厳しくすると古参アカウントが登録できなくなります。
-実在するかどうかは `GET /users/{userId}` の応答で判定し、表示名を応答に出して貼り間違いに気づけるようにしています。
-
-`user` を指定すると**代理登録**になります。本人に頼むより分かっている人がまとめて登録するほうが早いためですが、
-本人が何もしていないのに本人の VRChat に申請が飛ぶので、応答に出る VRChat 表示名を必ず確認してください。
-誰が登録したかは `vrc-links.json` の `linkedBy` に残ります。
-
-**vrchat-gateway がログインしているメインアカウント（慕狼ゆに）自身を登録する場合**は、
-フレンド状態の確認も申請も行いません。自分自身とはフレンドになれないためです。
-このアカウントは `/create-instance` が self-invite で招待するので、登録しておくと
-招待の報告に「あなた」として出るようになります。
-
-`/vrc-link` は運営ロール（`OPERATOR_ROLE_ID`）限定です。
-登録内容は `VRC_STATE_DIR/vrc-links.json` に保存されます（`VRC_LINK_STORE_PATH` で変更可）。
-インスタンス情報と同じ VRChat 側の状態なので、保存先も揃えています。個人に紐づくので Git には載せません。
-
-## VRChat へのログイン
-
-VRChat へのログイン（メインアカウントのパスワード・2FA・cookie）は、pve01 の LXC 108 で動く
-**vrchat-gateway**（DevServer の `~/dev/vrchat-gateway`）がまとめて持ちます。Bot は VRChat を直接呼ばず、
-ゲートウェイの `VRC_GATEWAY_URL/api/1/<VRChat API のパス>` を `VRC_GATEWAY_TOKEN` 付きで呼びます。
-Bot はパスワードも 2FA の秘密鍵も持ちません。
-
-ゲートウェイは Bot に許した API（インスタンス作成・招待・フレンド・ユーザー取得・グループ掲示板への投稿など）だけを中継し、
-それ以外は 403 を返します。**VRChat の新しい API を使うときは、ゲートウェイの `clients.json` の
-`engineer-meetup-bot` の `allow` にも足してください。** ゲートウェイがログインできないときは、
-各コマンドが「VRChat 認証エラー: vrchat-gateway が VRChat にログインできません: …」と返します。
-
-## 状態ファイルの置き場所
-
-実行時に書き換わるデータは、すべて **`state/`** にまとめています（`state/` は `.gitignore` 済み）。
-バックアップや別マシンへの移設は、このディレクトリごと運べば済みます。
-
-| ファイル | 内容 | 環境変数 |
-| :--- | :--- | :--- |
-| `state/storage.json` | 週次の開催予定・直近のツイートID・招待URL | `STORAGE_PATH` |
-| `state/lt-store.json` | LT 応募レコード | `LT_STORE_PATH` |
-| `state/lt-materials/` | LT 告知の素材画像 | `LT_MATERIALS_DIR` |
-| `state/latest.json` | 直近に作成したインスタンス情報 | `VRC_STATE_DIR` |
-| `state/vrc-links.json` | Discord ↔ VRChat アカウント対応表 | `VRC_LINK_STORE_PATH` |
-| `state/activity/` | サーバーのアクティビティの日別・ユーザー別集計と、ユーザー名の対応表（`users.json`） | `ACTIVITY_DIR` |
-
-`VRC_STATE_DIR` 以外は**プロセスの cwd 相対**です。本番の systemd サービスはリポジトリを cwd にして起動するので
-通常は意識不要ですが、別のディレクトリから `npm start` すると別の場所を見にいきます。
-
-## セットアップ
-
-### 1. 依存関係のインストール
+## 動かし方
 
 ```bash
 npm install
+cp .env.example .env   # 値を埋める
+npm start              # ts-node で起動する
 ```
 
-### 2. 環境設定
+環境変数・本番のセットアップ・状態ファイル・テストは [docs/operations.md](docs/operations.md) にあります。
 
-`.env.example` を `.env` にコピーし、値を埋めてください。
+## ドキュメント
 
-| 変数名 | 説明 |
+| ページ | 内容 |
 | :--- | :--- |
-| `DISCORD_TOKEN` | Discord Bot のトークン |
-| `GUILD_ID` | Bot を導入するサーバーの ID |
-| `OPERATIONS_CHANNEL_ID` | 運営用チャンネル ID（開催確認・エラー通知） |
-| `PUBLIC_CHANNEL_ID` | 本番お知らせチャンネル ID |
-| `TEST_CHANNEL_ID` | テスト用チャンネル ID（テストモード時に使用） |
-| `ANNOUNCE_ROLE_ID` | 告知メッセージでメンションするロールの ID |
-| `OPERATOR_ROLE_ID` | コマンド実行を許可するロールの ID |
-| `X_ACCOUNT` / `TEST_X_ACCOUNT` | 本番／テスト用 X アカウントのユーザー名（投稿URL組み立てに使用） |
-| `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_SECRET` | 本番 X アカウントの API 資格情報 |
-| `TEST_X_API_KEY` / `TEST_X_API_SECRET` / `TEST_X_ACCESS_TOKEN` / `TEST_X_ACCESS_SECRET` | テスト用 X アカウントの API 資格情報 |
-| `VRC_GATEWAY_URL` / `VRC_GATEWAY_TOKEN` | vrchat-gateway の URL と、ゲートウェイが発行した Bot 用のトークン（下の「VRChat へのログイン」） |
-| `VRC_STATE_DIR` | インスタンス情報の保存先ディレクトリ。未設定なら VRChat への告知などを飛ばす |
-| `VRC_SUB_USER_ID` | インスタンス作成時に自動招待するサブアカウントのユーザーID |
-| `WORLD_ID` | インスタンスを作成するワールドの ID |
-| `GROUP_ID` / `TEST_GROUP_ID` | 本番／テスト用の VRChat グループ ID |
-| `INSTANCE_REGION` | インスタンスのリージョン（任意、デフォルト `jp`） |
-| `VRC_LAUNCHER_SSH_TARGET` / `VRC_LAUNCHER_SSH_KEY` | 「サブアカウントで入る」ボタンで VRChat を起動する PC の SSH 接続先（`ユーザー名@ホスト`）と秘密鍵のパス（任意、両方そろったときだけボタンを出す）。接続先ではこの鍵を `authorized_keys` の `command=` で起動スクリプトに固定し、Bot からは location だけを送る |
-| `LT_RECORDER_SSH_KEY` / `LT_RECORDER_SSH_TARGET` | 「LT録画開始」ボタンで録画する PC の秘密鍵のパスと SSH 接続先（任意。接続先の既定は `VRC_LAUNCHER_SSH_TARGET`、鍵があるときだけボタンを出す）。入室用とは別の鍵にし、接続先ではこの鍵を `authorized_keys` の `command=` で録画スクリプトに固定する |
-| `VRCEVE_SSH_KEY` / `VRCEVE_SSH_TARGET` | VRChat イベントカレンダーに登録するデスクトップ VM の秘密鍵のパスと SSH 接続先（任意。両方そろっているときだけ、開催確認の YES で登録し、NO で削除する）。接続先ではこの鍵を `authorized_keys` の `command=` で `browser-desktop/vrceve/request.sh` に固定する |
-| `VRC_LINK_STORE_PATH` | Discord ↔ VRChat アカウント対応表の保存先（任意、デフォルトは `VRC_STATE_DIR/vrc-links.json`） |
-| `CONFIRM_CRON` / `PRE_ANNOUNCE_CRON` | 自動実行の cron 式（任意、デフォルトは毎週月曜 12:00 / 木曜 19:00） |
-| `STORAGE_PATH` | 週次状態の保存先（任意、デフォルト `./state/storage.json`） |
-| `LT_FORUM_CHANNEL_ID` / `TEST_LT_FORUM_CHANNEL_ID` | 本番／テスト用の LT 応募フォーラムチャンネル ID |
-| `MEETUP_WEEKDAY` | 集会の開催曜日（0=日 … 5=金、任意、デフォルト `5`） |
-| `LT_SLOTS_PER_DAY` | 1回の集会あたりの LT 枠数（任意、デフォルト `1`） |
-| `LT_DATE_CANDIDATES` | 日程選択で提示する候補の開催回数（任意、デフォルト `8`） |
-| `LT_STORE_PATH` | LT レコードの保存先（任意、デフォルト `./state/lt-store.json`） |
-| `LT_MATERIALS_DIR` | LT 素材の保存先ディレクトリ（任意、デフォルト `./state/lt-materials`） |
-| `LT_MAX_MATERIAL_MB` | 素材画像1枚あたりの上限MB（任意、デフォルト `50`） |
-| `LT_ANNOUNCE_ROLE_ID` | LT 告知でメンションするロール ID（任意、未設定なら `ANNOUNCE_ROLE_ID` と同じロール） |
-| `LT_GROUP_POST_NOTIFY` | VRChat グループ告知でメンバー全員に通知するか（任意、デフォルト `true`） |
-| `LT_AUTO_ANNOUNCE` | 週次フローに LT 告知を同乗させるか（任意、デフォルト `true`） |
-| `ACTIVITY_DIR` | アクティビティ集計の保存先ディレクトリ（任意、デフォルト `./state/activity`） |
-| `ACTIVITY_MEMBER_EVENTS` | 参加・退出も数えるか（任意、デフォルト `false`。Server Members Intent を有効にしてから `true` にする） |
-
-`PRE_ANNOUNCE_CRON` の木曜は**開催前日**の事前告知であり、開催日そのものではありません。LT の日程候補は cron 式ではなく `MEETUP_WEEKDAY` から算出します。
-
-`CLIENT_ID` は Bot ログイン時に自動取得されるため設定不要です。
-
-### 3. ビルドと起動
-
-#### 開発モード
-
-```bash
-npm start
-```
-
-#### 本番モード（systemd）
-
-本番は Proxmox 上の LXC コンテナ `engineer-meetup-bot`（Debian 13、この Bot 専用）で、systemd サービス `engineer-meetup-bot` として動かしています。
-専用ユーザー `engineer-meetup` で `/home/engineer-meetup/app` から起動し、落ちても 10 秒後に自動で再起動します。
-書き込めるのは `state/` とフォントキャッシュ（`assets/fonts/`）だけです。
-
-**`main` にマージすれば、1 分以内に自動でデプロイされます。** 手作業は要りません。
-
-本番のタイマー `engineer-meetup-deploy.timer` が 1 分ごとに `deploy/auto-deploy.sh` を実行し、
-`origin/main` に新しいコミットがあれば `deploy/deploy.sh` でデプロイします。
-コンテナから GitHub を見にいく方式なので、GitHub Actions も、外からコンテナに入る経路も使いません。
-
-`deploy/deploy.sh` は `git pull` → `npm ci` → `npm run build` → サービス再起動を行い、
-Discord へのログイン（`Ready! Logged in`）をログで確認できたら完了とします。30 秒以内に確認できなければ失敗です。
-
-**デプロイに失敗したとき**は、直前のコミットに自動で戻し、運営チャンネルに Bot から知らせます。
-失敗したコミットは、`main` に次のコミットが入るまで再試行しません。修正を `main` にマージすれば、それが改めてデプロイされます。
-
-手動でデプロイしたいとき（自動デプロイを止めているときなど）は、次を実行します。
-
-```bash
-ssh engineer-meetup-bot /home/engineer-meetup/app/deploy/deploy.sh
-```
-
-| 操作 | コマンド（コンテナ上で root） |
-| :--- | :--- |
-| 自動デプロイのログ | `journalctl -u engineer-meetup-deploy` |
-| 自動デプロイを止める／再開する | `systemctl disable --now engineer-meetup-deploy.timer` ／ `systemctl enable --now engineer-meetup-deploy.timer` |
-| `.env` だけ変えたときの再起動 | `systemctl restart engineer-meetup-bot` |
-| 停止 | `systemctl stop engineer-meetup-bot` |
-| 状態の確認 | `systemctl status engineer-meetup-bot` |
-| ログの追従 | `journalctl -u engineer-meetup-bot -f` |
-
-**Bot を動かすのは本番の 1 か所だけにしてください。** 別のマシンや `npm start`（ts-node での直接起動）と併用すると Bot が二重に動き、
-同じスラッシュコマンドを取り合って**古いコードのプロセスが応答することがあります**。`npm start` は開発時のみに使ってください。
-
-##### 初回セットアップ
-
-Node.js 24 と、動画変換に使う ffmpeg・poppler-utils、告知画像の描画に使う chromium を入れておきます。
-
-```bash
-apt install git ffmpeg poppler-utils chromium   # Node.js 24 は NodeSource の apt リポジトリから入れる
-useradd --system --create-home --home-dir /home/engineer-meetup --shell /usr/sbin/nologin engineer-meetup
-runuser -u engineer-meetup -- git clone https://github.com/yuni-shinogami/engineer-meetup-discordbot.git /home/engineer-meetup/app
-cd /home/engineer-meetup/app
-runuser -u engineer-meetup -- npm ci && runuser -u engineer-meetup -- npm run build
-
-# .env と state/ を置く（移設なら旧サーバーから両方を運ぶ）。VRC_STATE_DIR は /home/engineer-meetup/app/state にする
-install -d -o engineer-meetup -g engineer-meetup -m 700 state assets/fonts
-chown engineer-meetup:engineer-meetup .env && chmod 600 .env
-
-install -m 644 deploy/engineer-meetup-bot.service deploy/engineer-meetup-deploy.service deploy/engineer-meetup-deploy.timer /etc/systemd/system/
-systemctl daemon-reload
-systemctl enable --now engineer-meetup-bot engineer-meetup-deploy.timer
-```
-
-## コマンド一覧
-
-| コマンド | 説明 |
-| :--- | :--- |
-| `/confirm-meetup` | 今週の開催確認 YES/NO ボタンを運営チャンネルに送信 |
-| `/event-calendar` | 次の集会を VRChat イベントカレンダーに登録（`action` で削除・ログインの確認も）。`production:False`（既定）では送信せずに入力した画面だけを返す。開催確認の YES でも自動で登録される |
-| `/vrc-event` | 次の集会を VRChat のグループのイベントに登録（`action:削除` で本番で作った今週のイベントを削除）。`production:False`（既定）ではテスト用のグループにグループ内だけで作る。開催確認の YES でも自動で登録される |
-| `/discord-event` | 次の集会の Discord のイベントを作成（`action:削除` で本番で作った今週のイベントを削除）。`production:False`（既定）では作らずに内容だけを返す。開催確認の YES でも自動で作られる |
-| `/pre-announce` | X に事前告知（画像付き）を投稿し、翌日の LT 告知（X）も投稿（`lt-only:True` で LT だけ / `skip-lt:True` で LT を省略） |
-| `/create-instance` | VRChat インスタンスを作成し招待 URL を取得。実行者が `/vrc-link` 登録済みなら本人にも招待を送る |
-| `/vrc-link` | VRChat アカウントを登録し、招待を受け取れるようにする（`set` / `show` / `clear`） |
-| `/post-announcement` | X 引用リポスト・Discord・VRCGroup への告知を一括実行し、当日 LT があれば Discord・VRCGroup の LT 告知も投稿（`lt-only:True` で LT だけ / `skip-lt:True` で LT を省略） |
-| `/status` | Bot の設定状態と今週のスケジュール状況を確認 |
-| `/check-permissions` | Bot が各チャンネルで必要な権限を持っているか確認 |
-| `/generate-lt-image` | LT 告知画像を生成して返信 |
-| `/lt-apply` | LT に応募（モーダル入力 → フォーラムポスト自動作成）。オプションなし |
-| `/lt-material` | LT 告知の素材を登録（そろえば告知画像を自動生成） |
-
-### `/generate-lt-image` のオプション
-
-| オプション | 型 | 説明 |
-| :--- | :--- | :--- |
-| `title` | 文字列 | LT タイトル |
-| `speaker-name` | 文字列 | スピーカー名 |
-| `month` | 整数 (1-12) | 開催月 |
-| `day` | 整数 (1-31) | 開催日 |
-| `speaker-icon` | 添付ファイル | スピーカーアイコン画像 |
-| `title-slide` | 添付ファイル | タイトルスライド画像 |
-
-## ディレクトリ構造
-
-機能とファイルの対応・入口・import の決まりは [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)、依存関係の図は [docs/dependency-graph.md](docs/dependency-graph.md) にあります。
-
-```
-src/
-  discordbot/
-    index.ts        エントリーポイント。FEATURES（各機能の BotFeature）を登録する
-    register-commands.ts  各機能のスラッシュコマンドを Discord に登録する
-    config.ts        環境変数の読み込み
-    scheduler.ts      定期実行の登録（時刻は features/meetup/schedules.ts、処理は features/meetup/weekly.ts）
-    storage.ts        週次状態の永続化（state/storage.json）
-    interactions.ts   BotFeature の型と、スラッシュコマンド・customId（ボタン・モーダル・セレクト）の振り分け
-    features/         機能ごとのフォルダー。外からは各機能の index.ts だけを使う（docs/ARCHITECTURE.md）
-      lt/
-        index.ts        LT の機能が外に見せるもの
-        feature.ts      LT のスラッシュコマンドとボタン・モーダル・セレクトの一覧（入口がまとめて登録する）
-        commands/       LT のスラッシュコマンドとフォーラムのポスト内の操作（/lt-apply・/lt-material・/generate-lt-image など）
-        types.ts        LtEntry / LtStatus の定義、未入力項目の判定
-        status.ts       ステータスとフォーラムタグ名の対応・タグ ID 解決
-        store.ts        LT レコードの永続化（state/lt-store.json、原子的書き込み）
-        forum.ts        フォーラムポストの作成・タグ同期・ポスト内コンポーネント
-        materials.ts    告知素材のダウンロードとローカル保存
-        announce-image.ts  告知画像の生成と作り直し
-        announce-text.ts   媒体ごとの告知文の組み立て
-        announce.ts        X / Discord / VRChat への投稿（冪等・部分失敗対応）
-        weekly-announce.ts 週次フローに同乗する LT 告知の一括投稿と運営への報告
-        guard.ts        ポスト内コンポーネント操作の共通検証（本人確認・運営確認）
-      calendar/       イベント登録（VRChat イベントカレンダー・VRChat のグループのイベント・Discord のイベント）と /event-calendar・/vrc-event・/discord-event
-      slides/         司会進行スライド（Canva から PDF・動画を取って投稿）と /slides
-      meetup/         開催確認（YES/NO）・事前告知・開催告知と /confirm-meetup・/pre-announce・/post-announcement
-        weekly.ts       毎週の開催確認と事前告知の本体（scheduler.ts と「今すぐ事前告知を投稿する」ボタンから呼ぶ）
-        meetup.ts       開催確認のメッセージと事前告知の投稿
-        schedules.ts    毎週の定期実行の時刻（cron 式。CONFIRM_CRON・PRE_ANNOUNCE_CRON で変えられる）
-      instance/       VRChat のインスタンス作成・招待・アカウント登録と /create-instance・/vrc-link
-        vrc-launcher.ts   「サブアカウントで入る」ボタン（別の PC の VRChat を SSH で起動）
-        vrc-invite.ts     「自分に招待」ボタン
-        lt-recorder.ts    「LT録画開始」ボタンと録画パネル（別の PC の OBS で録画し、YouTube へ非公開でアップ）
-      activity/       Discord の活動の集計（起動したら集計を始める）
-        collector.ts    Discord のイベントと VC の見回りから集計を記録する
-        store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
-        backfill.ts     過去のメッセージ履歴からメッセージの集計を作り直す（npm run activity:backfill）
-      admin/          運営向けの確認（/status・/check-permissions）
-    shared/
-      interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信
-      x-post-url.ts   ツイート ID から投稿 URL を組み立てる（本番／テストのアカウントを選ぶ）
-      meetup-dates.ts 次の開催日の算出と日付の書式（MEETUP_WEEKDAY に従う）
-  x/
-    xBot.ts           X (Twitter) API クライアント
-    postAnnouncement.ts  事前告知ツイートの投稿
-    profileImage.ts   X プロフィール画像 URL の取得
-    quotePost.ts      開催告知の引用リポスト
-    assets/           投稿テンプレート・画像
-  vrchat/
-    api/              VRChat API クライアント（vrchat-gateway 経由。ログイン中のアカウント・ユーザー・フレンド・インスタンス作成・投稿）
-    actions/          VRChat 上のアクション（グループ投稿・招待）
-    session.ts        ゲートウェイ経由のクライアントとログイン中のアカウントを取る
-    links.ts          プロフィールURLの解釈と Discord ↔ VRChat 対応表の永続化
-    postLtAnnouncement.ts  LT 告知のグループ掲示板投稿（インスタンス情報に依存しない）
-    createInstance.ts     インスタンス作成フロー
-    postGroupAnnouncement.ts  グループ掲示板への告知フロー
-    assets/           グループ投稿テンプレート
-  image-gen/
-    generate.ts       画像生成エントリーポイント（テンプレートを HTML にして Chromium で描く）
-    browser.ts        ヘッドレス Chromium の起動と描画
-    fonts.ts          フォント読み込み
-    preview.ts        テンプレートのプレビュー（npm run image:preview）
-    templates/
-      lt-announce.tsx     LT 告知画像テンプレート（構造）
-      lt-announce.css     LT 告知画像テンプレート（見た目）
-    assets/
-      images/             テンプレートで使用する画像素材
-assets/
-  fonts/              フォントキャッシュ（自動生成、.gitignore 対象）
-deploy/
-  deploy.sh                       本番でのデプロイ（pull・ビルド・再起動・起動確認）
-  auto-deploy.sh                  main に新しいコミットがあれば deploy.sh を実行し、失敗したら巻き戻す
-  engineer-meetup-bot.service     本番の systemd ユニット
-  engineer-meetup-deploy.service  auto-deploy.sh を実行するユニット
-  engineer-meetup-deploy.timer    上を 1 分ごとに起動するタイマー
-  analytics-export.sh             analytics が取得用の鍵で入ったときに動く（LT の記録とアクティビティの集計を返す）
-```
-
-## テスト
-
-```bash
-npm test
-```
-
-[Vitest](https://vitest.dev/) を使用しています。Discord・X・VRChat の各 API 呼び出しはモックし、
-テンプレート置換や環境変数バリデーション、状態遷移などのロジックを検証しています。
-`src/image-gen/__tests__/generate.test.ts` の描画テストは、Chromium（`CHROMIUM_PATH`、既定は `/usr/bin/chromium`）があるときだけ動きます。
-Chromium の版で画素が揺れるため画像の一致は見ず、描いた画像を `src/image-gen/__tests__/__output__/` に書き出すので目で確かめてください。
-
-`npm test` には import の決まり（[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) の「依存の決まり」）の検査も入っています。決まりだけを見るときは `npm run deps:check`、依存関係の図を作り直すときは `npm run deps:graph` を使います。
-
-## 告知画像のテンプレート
-
-告知画像は **HTML と CSS をヘッドレス Chromium で描いて** PNG にしています。
-以前は Satori で描いていましたが、使える CSS が限られていたため切り替えました。grid・グラデーション・`filter`・`text-shadow`・`object-fit` など、ブラウザで使える CSS はそのまま使えます。
-
-| ファイル | 書くもの |
-| :--- | :--- |
-| `templates/<名前>.tsx` | 構造（React の要素）。差し込む文字列は自動でエスケープされる |
-| `templates/<名前>.css` | 見た目。普通の CSS |
-
-- フォントは `font-family: 'NotoSansJP'`（400 / 700）が使えます。ホストのフォントには頼らず、Bot が配ります
-- 画像は data URL か、`assets/images/` 以下の相対パスで参照します（`generate.ts` の `imageAssets` に登録したものだけ）
-- **外部の URL には取りに行きません。** 描画中のリクエストは Bot が配る素材と data URL 以外すべて遮断します
-- 見た目を確かめるときは `npm run image:preview [出力先.png]` でサンプルの素材から PNG を書き出せます
-
-本番では Chromium を `apt install chromium` で入れます。systemd の制限（`NoNewPrivileges`・HOME が読み取り専用）の下で動かすため、
-サンドボックスを切り（`--no-sandbox`）、プロファイルは一時ディレクトリに置いています。描くのは Bot が組み立てた HTML だけで、外部への通信も遮断しているためです。
-ブラウザは描画のときに起動し、使い終わって 60 秒たったら閉じます。
+| [docs/features.md](docs/features.md) | 機能ごとの詳しい説明 |
+| [docs/commands.md](docs/commands.md) | スラッシュコマンドの一覧 |
+| [docs/lt-workflow.md](docs/lt-workflow.md) | LT の応募から告知までの流れ |
+| [docs/vrchat.md](docs/vrchat.md) | VRChat アカウントの登録・招待・ログイン |
+| [docs/operations.md](docs/operations.md) | セットアップ・本番の運用・状態ファイル・テスト・告知画像のテンプレート |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 実装の地図・ディレクトリ構造・import の決まり |
+| [docs/dependency-graph.md](docs/dependency-graph.md) | 依存関係の図 |
