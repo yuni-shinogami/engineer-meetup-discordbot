@@ -3,13 +3,13 @@ import { createClient } from '../client';
 
 describe('createClient', () => {
   beforeEach(() => {
-    process.env.VRC_GATEWAY_URL = 'http://192.168.2.115:8080';
+    process.env.VRC_GATEWAY_URL = 'http://vrchat-gateway.example:8080';
     process.env.VRC_GATEWAY_TOKEN = 'token-from-env';
   });
 
   it('ゲートウェイの /api/1 を VRChat API の代わりに呼ぶ', () => {
     const { http } = createClient();
-    expect(http.defaults.baseURL).toBe('http://192.168.2.115:8080/api/1');
+    expect(http.defaults.baseURL).toBe('http://vrchat-gateway.example:8080/api/1');
   });
 
   it('ゲートウェイのトークンを Bearer で送る', () => {
