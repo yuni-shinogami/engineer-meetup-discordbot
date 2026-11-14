@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatDateKey,
+  formatImageDate,
   formatMeetupDate,
   formatShortDate,
+  nextDateKeyForMonthDay,
   parseDateKey,
   upcomingMeetupDates,
 } from '../meetup-dates';
@@ -85,5 +87,33 @@ describe('upcomingMeetupDates', () => {
 
   it('count が 0 なら空配列', () => {
     expect(upcomingMeetupDates(0, tuesday, 5)).toEqual([]);
+  });
+});
+
+describe('formatImageDate', () => {
+  it('その日の曜日を全角の括弧で付ける（金曜固定にしない）', () => {
+    expect(formatImageDate('2026-08-14')).toBe('8月14日（金）');
+    expect(formatImageDate('2026-08-15')).toBe('8月15日（土）');
+  });
+
+  it('解析できない文字列はそのまま返す', () => {
+    expect(formatImageDate('未定')).toBe('未定');
+  });
+});
+
+describe('nextDateKeyForMonthDay', () => {
+  const from = new Date(2026, 10, 14); // 2026-11-14
+
+  it('今日以降なら今年の日付にする', () => {
+    expect(nextDateKeyForMonthDay(11, 14, from)).toBe('2026-11-14');
+    expect(nextDateKeyForMonthDay(12, 4, from)).toBe('2026-12-04');
+  });
+
+  it('過ぎた月日は来年とみなす', () => {
+    expect(nextDateKeyForMonthDay(1, 8, from)).toBe('2027-01-08');
+  });
+
+  it('存在しない日付は null', () => {
+    expect(nextDateKeyForMonthDay(2, 30, from)).toBeNull();
   });
 });

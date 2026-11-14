@@ -9,6 +9,7 @@ export interface LtAnnounceTemplateProps {
   title: string;
   speakerName: string;
   speakerIcon: string;
+  /** 曜日まで含めた開催日の表記（例: 「6月26日（金）」） */
   eventDate: string;
   titleSlideImage: string;
 }
@@ -30,7 +31,7 @@ export function LtAnnounceTemplate({
         <div className="event">
           <img className="logo" src="assets/images/em_logo_620px_A.png" alt="" />
           <h1>エンジニア集会LT</h1>
-          <p className="date">{eventDate}（金）22:00~</p>
+          <p className="date">{eventDate}22:00~</p>
         </div>
 
         <div className="talk">
