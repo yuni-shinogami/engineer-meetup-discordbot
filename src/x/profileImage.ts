@@ -1,4 +1,4 @@
-import { createXClient } from './xBot';
+import { fetchUserByUsername } from './xBot';
 
 /**
  * X が返すプロフィール画像 URL は 48×48 の `_normal` 版。
@@ -19,12 +19,9 @@ export async function fetchXProfileImageUrl(
   isProd: boolean,
 ): Promise<string | null> {
   try {
-    const client = createXClient(isProd);
-    const result = await client.v2.userByUsername(username, {
-      'user.fields': ['profile_image_url'],
-    });
+    const user = await fetchUserByUsername(username, ['profile_image_url'], isProd);
 
-    const url = result.data?.profile_image_url;
+    const url = user?.profile_image_url;
     if (!url) {
       console.warn(`[X] @${username} のプロフィール画像 URL を取得できませんでした`);
       return null;

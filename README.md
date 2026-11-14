@@ -54,7 +54,7 @@ flowchart LR
 
 ## 使っている技術
 
-- **Bot**: TypeScript、discord.js、node-cron、twitter-api-v2、Vitest、dependency-cruiser
+- **Bot**: TypeScript、discord.js、node-cron、Vitest、dependency-cruiser
 - **告知画像**: React（テンプレート）、puppeteer-core と Chromium
 - **録画用 PC**: PowerShell、Python、OBS、ffmpeg、VRChat の OSC
 - **ブラウザ用 VM**: Python、Playwright

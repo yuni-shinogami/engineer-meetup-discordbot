@@ -94,13 +94,6 @@ module.exports = {
     },
     // 外部サービスの SDK は、それを受け持つ部品の中だけで使う。外部とのやりとりを探す場所を固定するため
     {
-      name: 'twitter-sdk-only-in-x',
-      comment: 'X（twitter-api-v2）とのやりとりは x/ にまとめる。',
-      severity: 'error',
-      from: { pathNot: '^src/x/' },
-      to: { path: '^node_modules/twitter-api-v2/' },
-    },
-    {
       name: 'axios-only-in-api-libs',
       comment: 'HTTP で外部の API を呼ぶのは vrchat/・canva/ にまとめる。',
       severity: 'error',

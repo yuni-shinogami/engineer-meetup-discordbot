@@ -71,7 +71,7 @@ import の向きに次の決まりがあり、`npm test`（`src/__tests__/depend
 | イベント登録が使ってよいほかの機能は LT だけ（`calendar-is-provider`） | イベント登録は開催確認から使われる側。LT はイベント名に LT のタイトルを入れるのに使う |
 | 司会進行スライドからほかの機能は import しない（`slides-is-provider`） | スライドは開催確認から使われる側 |
 | 部品どうしは import しない（`libs-independent`） | 部品を組み合わせるのは Bot の側。部品は単独で読めるようにしておく |
-| 外部サービスの SDK は受け持つ部品の中だけで使う（`twitter-sdk-only-in-x`・`axios-only-in-api-libs`・`renderer-only-in-image-gen`） | `twitter-api-v2` は `x/`、`axios` は `vrchat/`・`canva/`、`puppeteer-core`・`react-dom` は `image-gen/` だけ。外部とのやりとりを探す場所を固定する |
+| 外部サービスの SDK は受け持つ部品の中だけで使う（`axios-only-in-api-libs`・`renderer-only-in-image-gen`） | `axios` は `vrchat/`・`canva/`、`puppeteer-core`・`react-dom` は `image-gen/` だけ。外部とのやりとりを探す場所を固定する |
 | 本番のコードから devDependencies を使わない（`not-to-dev-dep`） | テストや開発の道具に本番のコードが頼らないようにする（型だけの import は除く） |
 | どこからも使われていないファイルを知らせる（`no-orphans`、警告だけ） | 使われていないなら消す |
 
@@ -131,7 +131,7 @@ src/
       x-post-url.ts   ツイート ID から投稿 URL を組み立てる（本番／テストのアカウントを選ぶ）
       meetup-dates.ts 次の開催日の算出と日付の書式（MEETUP_WEEKDAY に従う）
   x/
-    xBot.ts           X (Twitter) API クライアント
+    xBot.ts           X (Twitter) API クライアント（x-gateway 経由）
     postAnnouncement.ts  事前告知ツイートの投稿
     profileImage.ts   X プロフィール画像 URL の取得
     quotePost.ts      開催告知の引用リポスト
