@@ -39,8 +39,7 @@ npm install
 | `ANNOUNCE_ROLE_ID` | 告知メッセージでメンションするロールの ID |
 | `OPERATOR_ROLE_ID` | コマンド実行を許可するロールの ID |
 | `X_ACCOUNT` / `TEST_X_ACCOUNT` | 本番／テスト用 X アカウントのユーザー名（投稿URL組み立てに使用） |
-| `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_SECRET` | 本番 X アカウントの API 資格情報 |
-| `TEST_X_API_KEY` / `TEST_X_API_SECRET` / `TEST_X_ACCESS_TOKEN` / `TEST_X_ACCESS_SECRET` | テスト用 X アカウントの API 資格情報 |
+| `X_GATEWAY_URL` / `X_GATEWAY_TOKEN` | x-gateway の URL と、ゲートウェイが発行した Bot 用のトークン。X の鍵はゲートウェイが持ち、Bot は本番を `engineer-meetup`、テストを `engineer-meetup-test` というアカウント名で呼ぶ |
 | `VRC_GATEWAY_URL` / `VRC_GATEWAY_TOKEN` | vrchat-gateway の URL と、ゲートウェイが発行した Bot 用のトークン（下の「VRChat へのログイン」） |
 | `VRC_STATE_DIR` | インスタンス情報の保存先ディレクトリ。未設定なら VRChat への告知などを飛ばす |
 | `VRC_SUB_USER_ID` | インスタンス作成時に自動招待するサブアカウントのユーザーID |

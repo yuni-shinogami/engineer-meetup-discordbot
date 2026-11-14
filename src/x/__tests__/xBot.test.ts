@@ -1,78 +1,91 @@
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
+import { mkdtempSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
-const { tweetMock, TwitterApiMock } = vi.hoisted(() => {
-  const tweetMock = vi.fn().mockResolvedValue({ data: { id: 'tweet-id' } });
-  const TwitterApiMock = vi.fn().mockImplementation(function TwitterApi() {
-    return { readWrite: { v2: { tweet: tweetMock } } };
+import { fetchUserByUsername, postTweet, postTweetWithImage, quoteTweet } from '../xBot';
+
+// fetch をモックしているので、x-gateway にも X にも繋がない
+const fetchMock = vi.fn();
+
+function reply(status: number, body: unknown) {
+  return Promise.resolve(new Response(JSON.stringify(body), { status }));
+}
+
+describe('xBot（x-gateway 経由の X API 呼び出し）', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubEnv('X_GATEWAY_URL', 'http://gateway.example:8080/');
+    vi.stubEnv('X_GATEWAY_TOKEN', 'gw-token');
+    fetchMock.mockImplementation(() => reply(201, { data: { id: 'tweet-id' } }));
   });
-  return { tweetMock, TwitterApiMock };
-});
 
-vi.mock('twitter-api-v2', () => ({
-  TwitterApi: TwitterApiMock,
-}));
-
-import { postTweet } from '../xBot';
-
-// createClient() は xBot.ts の内部関数のため、資格情報のバリデーション/出し分けは
-// postTweet() 経由で検証する。twitter-api-v2 はモックしているので実際の
-// ネットワーク通信は発生しない。
-describe('xBot createClient（本番/テストアカウントの資格情報バリデーションと出し分け）', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
-    TwitterApiMock.mockClear();
-    tweetMock.mockClear();
+    vi.unstubAllGlobals();
+    fetchMock.mockReset();
   });
 
-  it('isProd: true で本番用の資格情報が一つでも欠けていればエラーになる', async () => {
-    vi.stubEnv('X_API_KEY', 'key');
-    vi.stubEnv('X_API_SECRET', 'secret');
-    vi.stubEnv('X_ACCESS_TOKEN', 'token');
-    vi.stubEnv('X_ACCESS_SECRET', '');
+  it('isProd で本番／テストのアカウントを選び、ゲートウェイのトークンを付けて投稿する', async () => {
+    expect(await postTweet('本番', true)).toBe('tweet-id');
+    await postTweet('テスト', false);
 
-    await expect(postTweet('text', true)).rejects.toThrow('X API credentials missing for 本番アカウント');
-    expect(TwitterApiMock).not.toHaveBeenCalled();
+    const [prodUrl, prodInit] = fetchMock.mock.calls[0]!;
+    const [testUrl] = fetchMock.mock.calls[1]!;
+    expect(prodUrl).toBe('http://gateway.example:8080/x/engineer-meetup/2/tweets');
+    expect(testUrl).toBe('http://gateway.example:8080/x/engineer-meetup-test/2/tweets');
+    expect(prodInit.method).toBe('POST');
+    expect(prodInit.headers).toMatchObject({ Authorization: 'Bearer gw-token', 'Content-Type': 'application/json' });
+    expect(JSON.parse(prodInit.body)).toEqual({ text: '本番' });
   });
 
-  it('isProd: false でテスト用の資格情報が一つでも欠けていればエラーになる', async () => {
-    vi.stubEnv('TEST_X_API_KEY', 'key');
-    vi.stubEnv('TEST_X_API_SECRET', '');
-    vi.stubEnv('TEST_X_ACCESS_TOKEN', 'token');
-    vi.stubEnv('TEST_X_ACCESS_SECRET', 'tSecret');
+  it('画像をアップロードしてから、その media_id を付けて投稿する', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'xbot-'));
+    const image = join(dir, 'a.jpg');
+    writeFileSync(image, 'jpeg');
+    fetchMock
+      .mockImplementationOnce(() => reply(200, { data: { id: 'media-id' } }))
+      .mockImplementationOnce(() => reply(201, { data: { id: 'tweet-id' } }));
 
-    await expect(postTweet('text', false)).rejects.toThrow('X API credentials missing for テストアカウント');
-    expect(TwitterApiMock).not.toHaveBeenCalled();
+    expect(await postTweetWithImage('画像つき', image, true)).toBe('tweet-id');
+
+    const [uploadUrl, uploadInit] = fetchMock.mock.calls[0]!;
+    const [, tweetInit] = fetchMock.mock.calls[1]!;
+    expect(uploadUrl).toBe('http://gateway.example:8080/x/engineer-meetup/2/media/upload');
+    expect((uploadInit.body as FormData).get('media_category')).toBe('tweet_image');
+    expect(JSON.parse(tweetInit.body)).toEqual({ text: '画像つき', media: { media_ids: ['media-id'] } });
   });
 
-  it('isProd: true のときは本番用 (X_*) の資格情報でクライアントを作る', async () => {
-    vi.stubEnv('X_API_KEY', 'prod-key');
-    vi.stubEnv('X_API_SECRET', 'prod-secret');
-    vi.stubEnv('X_ACCESS_TOKEN', 'prod-token');
-    vi.stubEnv('X_ACCESS_SECRET', 'prod-tsecret');
-
-    await postTweet('text', true);
-
-    expect(TwitterApiMock).toHaveBeenCalledWith({
-      appKey: 'prod-key',
-      appSecret: 'prod-secret',
-      accessToken: 'prod-token',
-      accessSecret: 'prod-tsecret',
-    });
+  it('引用は quote_tweet_id を付けて投稿する', async () => {
+    await quoteTweet('引用', 'source-id', true);
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toEqual({ text: '引用', quote_tweet_id: 'source-id' });
   });
 
-  it('isProd: false のときはテスト用 (TEST_X_*) の資格情報でクライアントを作る', async () => {
-    vi.stubEnv('TEST_X_API_KEY', 'test-key');
-    vi.stubEnv('TEST_X_API_SECRET', 'test-secret');
-    vi.stubEnv('TEST_X_ACCESS_TOKEN', 'test-token');
-    vi.stubEnv('TEST_X_ACCESS_SECRET', 'test-tsecret');
+  it('ユーザー検索は user.fields をクエリで渡す', async () => {
+    fetchMock.mockImplementation(() => reply(200, { data: { profile_image_url: 'https://x/a.jpg' } }));
 
-    await postTweet('text', false);
+    expect(await fetchUserByUsername('some one', ['profile_image_url'], false))
+      .toEqual({ profile_image_url: 'https://x/a.jpg' });
+    expect(fetchMock.mock.calls[0]![0])
+      .toBe('http://gateway.example:8080/x/engineer-meetup-test/2/users/by/username/some%20one?user.fields=profile_image_url');
+  });
 
-    expect(TwitterApiMock).toHaveBeenCalledWith({
-      appKey: 'test-key',
-      appSecret: 'test-secret',
-      accessToken: 'test-token',
-      accessSecret: 'test-tsecret',
-    });
+  it('ゲートウェイに断られたら、トークンと clients.json を見るよう伝える', async () => {
+    fetchMock.mockImplementation(() => reply(403, { error: 'forbidden', message: 'POST /engineer-meetup/2/tweets は許していません' }));
+
+    await expect(postTweet('text', true)).rejects.toThrow(/X_GATEWAY_TOKEN と、ゲートウェイの clients.json/);
+  });
+
+  it('X が失敗を返したら、ステータスと本文をエラーにする', async () => {
+    fetchMock.mockImplementation(() => reply(402, { title: 'CreditsDepleted' }));
+
+    await expect(postTweet('text', true)).rejects.toThrow('(402): {"title":"CreditsDepleted"}');
+  });
+
+  it('ゲートウェイの設定がなければ呼ばずにエラーにする', async () => {
+    vi.stubEnv('X_GATEWAY_TOKEN', '');
+
+    await expect(postTweet('text', true)).rejects.toThrow('X_GATEWAY_URL / X_GATEWAY_TOKEN が設定されていません');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
