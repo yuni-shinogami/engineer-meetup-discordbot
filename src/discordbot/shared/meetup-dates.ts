@@ -32,11 +32,24 @@ export function formatSlashDate(key: string): string {
   return key.replace(/-/g, '/');
 }
 
-/** 'YYYY-MM-DD' を「9月5日」形式にする。告知画像に載せる曜日なしの表記。 */
+/** 'YYYY-MM-DD' を「9月5日（金）」形式にする。告知画像に載せる表記（括弧は全角）。 */
 export function formatImageDate(key: string): string {
   const date = parseDateKey(key);
   if (!date) return key;
-  return `${date.getMonth() + 1}月${date.getDate()}日`;
+  return `${date.getMonth() + 1}月${date.getDate()}日（${WEEKDAY_LABELS[date.getDay()]}）`;
+}
+
+/**
+ * 月日だけの指定を、from 以降で最初に来るその日付の 'YYYY-MM-DD' にする。
+ * 今年の日付が過ぎていれば来年とみなす。どちらの年にも存在しない日付（2/30 など）なら null。
+ */
+export function nextDateKeyForMonthDay(month: number, day: number, from: Date = new Date()): string | null {
+  const today = formatDateKey(from);
+  for (const year of [from.getFullYear(), from.getFullYear() + 1]) {
+    const key = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (parseDateKey(key) && key >= today) return key;
+  }
+  return null;
 }
 
 /** 'YYYY-MM-DD' を「9月5日(金)」形式にする。解析できなければ入力をそのまま返す。 */

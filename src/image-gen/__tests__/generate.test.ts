@@ -16,7 +16,7 @@ const props = {
   title: 'テストタイトル<script>',
   speakerName: '慕狼ゆに',
   speakerIcon: 'data:image/png;base64,AAAA',
-  eventDate: '6月27日',
+  eventDate: '6月26日（金）',
   titleSlideImage: 'data:image/png;base64,BBBB',
 };
 
@@ -50,7 +50,7 @@ describe.runIf(existsSync(chromiumPath()))('generateImage', () => {
       title: 'テストタイトルテストタイトル',
       speakerName: '慕狼ゆに',
       speakerIcon: toDataUrl(join(ASSETS, 'test_icon__400x400.jpg'), 'image/jpeg'),
-      eventDate: '6月27日',
+      eventDate: '6月26日（金）',
       titleSlideImage: toDataUrl(join(ASSETS, 'test_slide.png'), 'image/png'),
     };
 

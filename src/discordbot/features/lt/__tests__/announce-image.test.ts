@@ -87,7 +87,7 @@ describe('renderAnnounceImage', () => {
       title: '型で殴る話',
       speakerName: 'ゆに',
       speakerIcon: 'data:image/png;base64,/materials/t1/speakerIcon.png',
-      eventDate: '9月4日',
+      eventDate: '9月4日（金）',
       titleSlideImage: 'data:image/png;base64,/materials/t1/titleSlide.png',
     });
   });

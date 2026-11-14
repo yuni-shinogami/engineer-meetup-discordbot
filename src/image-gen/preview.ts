@@ -21,7 +21,7 @@ async function main() {
     title: 'テストタイトルテストタイトル',
     speakerName: '慕狼ゆに',
     speakerIcon: dataUrl('test_icon__400x400.jpg', 'image/jpeg'),
-    eventDate: '6月27日',
+    eventDate: '6月26日（金）',
     titleSlideImage: dataUrl('test_slide.png', 'image/png'),
   });
   writeFileSync(out, png);

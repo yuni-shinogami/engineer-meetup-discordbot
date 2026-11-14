@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, AttachmentBuilder } from 'discord.js';
 import { generateImage } from '../../../../image-gen/generate';
 import { requireOperatorRole, formatError } from '../../../shared/interaction';
+import { formatImageDate, nextDateKeyForMonthDay } from '../../../shared/meetup-dates';
 
 export const generateLtImageCommand = new SlashCommandBuilder()
   .setName('generate-lt-image')
@@ -40,9 +41,16 @@ export async function handleGenerateLtImageCommand(interaction: ChatInputCommand
   const speakerName = interaction.options.getString('speaker-name', true);
   const month = interaction.options.getInteger('month', true);
   const day = interaction.options.getInteger('day', true);
-  const eventDate = `${month}月${day}日`;
   const speakerIconAttachment = interaction.options.getAttachment('speaker-icon', true);
   const titleSlideAttachment = interaction.options.getAttachment('title-slide', true);
+
+  // 曜日を出すには年が要るので、今日以降で最初に来るその月日とみなす
+  const dateKey = nextDateKeyForMonthDay(month, day);
+  if (!dateKey) {
+    await interaction.editReply(`❌ ${month}月${day}日 は存在しない日付です。`);
+    return;
+  }
+  const eventDate = formatImageDate(dateKey);
 
   try {
     await interaction.editReply('画像を生成しています...');
