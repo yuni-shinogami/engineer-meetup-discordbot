@@ -1,0 +1,4 @@
+# youtube-gateway の呼び出し先。youtube-gateway.toml にコピーして値を埋める（リポジトリには入れない）
+url = "http://<ゲートウェイ>:8080"
+token = ""                   # ゲートウェイの new-token で発行したトークン
+account = "engineer-meetup"  # ゲートウェイのアカウント名（集会のチャンネル）

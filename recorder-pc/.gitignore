@@ -1,6 +1,5 @@
 # 録画 PC で作られるもの・置くもの（リポジトリには入れない）
-lt-recorder/client_secret.json
-lt-recorder/token.json
+lt-recorder/youtube-gateway.toml
 lt-recorder/.venv/
 lt-recorder/models/
 lt-recorder/assets/ending.wav

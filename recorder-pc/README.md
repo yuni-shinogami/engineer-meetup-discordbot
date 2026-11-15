@@ -49,9 +49,10 @@ Bot から SSH で操作する録画 PC（Windows のゲーミングノート）
    - 背景除去のモデル（`birefnet-general-lite`）は、初回に `lt-recorder/models/` へ自動でダウンロードされる
 5. 管理者の PowerShell で、録画 PC にログインするユーザーとしてタスクを登録する: `powershell -ExecutionPolicy Bypass -File Register-Tasks.ps1`
 6. Bot の公開鍵を `C:\ProgramData\ssh\administrators_authorized_keys` に足す（[`authorized_keys.example`](authorized_keys.example)）
-7. YouTube の認可（初回のみ）: Google Cloud で作った OAuth クライアント（デスクトップアプリ）の `client_secret.json` を `lt-recorder/` に置き、`lt.py auth` で集会のチャンネルのアカウントで許可する。`token.json` ができる
-   - `client_secret.json` と `token.json` はリポジトリに入れない（`.gitignore` 済み）
-   - `token.json` は、録画 PC のユーザーが書き込めるようにする（タスクが通常の権限で動き、認可を更新したときに書き直すため）。管理者の SSH で置いた場合は `icacls token.json /grant <ユーザー>:(M)`
+7. YouTube へのアップロード: 集会のチャンネルの認可は youtube-gateway（呼び出し元ごとに許した API だけを中継するゲートウェイ）が持ち、録画 PC には置かない。
+   [`youtube-gateway.example.toml`](lt-recorder/youtube-gateway.example.toml) を `lt-recorder/youtube-gateway.toml` にコピーして、ゲートウェイの URL・発行されたトークン・アカウント名を書き、`lt.py youtube-check` でチャンネル名が出ることを確かめる
+   - ゲートウェイには、この PC から `POST`・`PUT /<アカウント>/upload/youtube/v3/videos`、`POST /<アカウント>/upload/youtube/v3/thumbnails/set`、`GET /<アカウント>/youtube/v3/channels` を許してもらう
+   - `youtube-gateway.toml` はリポジトリに入れない（`.gitignore` 済み）。置いていなければ編集までで止まる
 
 ## 書き換えるときの注意
 
