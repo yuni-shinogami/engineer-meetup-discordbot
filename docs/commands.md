@@ -12,6 +12,7 @@
 | `/post-announcement` | X 引用リポスト・Discord・VRCGroup への告知を一括実行し、当日 LT があれば Discord・VRCGroup の LT 告知も投稿（`lt-only:True` で LT だけ / `skip-lt:True` で LT を省略） |
 | `/status` | Bot の設定状態と今週のスケジュール状況を確認 |
 | `/check-permissions` | Bot が各チャンネルで必要な権限を持っているか確認 |
+| `/slides` | 司会進行スライドを Canva から取って返信（`format:webm`（既定、VRChat の動画プレイヤー用）/ `format:pdf`）。開催確認の YES でも自動で投稿される |
 | `/generate-lt-image` | LT 告知画像を生成して返信 |
 | `/lt-apply` | LT に応募（モーダル入力 → フォーラムポスト自動作成）。オプションなし |
 | `/lt-material` | LT 告知の素材を登録（そろえば告知画像を自動生成） |

@@ -112,7 +112,11 @@ src/
         weekly-announce.ts 週次フローに同乗する LT 告知の一括投稿と運営への報告
         guard.ts        ポスト内コンポーネント操作の共通検証（本人確認・運営確認）
       calendar/       イベント登録（VRChat イベントカレンダー・VRChat のグループのイベント・Discord のイベント）と /event-calendar・/vrc-event・/discord-event
+        vrceve.ts       VRChat イベントカレンダー（ブラウザ用 VM に SSH で頼む）
+        vrc-event.ts    VRChat のグループのイベント
+        discord-event.ts  Discord のイベント
       slides/         司会進行スライド（Canva から PDF・動画を取って投稿）と /slides
+        slides.ts       Canva から書き出して webm（または PDF）にし、添付を作る。開催確認の YES からの自動投稿
       meetup/         開催確認（YES/NO）・事前告知・開催告知と /confirm-meetup・/pre-announce・/post-announcement
         weekly.ts       毎週の開催確認と事前告知の本体（scheduler.ts と「今すぐ事前告知を投稿する」ボタンから呼ぶ）
         meetup.ts       開催確認のメッセージと事前告知の投稿
@@ -126,6 +130,7 @@ src/
         store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
         backfill.ts     過去のメッセージ履歴からメッセージの集計を作り直す（npm run activity:backfill）
       admin/          運営向けの確認（/status・/check-permissions）
+        next-run.ts     cron 式から次に動く時刻を出す（/status に表示する）
     shared/
       interaction.ts  どの機能からも使う、運営ロールの確認とエラーの返信
       x-post-url.ts   ツイート ID から投稿 URL を組み立てる（本番／テストのアカウントを選ぶ）
@@ -137,8 +142,9 @@ src/
     quotePost.ts      開催告知の引用リポスト
     assets/           投稿テンプレート・画像
   vrchat/
-    api/              VRChat API クライアント（vrchat-gateway 経由。ログイン中のアカウント・ユーザー・フレンド・インスタンス作成・投稿）
+    api/              VRChat API クライアント（vrchat-gateway 経由。ログイン中のアカウント・ユーザー・フレンド・インスタンス作成・投稿・グループのイベント）
     actions/          VRChat 上のアクション（グループ投稿・招待）
+    internal/         インスタンス情報（latest.json）の保存と小さな部品
     session.ts        ゲートウェイ経由のクライアントとログイン中のアカウントを取る
     links.ts          プロフィールURLの解釈と Discord ↔ VRChat 対応表の永続化
     postLtAnnouncement.ts  LT 告知のグループ掲示板投稿（インスタンス情報に依存しない）
@@ -155,6 +161,13 @@ src/
       lt-announce.css     LT 告知画像テンプレート（見た目）
     assets/
       images/             テンプレートで使用する画像素材
+  canva/
+    auth.ts           Canva の OAuth（リフレッシュトークンを state/canva-tokens.json に置き、アクセストークンを作り直す）
+    login.ts          初回の認可（npm run canva:login）
+    export.ts         デザインを PDF に書き出す
+    config.ts         Canva の設定（Bot の config.ts を通さず環境変数から読む）
+  video/
+    pdf-to-webm.ts    PDF を 1 ページずつの webm 動画にする（poppler・ffmpeg）
 assets/
   fonts/              フォントキャッシュ（自動生成、.gitignore 対象）
 deploy/

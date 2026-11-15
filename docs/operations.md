@@ -13,6 +13,7 @@
 | `state/latest.json` | 直近に作成したインスタンス情報 | `VRC_STATE_DIR` |
 | `state/vrc-links.json` | Discord ↔ VRChat アカウント対応表 | `VRC_LINK_STORE_PATH` |
 | `state/activity/` | サーバーのアクティビティの日別・ユーザー別集計と、ユーザー名の対応表（`users.json`） | `ACTIVITY_DIR` |
+| `state/canva-tokens.json` | Canva のリフレッシュトークン（`npm run canva:login` が書く） | `CANVA_STATE_DIR` |
 
 `VRC_STATE_DIR` 以外は**プロセスの cwd 相対**です。本番の systemd サービスはリポジトリを cwd にして起動するので
 通常は意識不要ですが、別のディレクトリから `npm start` すると別の場所を見にいきます。
@@ -64,10 +65,24 @@ npm install
 | `LT_AUTO_ANNOUNCE` | 週次フローに LT 告知を同乗させるか（任意、デフォルト `true`） |
 | `ACTIVITY_DIR` | アクティビティ集計の保存先ディレクトリ（任意、デフォルト `./state/activity`） |
 | `ACTIVITY_MEMBER_EVENTS` | 参加・退出も数えるか（任意、デフォルト `false`。Server Members Intent を有効にしてから `true` にする） |
+| `CHROMIUM_PATH` | 告知画像の描画に使う Chromium（任意、デフォルト `/usr/bin/chromium`） |
+| `CANVA_CLIENT_ID` / `CANVA_CLIENT_SECRET` | Canva の Developer Portal で作った Connect APIs の integration（司会進行スライドに使う） |
+| `CANVA_SLIDE_DESIGN_ID` | 司会進行スライドのデザイン ID（Canva の編集 URL `/design/<ここ>/edit`） |
+| `CANVA_REDIRECT_URI` | 初回認可のコールバック先（任意、デフォルト `http://127.0.0.1:8976/callback`。Developer Portal に登録した値と一致させる） |
+| `CANVA_STATE_DIR` | Canva のリフレッシュトークンの保存先ディレクトリ（任意、デフォルト `./state`） |
+| `CANVA_MAX_PDF_MB` | 添付できるスライドの上限 MB（任意、デフォルト `50`） |
+| `CANVA_AUTO_POST_SLIDES` | 開催確認の YES で司会進行スライドを自動投稿するか（任意、デフォルト `true`） |
+| `SLIDES_VIDEO_SECONDS` / `SLIDES_VIDEO_HEIGHT` | 司会進行スライド動画の 1 ページあたりの秒数と高さ px（任意、デフォルト `1` / `1080`） |
 
 `PRE_ANNOUNCE_CRON` の木曜は**開催前日**の事前告知であり、開催日そのものではありません。LT の日程候補は cron 式ではなく `MEETUP_WEEKDAY` から算出します。
 
 `CLIENT_ID` は Bot ログイン時に自動取得されるため設定不要です。
+
+### Canva の認可
+
+司会進行スライドを使うときだけ要ります。`.env` に `CANVA_CLIENT_ID`・`CANVA_CLIENT_SECRET` を書いてから、
+`npm run canva:login` を実行し、表示された URL をブラウザで開いて許可します。
+リフレッシュトークンは `CANVA_STATE_DIR/canva-tokens.json` に保存され、以後は Bot が更新します。
 
 ### 3. ビルドと起動
 
@@ -139,7 +154,7 @@ systemctl enable --now engineer-meetup-bot engineer-meetup-deploy.timer
 npm test
 ```
 
-[Vitest](https://vitest.dev/) を使用しています。Discord・X・VRChat の各 API 呼び出しはモックし、
+[Vitest](https://vitest.dev/) を使用しています。Discord・X・VRChat・Canva の各 API 呼び出しはモックし、
 テンプレート置換や環境変数バリデーション、状態遷移などのロジックを検証しています。
 `src/image-gen/__tests__/generate.test.ts` の描画テストは、Chromium（`CHROMIUM_PATH`、既定は `/usr/bin/chromium`）があるときだけ動きます。
 Chromium の版で画素が揺れるため画像の一致は見ず、描いた画像を `src/image-gen/__tests__/__output__/` に書き出すので目で確かめてください。

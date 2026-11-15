@@ -58,5 +58,5 @@ Bot から SSH で操作する録画 PC（Windows のゲーミングノート）
 
 - `.ps1` は **UTF-8（BOM 付き）** で保存する。Windows PowerShell 5 は BOM のないファイルを ANSI（Shift_JIS）として読むので、日本語のメッセージやコメントが壊れる
 - 逆に `config.toml` は **BOM なし** にする（Python の `tomllib` が読めなくなる）。録画 PC 上で PowerShell 5 の `Set-Content -Encoding UTF8` で書き換えると BOM が付くので、手元で直してコピーする
-- Bot から呼ばれる動詞や返す JSON を変えたら、Bot 側（`src/discordbot/lt-recorder.ts`・`src/discordbot/vrc-launcher.ts`）も合わせて直す
+- Bot から呼ばれる動詞や返す JSON を変えたら、Bot 側（`src/discordbot/features/instance/lt-recorder.ts`・`src/discordbot/features/instance/vrc-launcher.ts`）も合わせて直す
 - 録画 PC への反映は手作業（`scp` などでコピー）。`main` にマージしても録画 PC には自動では入らない

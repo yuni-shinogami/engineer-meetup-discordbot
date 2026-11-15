@@ -30,7 +30,7 @@
      サブアカウントが入室したあとに押すと、サブアカウントをひな壇前にワープさせて配信用画面を 4 アングルにし、OBS で録画を始めます。
      返信が録画パネルになり、今日の LT ごとの **「▶ 登壇者名」** で LT の始まりを、**「⏸ 区切り」** で終わりを記録します。
      **「⏹ 録画終了」** で録画を止めると、録画 PC が記録した時刻で LT ごとに切り分け、過去の LT 動画と同じ作り（オープニングのロゴと日付カード、スライド＋登壇者カメラ＋タイトルの帯、エンディング曲付きのエンディング）に編集します（`archivePolicy` が `none` の LT は編集しません）。
-     録画 PC で YouTube を認可していれば、続けて YouTube に**非公開**でアップロードし、チャンネルに動画の URL と登壇者の希望（一般公開／限定公開）に合わせた切り替え方を報告します。
+     録画 PC に youtube-gateway（集会のチャンネルの認可を持つゲートウェイ）を設定していれば、続けて YouTube に**非公開**でアップロードし、チャンネルに動画の URL と登壇者の希望（一般公開／限定公開）に合わせた切り替え方を報告します。
      録画 PC に youtube-gateway の設定がないとき（または録画 PC の `config.toml` で `auto_upload = false` にしたとき）は編集までで止め、書き出したファイル名を報告します（あとで設定すればアップロードだけやり直せます）。途中経過は「🔄 状況」で確認できます。
      録画 PC 側のスクリプトとセットアップ手順は [`recorder-pc/`](../recorder-pc/README.md) にあります。
    - 同じ条件で **「📻 ラジオ準備」ボタン**も付きます（運営ロール限定）。エンジニア集会アフターラジオの前に押すと、サブアカウントを右Shift＋2 でラジオブースへワープさせ（ワールドがすりガラス・配信中の表示・マイクゾーンをオンにする）、向きをそろえてストリームカメラを開き、Spout に流して、録画 PC の OBS をラジオのシーンにします。配信は OBS で手で開始します。
@@ -53,11 +53,17 @@
    - 応募は登壇者本人が行うため、このコマンドだけは `OPERATOR_ROLE_ID` を要求しません（日程の確定は運営限定）。
    - **`production` オプションはありません。** 応募先は実行した場所から決まります（[LT 応募ワークフロー](lt-workflow.md)）。
 
-7. **設定確認 (`/status`, `/check-permissions`)**
+7. **司会進行スライド (開催確認の YES で自動 / `/slides` で手動)**
+   - Canva の司会進行スライド（`CANVA_SLIDE_DESIGN_ID`）を PDF に書き出し、1 ページ `SLIDES_VIDEO_SECONDS` 秒の webm 動画にして投稿します。VRChat の動画プレイヤーで再生し、シークでページを送れます。`/slides format:pdf` なら PDF のまま返します。
+   - 開催確認で YES を押すと、そのチャンネルに自動で投稿します（`CANVA_AUTO_POST_SLIDES=false` で停止）。失敗しても開催確認は止めず、理由を同じチャンネルに残します。
+   - Canva 側の「非表示」は書き出しに反映されないので、当日出すページだけをデザインに置いておきます。
+   - 最初に `npm run canva:login` で Canva を認可しておきます（[operations.md](operations.md#canva-の認可)）。
+
+8. **設定確認 (`/status`, `/check-permissions`)**
    - `/status`: 今週のスケジュール状況、X/VRChat 連携設定、Bot が参照する各チャンネルの疎通、自動実行スケジュールの次回実行時刻を確認します。
    - `/check-permissions`: Bot が各チャンネルで必要な権限（閲覧・送信・リンク埋め込み・ロールping）を持っているか確認します。
 
-8. **サーバーのアクティビティ集計（自動）**
+9. **サーバーのアクティビティ集計（自動）**
    - サーバーのメッセージ・リアクション・メンション・VC・参加/退出を、日本時間の 1 日ごとに `state/activity/YYYY-MM-DD.json` へ集計します。チャンネル別・時間帯別・ロール別の件数、VC の人・分と同時接続の最大に加え、**ユーザーごと**の発言数（チャンネル別）・付けたリアクション・メンション/リプライした相手・VC の滞在時間を Discord のユーザー ID で持ちます。
    - ユーザー名と表示名は日別ファイルには入れず、`state/activity/users.json` に最後に見たときのものを持ちます（改名しても過去の集計は ID で追えます）。
    - **本文は保存しません**（Message Content Intent も使いません）。個人に紐づくデータなので `state/` の外（Git や公開の場所）には出さないでください。
@@ -66,5 +72,5 @@
    - **analytics への受け渡し**: engineer-meetup-analytics は、取得用の鍵で ssh して `activity` を送ると、`state/activity/` の日別ファイルと `users.json` を tar.gz で受け取ります（`deploy/analytics-export.sh`。コマンドなしなら前からの LT の記録）。このスクリプトは鍵を置いたユーザーの権限で動くので、`install -m 755 -o root -g root deploy/analytics-export.sh /usr/local/bin/analytics-export` でコピーし、authorized_keys の `command=` をそこに向けます。変えたときはもう一度コピーしてください。
    - 参加・退出は特権 Intent（Server Members）が要るので、Developer Portal の Bot 設定で **Server Members Intent** を有効にしてから `ACTIVITY_MEMBER_EVENTS=true` にしたときだけ数えます。有効にしないまま `true` にすると Bot がログインできません。
 
-9. **権限制御**
+10. **権限制御**
    - `/lt-apply` と `/lt-material` を除く全コマンドは `OPERATOR_ROLE_ID` で指定したロールを持つユーザーのみ実行可能です（この 2 つは登壇者本人が使うため）。
