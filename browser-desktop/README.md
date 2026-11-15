@@ -13,7 +13,7 @@ Bot から SSH で頼んで、ログイン済みの Chrome でブラウザの操
   - `register <base64url の JSON>`: フォームに入力して送信し、編集用 URL を返す。`dry_run` なら送らずに入力した画面（JPEG）を返す
   - `delete <base64url の JSON>`: 編集用 URL から「イベントを削除する」で送り直す
   - `check`: Chrome が動いていて、集会用アカウントでログインしているか
-- フォームの項目と entry 番号は `vrceve/config.toml`。中身（イベント名・時刻・内容など）は Bot 側（`src/discordbot/vrceve.ts`）で決める
+- フォームの項目と entry 番号は `vrceve/config.toml`。中身（イベント名・時刻・内容など）は Bot 側（`src/discordbot/features/calendar/vrceve.ts`）で決める
 
 ### フォームの癖
 

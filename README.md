@@ -15,6 +15,7 @@
 | インスタンス作成 | VRChat のグループインスタンスを作り、運営とサブアカウントを招待する |
 | LT 応募 | 応募を Discord のフォーラムで受け付け、日程調整・素材の回収・告知画像の生成・告知までを 1 本の流れで扱う |
 | LT 録画 | 録画用 PC の VRChat と OBS を操作して LT を録画し、LT ごとに編集して YouTube にアップロードする |
+| 司会進行スライド | Canva の司会進行スライドを VRChat の動画プレイヤーで流せる webm にして、開催確認の YES で投稿する |
 | 活動の集計 | Discord サーバーの発言・リアクション・VC を日ごとに集計する（本文は保存しない） |
 
 機能ごとの詳しい説明は [docs/features.md](docs/features.md) にあります。
@@ -28,18 +29,22 @@ flowchart LR
   end
   bot[Discord Bot<br/>TypeScript]
   gw[vrchat-gateway<br/>VRChat のログインを持つ中継]
+  xgw[x-gateway<br/>X の鍵を持つ中継]
+  ytgw[youtube-gateway<br/>YouTube の認可を持つ中継]
   vrc[(VRChat API)]
   x[(X API)]
   pc[録画用 PC<br/>VRChat・OBS・ffmpeg]
   vm[ブラウザ用 VM<br/>ログイン済みの Chrome]
   yt[(YouTube)]
   cal[(イベントカレンダー)]
+  canva[(Canva)]
 
   ops -- コマンド・ボタン --> bot
   bot -- 許可した API だけ --> gw --> vrc
-  bot --> x
-  bot -- 用途ごとの SSH 鍵 --> pc --> yt
+  bot -- 許可した API だけ --> xgw --> x
+  bot -- 用途ごとの SSH 鍵 --> pc -- 許可した API だけ --> ytgw --> yt
   bot -- 用途ごとの SSH 鍵 --> vm --> cal
+  bot --> canva
 ```
 
 ## 設計で工夫したこと
@@ -47,7 +52,7 @@ flowchart LR
 - **機能ごとのフォルダー**: `src/discordbot/features/<機能>/` に機能をまとめ、外に見せるものは `index.ts` だけにしています。
   機能が増えて全体を把握しにくくなったため、少しずつ PR を分けて移しました（[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)）。
 - **import の決まりをテストで守る**: [dependency-cruiser](https://github.com/sverweij/dependency-cruiser) で「機能は他の機能の内部を直接 import しない」などの決まりを書き、`npm test` で検査しています。違反は 0 件です。
-- **秘密をゲートウェイに集める**: VRChat のパスワードと 2FA の秘密鍵は vrchat-gateway だけが持ち、Bot には許した API を呼べるトークンしか渡していません（[docs/vrchat.md](docs/vrchat.md)）。
+- **秘密をゲートウェイに集める**: VRChat のパスワードと 2FA の秘密鍵は vrchat-gateway、X の API キーは x-gateway、集会の YouTube チャンネルの認可は youtube-gateway だけが持ちます。Bot と録画用 PC には、許した API とアカウントだけを呼べるトークンしか渡していません（[docs/vrchat.md](docs/vrchat.md)、[recorder-pc/](recorder-pc/README.md)）。
 - **1 つの鍵で 1 つのことしかできない SSH**: 録画用 PC とブラウザ用 VM には、`command=` で実行できるスクリプトを 1 つに固定した鍵で入ります。Bot が乗っ取られても、その PC で好きなコマンドは打てません（[recorder-pc/](recorder-pc/README.md)、[browser-desktop/](browser-desktop/README.md)）。
 - **本番とテストの分離**: テスト用チャンネルから操作すると、投稿や登録は送らずに内容だけを返すか、テスト用のグループに作ります。
 - **告知画像は HTML と CSS で描く**: ヘッドレス Chromium で PNG にしています。描画中は外部への通信をすべて遮断しています。
@@ -56,6 +61,7 @@ flowchart LR
 
 - **Bot**: TypeScript、discord.js、node-cron、Vitest、dependency-cruiser
 - **告知画像**: React（テンプレート）、puppeteer-core と Chromium
+- **司会進行スライド**: Canva Connect API、poppler と ffmpeg（PDF を webm にする）
 - **録画用 PC**: PowerShell、Python、OBS、ffmpeg、VRChat の OSC
 - **ブラウザ用 VM**: Python、Playwright
 - **動かしている場所**: Proxmox VE 上の LXC（systemd）。main にマージすると自動でデプロイされます

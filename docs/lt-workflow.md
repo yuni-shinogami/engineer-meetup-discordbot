@@ -128,7 +128,7 @@ Discord のモーダルは **コンポーネント 5 個まで**（API 仕様）
 
 「参加者に撮られるのは困るが、公式アーカイブなら可」は矛盾しないため、**2 × 3 = 6 通りすべてが有効**です。
 1 問に統合すると選択肢が 6 個になり読みづらいので、モーダルでは 2 問（2択 + 3択）に分けています
-（`src/discordbot/lt/types.ts` の `CAPTURE_POLICY_CHOICES` / `ARCHIVE_POLICY_CHOICES`）。
+（`src/discordbot/features/lt/types.ts` の `CAPTURE_POLICY_CHOICES` / `ARCHIVE_POLICY_CHOICES`）。
 その 2 枠を確保するため、「LTの中で動画を流す予定」をポスト側に移しています。
 
 フォーラムポストでは次の場合に警告を表示します。
@@ -327,7 +327,7 @@ body:  今日はさみっとさんの LT がありますーーー！！
 
 ## ステータスとタグ
 
-タグ名は `src/discordbot/lt/status.ts` の `LT_STATUS_LABELS` で管理しています。
+タグ名は `src/discordbot/features/lt/status.ts` の `LT_STATUS_LABELS` で管理しています。
 Discord 側のタグ名を変える場合はこの定数も合わせて変更してください。絵文字はタグの `name` とは別フィールドなので、タグに絵文字を付けても名前の引き当てには影響しません。
 
 **事前準備**: LT フォーラムに上記6つのタグを手動で作成してください。タグに「モデレーターのみ設定可」を付けると登壇者による付け替えを防げます（この場合 Bot に `ManageThreads` 権限が必要）。設定漏れは起動時のログと `/status` で確認できます。
