@@ -11,9 +11,10 @@ Bot からは Request-Recorder.ps1 経由で呼ばれ、結果を JSON 1 行で�
 手で使うもの:
   pipeline <セッション>   編集 → アップロード（タスク LT-Recorder-Pipeline から呼ばれる）
   move [world]            OSC ルートだけ実行（位置の調整用）
-  auth                    YouTube の OAuth 認可（初回のみ）
+  youtube-check           youtube-gateway に繋がるか・どのチャンネルとしてアップするかを確かめる
 """
 import argparse, base64, datetime as dt, io, json, math, os, re, subprocess, sys, time, tomllib, traceback
+import urllib.error, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -805,26 +806,103 @@ def process(sdir, s):
 
 
 # ---------- YouTube ----------
+# 集会のチャンネルの認可は youtube-gateway が持ち、録画 PC には置かない。
+# 呼び出し先とトークンは youtube-gateway.toml（リポジトリに入れない）に書く。
 
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+GATEWAY_FILE = ROOT / "youtube-gateway.toml"
+CHUNK = 16 << 20  # 再開可能なアップロードの 1 回分（ゲートウェイは 32MB まで受ける）
+RETRY_STATUS = (0, 500, 502, 503, 504)  # 0 は繋がらなかったとき
 
 
-def youtube():
-    from google.oauth2.credentials import Credentials
-    from google.auth.transport.requests import Request
-    from googleapiclient.discovery import build
-    token = ROOT / "token.json"
-    if not token.exists():
-        raise RuntimeError("YouTube が未認可です（gaming-laptop で lt.py auth を実行してください）")
-    creds = Credentials.from_authorized_user_file(str(token), SCOPES)
-    if not creds.valid:
-        creds.refresh(Request())
-        try:
-            token.write_text(creds.to_json(), encoding="utf-8")
-        except OSError as ex:
-            # 保存できなくても更新トークンは変わらないので、アップロードは続けられる（次回も更新し直すだけ）
-            log(f"token.json を更新できません（録画 PC のユーザーに書き込み権限が必要）: {ex}")
-    return build("youtube", "v3", credentials=creds)
+def gateway():
+    """youtube-gateway の設定。置いていなければ None（アップロードせずに編集までで止める）"""
+    if not GATEWAY_FILE.exists():
+        return None
+    g = tomllib.loads(GATEWAY_FILE.read_text(encoding="utf-8"))
+    missing = [k for k in ("url", "token", "account") if not g.get(k)]
+    if missing:
+        raise RuntimeError(f"{GATEWAY_FILE.name} に {', '.join(missing)} がありません")
+    return g
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    # 再開可能なアップロードの途中は 308 が返る。リダイレクトとして追わずにそのまま受け取る
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def yt_call(g, method, path, body=None, headers=None):
+    """youtube-gateway を呼び、(ステータス, ヘッダー, 本文) を返す。繋がらなければステータス 0。
+    path は https://www.googleapis.com より後ろ（/youtube/v3/… か /upload/youtube/v3/…）か、URL そのもの"""
+    url = path if path.startswith("http") else f"{g['url'].rstrip('/')}/youtube/{g['account']}{path}"
+    req = urllib.request.Request(url, method=method, data=body,
+                                 headers={**(headers or {}), "Authorization": f"Bearer {g['token']}"})
+    try:
+        with urllib.request.build_opener(_NoRedirect).open(req, timeout=300) as r:
+            return r.status, r.headers, r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, e.headers, e.read()
+    except OSError as e:
+        return 0, {}, str(e).encode()
+
+
+def yt_error(what, status, body):
+    return RuntimeError(f"{what}に失敗 ({status}): {body[:300].decode(errors='replace')}")
+
+
+def received(headers):
+    """308 の Range（bytes=0-N）から、次に送る位置"""
+    r = headers.get("Range")
+    return int(r.rsplit("-", 1)[1]) + 1 if r else 0
+
+
+def upload_video(g, file, body):
+    """再開可能なアップロードで動画を送り、動画 ID を返す。途中で切れたら届いた所から続ける"""
+    size = Path(file).stat().st_size
+    status, h, res = yt_call(
+        g, "POST", "/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status",
+        json.dumps(body).encode(),
+        {"Content-Type": "application/json; charset=UTF-8", "X-Upload-Content-Type": "video/mp4",
+         "X-Upload-Content-Length": str(size)})
+    if status != 200 or not h.get("Location"):
+        raise yt_error("アップロードの開始", status, res)
+    # Location はゲートウェイの上のパス（/youtube/<アカウント>/upload/…&upload_id=…）に書き換えられて返る
+    session, offset, failures = g["url"].rstrip("/") + h["Location"], 0, 0
+    with open(file, "rb") as f:
+        while True:
+            f.seek(offset)
+            chunk = f.read(CHUNK)
+            status, h, res = yt_call(g, "PUT", session, chunk,
+                                     {"Content-Range": f"bytes {offset}-{offset + len(chunk) - 1}/{size}"})
+            if status in RETRY_STATUS and failures < 5:
+                failures += 1
+                log(f"アップロードが途切れたので、届いた所から送り直します ({status})")
+                time.sleep(5 * 2 ** failures)
+                # どこまで届いたかを聞き直す
+                status, h, res = yt_call(g, "PUT", session, b"", {"Content-Range": f"bytes */{size}"})
+                if status in RETRY_STATUS:
+                    continue
+            if status in (200, 201):
+                return json.loads(res)["id"]
+            if status != 308:
+                raise yt_error("アップロード", status, res)
+            offset = received(h)
+
+
+def set_thumbnail(g, video_id, thumb):
+    ctype = "image/png" if str(thumb).lower().endswith(".png") else "image/jpeg"
+    status, _, res = yt_call(g, "POST", f"/upload/youtube/v3/thumbnails/set?videoId={video_id}",
+                             Path(thumb).read_bytes(), {"Content-Type": ctype})
+    if status != 200:
+        raise yt_error("サムネイルの設定", status, res)
+
+
+def channel_name(g):
+    """ゲートウェイが認可しているチャンネルの名前（設定の確かめ用）"""
+    status, _, res = yt_call(g, "GET", "/youtube/v3/channels?part=snippet&mine=true")
+    if status != 200:
+        raise yt_error("チャンネルの読み込み", status, res)
+    return ", ".join(c["snippet"]["title"] for c in json.loads(res).get("items", []))
 
 
 def video_meta(c, s):
@@ -839,27 +917,22 @@ def video_meta(c, s):
 
 
 def upload(sdir, s):
-    from googleapiclient.http import MediaFileUpload
     y = CFG["youtube"]
     targets = [c for c in s["clips"] if c.get("file") and not c.get("video_id")]
     if not targets:
         return
-    yt = youtube()
+    g = gateway()
     for c in targets:
         body = {
             "snippet": {**video_meta(c, s), "categoryId": y["category"]},
             "status": {"privacyStatus": y["privacy"], "selfDeclaredMadeForKids": False},
         }
         log(f"アップロード {body['snippet']['title']}")
-        req = yt.videos().insert(part="snippet,status", body=body,
-                                 media_body=MediaFileUpload(c["file"], chunksize=16 << 20, resumable=True))
-        res = None
-        while res is None:
-            _, res = req.next_chunk()
-        c.update(video_id=res["id"], privacy=y["privacy"])
+        video_id = upload_video(g, c["file"], body)
+        c.update(video_id=video_id, privacy=y["privacy"])
         save(sdir / "session.json", s)
         try:
-            yt.thumbnails().set(videoId=res["id"], media_body=MediaFileUpload(c["thumb"])).execute()
+            set_thumbnail(g, video_id, c["thumb"])
         except Exception as ex:
             log(f"サムネ設定に失敗: {ex}")
 
@@ -872,11 +945,11 @@ def cmd_pipeline(a):
         save(sdir / "session.json", s)
         process(sdir, s)
         save(sdir / "session.json", s)
-        if not CFG["youtube"].get("auto_upload") or not (ROOT / "token.json").exists():
+        if not CFG["youtube"].get("auto_upload") or gateway() is None:
             # API の監査が通るまでは編集までで止める（未審査のプロジェクトからアップした動画は非公開にロックされ、
             # あとから公開に切り替えられない）。auto_upload を有効にしたあと pipeline をもう一度流せばアップロードだけ進む
             s["state"] = "edited"
-            log("自動アップロードが無効か YouTube が未認可なので、アップロードせずに終了")
+            log(f"自動アップロードが無効か {GATEWAY_FILE.name} がないので、アップロードせずに終了")
         else:
             s["state"] = "uploading"
             save(sdir / "session.json", s)
@@ -888,16 +961,11 @@ def cmd_pipeline(a):
     save(sdir / "session.json", s)
 
 
-def cmd_auth(a):
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    secret = ROOT / "client_secret.json"
-    if not secret.exists():
-        sys.exit(f"{secret} を置いてください（Google Cloud の OAuth クライアント: デスクトップアプリ）")
-    flow = InstalledAppFlow.from_client_secrets_file(str(secret), SCOPES)
-    creds = flow.run_local_server(port=a.port, open_browser=False,
-                                  authorization_prompt_message="このURLをブラウザで開いて許可してください:\n{url}\n")
-    (ROOT / "token.json").write_text(creds.to_json(), encoding="utf-8")
-    print("YouTube の認可を保存しました")
+def cmd_youtube_check(a):
+    g = gateway()
+    if g is None:
+        sys.exit(f"{GATEWAY_FILE} を置いてください（youtube-gateway の URL・トークン・アカウント）")
+    print(f"アップロード先のチャンネル: {channel_name(g)}")
 
 
 def main():
@@ -923,7 +991,7 @@ def main():
     sp = p.add_subparsers(dest="cmd", required=True)
     sp.add_parser("pipeline").add_argument("session", nargs="?")
     sp.add_parser("move").add_argument("world", nargs="?")
-    sp.add_parser("auth").add_argument("--port", type=int, default=8765)
+    sp.add_parser("youtube-check")
     a = p.parse_args()
     if a.cmd == "move":
         world = a.world or (current_location() or "").split(":")[0]
@@ -932,7 +1000,7 @@ def main():
         except UserError as ex:
             sys.exit(str(ex))
     else:
-        {"pipeline": cmd_pipeline, "auth": cmd_auth}[a.cmd](a)
+        {"pipeline": cmd_pipeline, "youtube-check": cmd_youtube_check}[a.cmd](a)
 
 
 if __name__ == "__main__":
