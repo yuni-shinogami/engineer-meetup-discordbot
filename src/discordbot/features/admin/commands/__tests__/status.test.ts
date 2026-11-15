@@ -69,26 +69,39 @@ describe('handleStatusCommand', () => {
     expect(interaction.editReply).not.toHaveBeenCalled();
   });
 
-  it('X APIキーが両方設定されていれば設定済みと表示する', async () => {
-    vi.stubEnv('X_API_KEY', 'a');
-    vi.stubEnv('TEST_X_API_KEY', 'b');
+  it('x-gateway の URL とトークンが両方設定されていれば設定済みと表示する', async () => {
+    vi.stubEnv('X_GATEWAY_URL', 'http://x-gateway.example:8080');
+    vi.stubEnv('X_GATEWAY_TOKEN', 'token');
     const interaction = makeInteraction();
 
     await handleStatusCommand(interaction);
 
     const [message] = interaction.editReply.mock.calls[0]!;
-    expect(message).toContain('✅ X API 認証情報: 設定済み');
+    expect(message).toContain('✅ X 連携 (x-gateway): 設定済み');
   });
 
-  it('X APIキーが片方でも欠けていれば未設定と表示する', async () => {
-    vi.stubEnv('X_API_KEY', '');
-    vi.stubEnv('TEST_X_API_KEY', 'b');
+  it('x-gateway の設定が片方でも欠けていれば未設定と表示する', async () => {
+    vi.stubEnv('X_GATEWAY_URL', 'http://x-gateway.example:8080');
+    vi.stubEnv('X_GATEWAY_TOKEN', '');
     const interaction = makeInteraction();
 
     await handleStatusCommand(interaction);
 
     const [message] = interaction.editReply.mock.calls[0]!;
-    expect(message).toContain('❌ X API 認証情報: 未設定');
+    expect(message).toContain('❌ X 連携 (x-gateway): 未設定 (X_GATEWAY_URL / X_GATEWAY_TOKEN)');
+  });
+
+  it('X の API キーが残っていても、x-gateway が未設定なら未設定と表示する', async () => {
+    vi.stubEnv('X_API_KEY', 'a');
+    vi.stubEnv('TEST_X_API_KEY', 'b');
+    vi.stubEnv('X_GATEWAY_URL', '');
+    vi.stubEnv('X_GATEWAY_TOKEN', '');
+    const interaction = makeInteraction();
+
+    await handleStatusCommand(interaction);
+
+    const [message] = interaction.editReply.mock.calls[0]!;
+    expect(message).toContain('❌ X 連携 (x-gateway): 未設定');
   });
 
   it('storage の開催状況・URLを本文に反映する', async () => {

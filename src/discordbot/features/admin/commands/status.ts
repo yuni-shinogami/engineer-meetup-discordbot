@@ -22,9 +22,10 @@ export async function handleStatusCommand(interaction: ChatInputCommandInteracti
   const ok = '✅';
   const ng = '❌';
 
-  const xApiOk = process.env['X_API_KEY'] && process.env['TEST_X_API_KEY'];
+  // X の鍵は x-gateway が持つので、Bot が持っているのはゲートウェイの URL とトークンだけ
+  const xGatewayOk = process.env['X_GATEWAY_URL'] && process.env['X_GATEWAY_TOKEN'];
   const xChecks = [
-    `${xApiOk ? ok : ng} X API 認証情報: ${xApiOk ? '設定済み' : '未設定 (X_API_KEY / TEST_X_API_KEY)'}`,
+    `${xGatewayOk ? ok : ng} X 連携 (x-gateway): ${xGatewayOk ? '設定済み' : '未設定 (X_GATEWAY_URL / X_GATEWAY_TOKEN)'}`,
   ];
 
   const vrcStateOk = config.vrcStateDir && existsSync(config.vrcStateDir);
