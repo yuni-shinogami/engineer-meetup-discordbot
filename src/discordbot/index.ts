@@ -9,13 +9,14 @@ import { meetupFeature } from './features/meetup/index';
 import { instanceFeature } from './features/instance/index';
 import { activityFeature } from './features/activity/index';
 import { adminFeature } from './features/admin/index';
+import { matchFeature } from './features/match/index';
 import { registerCommands } from './register-commands';
 
 /**
  * Bot の機能（features/）。コマンド・ボタン・モーダル・セレクトと起動時の処理は、すべてここから登録する。
  * 機能を足したらここに並べる。起動時の処理（onReady）はこの順に呼ぶので、活動の集計は取りこぼしが無いよう先頭に置く。
  */
-const FEATURES = [activityFeature, ltFeature, calendarFeature, slidesFeature, meetupFeature, instanceFeature, adminFeature];
+const FEATURES = [activityFeature, ltFeature, calendarFeature, slidesFeature, meetupFeature, instanceFeature, matchFeature, adminFeature];
 
 const client = new Client({
   intents: [

@@ -5,6 +5,12 @@ export interface VRChatUser {
   displayName: string;
 }
 
+/** 本人確認に使う、プロフィールの文章（自己紹介とステータスの一言）。 */
+export interface VRChatUserProfile extends VRChatUser {
+  bio: string;
+  statusDescription: string;
+}
+
 /**
  * ユーザーの存在確認と表示名の取得。
  *
@@ -13,6 +19,22 @@ export interface VRChatUser {
  * null を返す。
  */
 export async function getUser(client: VRChatClient, userId: string): Promise<VRChatUser | null> {
+  const data = await fetchUser(client, userId);
+  return data && { id: data.id, displayName: data.displayName ?? data.id };
+}
+
+/** getUser に加えて、自己紹介とステータスの一言も返す。本人が書いた確認コードを読むのに使う。 */
+export async function getUserProfile(client: VRChatClient, userId: string): Promise<VRChatUserProfile | null> {
+  const data = await fetchUser(client, userId);
+  return data && {
+    id: data.id,
+    displayName: data.displayName ?? data.id,
+    bio: typeof data.bio === 'string' ? data.bio : '',
+    statusDescription: typeof data.statusDescription === 'string' ? data.statusDescription : '',
+  };
+}
+
+async function fetchUser(client: VRChatClient, userId: string) {
   const { http } = client;
   const resp = await http.get(`/users/${encodeURIComponent(userId)}`);
 
@@ -25,6 +47,5 @@ export async function getUser(client: VRChatClient, userId: string): Promise<VRC
   if (!data?.id) {
     throw new Error(`ユーザー取得の応答が不正です: ${JSON.stringify(data)}`);
   }
-
-  return { id: data.id, displayName: data.displayName ?? data.id };
+  return data;
 }
