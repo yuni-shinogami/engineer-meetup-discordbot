@@ -132,6 +132,10 @@ export const config = {
    * Developer Portal で有効にしてから true にする。有効にしないまま true にすると Bot がログインできない。
    */
   activityMemberEvents: boolEnv('ACTIVITY_MEMBER_EVENTS', false),
+
+  // --- マッチング ---
+  /** 申し込み・今夜の記録と、分析が置いていくプロフィールの置き場所（features/match/store.ts） */
+  matchDir: process.env.MATCH_DIR || './state/match',
 };
 
 export function ltForumChannelId(isProd: boolean): string {

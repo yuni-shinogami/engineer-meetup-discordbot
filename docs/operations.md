@@ -13,6 +13,7 @@
 | `state/latest.json` | 直近に作成したインスタンス情報 | `VRC_STATE_DIR` |
 | `state/vrc-links.json` | Discord ↔ VRChat アカウント対応表 | `VRC_LINK_STORE_PATH` |
 | `state/activity/` | サーバーのアクティビティの日別・ユーザー別集計と、ユーザー名の対応表（`users.json`） | `ACTIVITY_DIR` |
+| `state/match/` | マッチングの申し込み・今夜の記録（`state.json`）、分析に渡す VRChat ID の一覧（`optin-ids.json`）、分析が置くプロフィール（`profiles.json`） | `MATCH_DIR` |
 | `state/canva-tokens.json` | Canva のリフレッシュトークン（`npm run canva:login` が書く） | `CANVA_STATE_DIR` |
 
 `VRC_STATE_DIR` 以外は**プロセスの cwd 相対**です。本番の systemd サービスはリポジトリを cwd にして起動するので
@@ -65,6 +66,8 @@ npm install
 | `LT_AUTO_ANNOUNCE` | 週次フローに LT 告知を同乗させるか（任意、デフォルト `true`） |
 | `ACTIVITY_DIR` | アクティビティ集計の保存先ディレクトリ（任意、デフォルト `./state/activity`） |
 | `ACTIVITY_MEMBER_EVENTS` | 参加・退出も数えるか（任意、デフォルト `false`。Server Members Intent を有効にしてから `true` にする） |
+| `MATCH_DIR` | マッチングの記録の置き場所（任意、デフォルト `./state/match`。`deploy/analytics-export.sh` はこの既定の場所を読み書きする） |
+| `MATCH_CRON` | 「🤝」ボタンを公開チャンネルに出す cron 式（任意、デフォルト毎週金曜 21:55。開催予定が YES の週だけ出す） |
 | `CHROMIUM_PATH` | 告知画像の描画に使う Chromium（任意、デフォルト `/usr/bin/chromium`） |
 | `CANVA_CLIENT_ID` / `CANVA_CLIENT_SECRET` | Canva の Developer Portal で作った Connect APIs の integration（司会進行スライドに使う） |
 | `CANVA_SLIDE_DESIGN_ID` | 司会進行スライドのデザイン ID（Canva の編集 URL `/design/<ここ>/edit`） |

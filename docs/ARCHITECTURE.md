@@ -34,6 +34,7 @@ Bot の実装の地図です。「この機能はどのファイル？」「何�
 | 告知画像 | `/generate-lt-image`・LT の素材がそろったとき | `features/lt/commands/generate-lt-image.ts`・`features/lt/announce-image.ts`・`src/image-gen/` |
 | 司会進行スライド | `/slides`・開催確認の YES | `features/slides/`・`src/canva/`・`src/video/` |
 | 活動の集計 | Discord のイベント（メッセージ・リアクション・VC・参加と退出）・`npm run activity:backfill` | `features/activity/` |
+| マッチング | `/match`・「🤝 今夜話すと良さそうな人」ボタン（金曜 21:55 の cron）・本人確認のボタン | `features/match/`（`commands/match.ts`・`match.ts`・`store.ts`）・`deploy/analytics-export.sh`（`match-optins`・`match-profiles`） |
 | 状態の確認 | `/status`・`/check-permissions` | `features/admin/` |
 | （共通の部品） | どの機能からも使う | `shared/interaction.ts`（運営ロールの確認・エラーの返信）・`shared/x-post-url.ts`（ツイートの URL）・`shared/meetup-dates.ts`（開催日の算出と日付の書式） |
 
@@ -129,6 +130,9 @@ src/
         collector.ts    Discord のイベントと VC の見回りから集計を記録する
         store.ts        日別集計の足し込みと書き出し（state/activity/YYYY-MM-DD.json・users.json）
         backfill.ts     過去のメッセージ履歴からメッセージの集計を作り直す（npm run activity:backfill）
+      match/          集会のタグから似たことをやっていそうな人を薦めるマッチング（/match と「🤝」ボタン）
+        match.ts        今夜押した人の中から似ている人を選ぶ・確認コード・回の日付
+        store.ts        申し込み・今夜の記録と、分析が置いていくプロフィール（state/match/）
       admin/          運営向けの確認（/status・/check-permissions）
         next-run.ts     cron 式から次に動く時刻を出す（/status に表示する）
     shared/

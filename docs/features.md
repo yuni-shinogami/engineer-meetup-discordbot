@@ -72,5 +72,11 @@
    - **analytics への受け渡し**: engineer-meetup-analytics は、取得用の鍵で ssh して `activity` を送ると、`state/activity/` の日別ファイルと `users.json` を tar.gz で受け取ります（`deploy/analytics-export.sh`。コマンドなしなら前からの LT の記録）。このスクリプトは鍵を置いたユーザーの権限で動くので、`install -m 755 -o root -g root deploy/analytics-export.sh /usr/local/bin/analytics-export` でコピーし、authorized_keys の `command=` をそこに向けます。変えたときはもう一度コピーしてください。
    - 参加・退出は特権 Intent（Server Members）が要るので、Developer Portal の Bot 設定で **Server Members Intent** を有効にしてから `ACTIVITY_MEMBER_EVENTS=true` にしたときだけ数えます。有効にしないまま `true` にすると Bot がログインできません。
 
+   - **マッチング (`/match`)**: 集会のワールドで付けたタグの記録から、似たことをやっていそうな人を薦めます。
+     - `/match join profile:<VRChat のプロフィールURL>` で申し込みます。何を使って相手に何が見えるかを見せたうえで確認コード（`EM-XXXXXX`）を出すので、VRChat のステータスの一言か自己紹介に入れて「✅ コードを入れました」を押すと、本人確認が済んで申し込みになります（30 分以内。フレンド申請はしません）。同じ VRChat アカウントで別の人が本人確認をしたら、前の申し込みは外れます。
+     - 開催予定が YES の週の金曜 21:55（`MATCH_CRON`）に、公開チャンネルへ「🤝 今夜話すと良さそうな人」ボタンを出します。運営は `/match post` で今のチャンネルにも出せます。押すと「今夜いる」の記録が付き、今夜押した申し込み済みの人の中から似ている人を 3 人まで、本人にだけ表示します（VRChat の表示名・グループ・共通のタグ）。
+     - `/match show` で申し込みの状態と推測したグループを、`/match leave` でやめると、申し込み・今夜の記録・プロフィールをすぐ消します。
+     - 何をやっていそうか（活動の混ざり方と主なタグ）は engineer-meetup-analytics が作ります。analytics は取得用の鍵で ssh して `match-optins` で申し込んだ人の VRChat のユーザー ID だけを受け取り（Discord の ID は渡しません）、その人たちの分だけを `match-profiles` で `state/match/profiles.json` に置きます（`deploy/analytics-export.sh`）。位置の記録や、誰と近くにいたかは使いません。
+
 10. **権限制御**
    - `/lt-apply` と `/lt-material` を除く全コマンドは `OPERATOR_ROLE_ID` で指定したロールを持つユーザーのみ実行可能です（この 2 つは登壇者本人が使うため）。
